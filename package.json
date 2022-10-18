@@ -1,0 +1,44 @@
+{
+  "name": "alby-tools",
+  "version": "1.0.0",
+  "description": "Collection of helpful building blocks and tools to build Bitcoin Lighting web apps",
+  "type": "module",
+  "source": "src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.module.js",
+  "unpkg": "./dist/index.umd.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "keywords": [
+    "lightning",
+    "bitcoin",
+    "alby"
+  ],
+  "exports": {
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.modern.js"
+  },
+  "scripts": {
+    "prebuild": "yarn run clean",
+    "prepack": "yarn run build",
+    "test": "echo tests are missing",
+    "clean": "rm -rf dist",
+    "build": "microbundle",
+    "dev": "microbundle watch"
+  },
+  "dependencies": {
+    "cross-fetch": "^3.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.0",
+    "microbundle": "^0.15.1",
+    "typescript": "^4.8.4"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "author": "Alby contributors",
+  "license": "MIT"
+}
