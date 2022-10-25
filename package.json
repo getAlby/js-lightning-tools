@@ -1,7 +1,7 @@
 {
   "name": "alby-tools",
   "version": "1.0.0",
-  "description": "Collection of helpful building blocks and tools to build Bitcoin Lighting web apps",
+  "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
   "source": "src/index.ts",
   "main": "./dist/index.cjs",
