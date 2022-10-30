@@ -3,6 +3,8 @@ import fetch from 'cross-fetch';
 const LN_ADDRESS_REGEX =
 /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
+const DEFAULT_PROXY = "https://api.getalby.com/lightning-address-details";
+
 export default class LightningAddress {
   address: string;
   options: { proxy: boolean };
@@ -13,11 +15,8 @@ export default class LightningAddress {
 
   constructor(address: string, options: { proxy: boolean }) {
     this.address = address;
-    this.options = { proxy: true, ...options };
+    this.options = { proxy: DEFAULT_PROXY, ...options };
     this.parse();
-    if (this.options.proxy) {
-      this.fetchWithCorsProxy();
-    }
   }
 
   parse() {
@@ -30,17 +29,20 @@ export default class LightningAddress {
 
   async fetch() {
     if (this.options.proxy) {
-      return this.fetchWithCorsProxy();
+      return this.fetchWithProxy();
     } else {
-      return this.fetchWithoutCorsProxy();
+      return this.fetchWithoutProxy();
     }
   }
 
-  async fetchWithCorsProxy() {
-    const result = await fetch();
+  async fetchWithProxy() {
+    const result = await fetch(`${this.options.proxy}?${new URLSearchParams({ln: this.address}).toString()}`);
+    const json = await result.json();
+    this.lnurlpData = json.lnurlp;
+    this.keysendData = json.keysend;
   }
 
-  async fetchWithoutCorsProxy() {
+  async fetchWithoutProxy() {
     try {
       const lnurlResult = await fetch(this.lnurlpUrl());
       this.lnurlpData = await lnurlResult.json();
