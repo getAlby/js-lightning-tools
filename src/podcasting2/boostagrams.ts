@@ -31,7 +31,7 @@ type Boost = {
   sender_name: string;
 }
 
-export const boost = (args: BoostArguments, options?: BoostOptions) => {
+export const boost = async (args: BoostArguments, options?: BoostOptions) => {
   let { boost, amount } = args;
   if (!options) {
     options = {};
@@ -51,7 +51,9 @@ export const boost = (args: BoostArguments, options?: BoostOptions) => {
   if (args.customKey && args.customValue) {
     weblnParams.customRecords[args.customKey] = args.customValue;
   }
-  return webln.keysend(weblnParams);
+  await webln.enable();
+  const response = await webln.keysend(weblnParams);
+  return response;
 }
 
 
