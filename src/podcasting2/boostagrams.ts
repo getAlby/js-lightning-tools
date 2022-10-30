@@ -1,0 +1,58 @@
+
+type BoostOptions = {
+ webln?: unknown;
+}
+
+type BoostArguments = {
+  destination: string
+  customKey?: string;
+  customValue?: string;
+  amount?: number;
+  boost: Boost;
+}
+
+type WeblnBoostParams = {
+  destination: string;
+  amount: number;
+  customRecords: Record<string,string>;
+}
+
+type Boost = {
+  action: string;
+  value_msat: number;
+  value_msat_total: number;
+  app_name: string;
+  app_version: string;
+  feedId: string;
+  podcast: string;
+  episode: string;
+  ts: number;
+  name: string;
+  sender_name: string;
+}
+
+export const boost = (args: BoostArguments, options?: BoostOptions) => {
+  let { boost, amount } = args;
+  if (!options) {
+    options = {};
+  }
+  const webln = options.webln || (typeof window !== 'undefined' && (window as any).webln);
+  if (!amount) {
+    amount = Math.floor(boost.value_msat / 1000);
+  }
+
+  let weblnParams: WeblnBoostParams = {
+    destination: args.destination,
+    amount: amount,
+    customRecords: {
+      '7629169': JSON.stringify(boost)
+    }
+  };
+  if (args.customKey && args.customValue) {
+    weblnParams.customRecords[args.customKey] = args.customValue;
+  }
+  return webln.keysend(weblnParams);
+}
+
+
+export default boost;
