@@ -1,7 +1,7 @@
 import fetch from 'cross-fetch';
 import MemoryStorage from "../utils/MemoryStorage";
 
-const fetchWithLsat = async (url, fetchArgs, options) => {
+export const fetchWithLsat = async (url, fetchArgs, options) => {
   if (!options) {
     options = {};
   }

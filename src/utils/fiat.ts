@@ -2,7 +2,7 @@ import fetch from 'cross-fetch';
 
 const numSatsInBtc = 100_000_000;
 
-const getFiatBtcRate = async (currency: string): Promise<number> => {
+export const getFiatBtcRate = async (currency: string): Promise<number> => {
   const response = await fetch(
     `https://getalby.com/api/rates/${currency.toLowerCase()}.json`
   );
@@ -11,14 +11,20 @@ const getFiatBtcRate = async (currency: string): Promise<number> => {
   return data.rate_float / numSatsInBtc;
 };
 
-export const getFiatValue = async ({ amount, currency}: {  amount: number | string; currency: string; }) => {
+export const getFiatValue = async ({ satoshi, currency}: { satoshi: number | string; currency: string; }) => {
   const rate = await getFiatBtcRate(currency);
 
-  return Number(amount) * rate;
+  return Number(satoshi) * rate;
 };
 
-export const getFormattedFiatValue = async ({ amount, currency}: {  amount: number | string; currency: string; }) => {
-  const fiatValue = await getFiatValue({ amount, currency });
+export const getSatoshiValue = async ({amount, currency}: { amount: number | string; currency: string; }) => {
+  const rate = await getFiatBtcRate(currency);
+
+  return Math.floor(Number(amount) / rate);
+}
+
+export const getFormattedFiatValue = async ({ satoshi, currency}: {  satoshi: number | string; currency: string; }) => {
+  const fiatValue = await getFiatValue({ satoshi, currency });
   return fiatValue.toLocaleString("en", {
     style: "currency",
     currency,
