@@ -3,9 +3,8 @@ import fetch from 'cross-fetch';
 const numSatsInBtc = 100_000_000;
 
 export const getFiatBtcRate = async (currency: string): Promise<number> => {
-  const response = await fetch(
-    `https://getalby.com/api/rates/${currency.toLowerCase()}.json`
-  );
+  const url = "https://getalby.com/api/rates/" + currency.toLowerCase() + ".json";
+  const response = await fetch(url);
   const data = await response.json();
 
   return data.rate_float / numSatsInBtc;
