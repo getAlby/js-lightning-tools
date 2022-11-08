@@ -11,6 +11,7 @@
     "allowSyntheticDefaultImports": true,
     "target": "es2020",
     "rootDir": "./src",
+    "moduleResolution": "node",
     "sourceMap": true
   },
   "include": ["src/**/*"],
