@@ -7,15 +7,16 @@ const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com/lightning-address-deta
 
 export default class LightningAddress {
   address: string;
-  options: { proxy: boolean };
+  options: { proxy: string };
   username: string | undefined;
   domain: string | undefined;
   keysendData: unknown;
   lnurlpData: unknown;
 
-  constructor(address: string, options: { proxy: boolean }) {
+  constructor(address: string, options: { proxy: string }) {
     this.address = address;
-    this.options = { proxy: DEFAULT_PROXY, ...options };
+    this.options = { proxy: DEFAULT_PROXY };
+    this.options = Object.assign(this.options, options);
     this.parse();
   }
 
