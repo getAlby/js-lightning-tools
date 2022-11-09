@@ -3,7 +3,7 @@ import fetch from 'cross-fetch';
 const LN_ADDRESS_REGEX =
 /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
-const DEFAULT_PROXY = "https://api.getalby.com/lightning-address-details";
+const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com/lightning-address-details";
 
 export default class LightningAddress {
   address: string;
