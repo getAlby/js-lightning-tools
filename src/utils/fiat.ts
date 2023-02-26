@@ -10,21 +10,24 @@ export const getFiatBtcRate = async (currency: string): Promise<number> => {
   return data.rate_float / numSatsInBtc;
 };
 
-export const getFiatValue = async ({ satoshi, currency}: { satoshi: number | string; currency: string; }) => {
+export const getFiatValue = async ({ satoshi, currency }: { satoshi: number | string; currency: string; }) => {
   const rate = await getFiatBtcRate(currency);
 
   return Number(satoshi) * rate;
 };
 
-export const getSatoshiValue = async ({amount, currency}: { amount: number | string; currency: string; }) => {
+export const getSatoshiValue = async ({ amount, currency }: { amount: number | string; currency: string; }) => {
   const rate = await getFiatBtcRate(currency);
 
   return Math.floor(Number(amount) / rate);
 }
 
-export const getFormattedFiatValue = async ({ satoshi, currency}: {  satoshi: number | string; currency: string; }) => {
+export const getFormattedFiatValue = async ({ satoshi, currency, locale }: { satoshi: number | string; currency: string; locale: string }) => {
+  if (!locale) {
+    locale = 'en';
+  }
   const fiatValue = await getFiatValue({ satoshi, currency });
-  return fiatValue.toLocaleString("en", {
+  return fiatValue.toLocaleString(locale, {
     style: "currency",
     currency,
   });

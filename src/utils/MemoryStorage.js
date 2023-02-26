@@ -6,6 +6,7 @@ class MemoryStorage {
   getItem(key) {
     return this.storage[key];
   }
+
   setItem(key, value) {
     this.storage[key] = value;
   }
