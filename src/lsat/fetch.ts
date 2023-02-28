@@ -1,7 +1,13 @@
 import fetch from 'cross-fetch';
 import MemoryStorage from "../utils/MemoryStorage";
 
-export const fetchWithLsat = async (url, fetchArgs, options) => {
+declare global {
+  interface Window {
+    webln:any;
+  }
+}
+
+export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
   if (!options) {
     options = {};
   }
