@@ -26,6 +26,7 @@ export const isValidAmount = ({
 
 const TAG_PAY_REQUEST = 'payRequest'
 
+// From: https://github.com/dolcalmi/lnurl-pay/blob/main/src/request-pay-service-params.ts
 export const parseLnUrlPayResponse = (
   data: Record<string, string|number>
 ): LnUrlPayResponse => {
