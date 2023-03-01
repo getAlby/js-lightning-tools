@@ -1,6 +1,6 @@
 
 type BoostOptions = {
- webln?: unknown;
+  webln?: unknown;
 }
 
 type BoostArguments = {
@@ -14,7 +14,7 @@ type BoostArguments = {
 type WeblnBoostParams = {
   destination: string;
   amount: number;
-  customRecords: Record<string,string>;
+  customRecords: Record<string, string>;
 }
 
 type Boost = {
@@ -55,6 +55,5 @@ export const boost = async (args: BoostArguments, options?: BoostOptions) => {
   const response = await webln.keysend(weblnParams);
   return response;
 }
-
 
 export default boost;

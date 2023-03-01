@@ -1,14 +1,15 @@
 class MemoryStorage {
-  storage: any;
+  storage;
 
   constructor(initial?: any) {
     this.storage = initial || {};
   }
 
-  getItem(key: string) {
+  getItem(key) {
     return this.storage[key];
   }
-  setItem(key: string, value: any) {
+
+  setItem(key, value) {
     this.storage[key] = value;
   }
 }
