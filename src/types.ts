@@ -12,3 +12,9 @@ export type LnUrlPayResponse = {
   commentAllowed: number
   rawData: { [key: string]: string | number }
 }
+
+export type InvoiceArgs = {
+  pr: string;
+  verify?: string;
+  preimage?: string;
+}

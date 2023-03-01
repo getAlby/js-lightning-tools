@@ -1,6 +1,7 @@
 import fetch from 'cross-fetch';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
+import { InvoiceArgs } from './types';
 
 const LN_ADDRESS_REGEX =
 /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -93,11 +94,13 @@ export default class LightningAddress {
     const data = await fetch(callbackUrl)
     const json = await data.json()
     const paymentRequest = json && json.pr && json.pr.toString()
-    const verifyURL = json && (json.verify || '').toString()
-
     if (!paymentRequest) throw new Error('Invalid pay service invoice')
 
-    const invoice = new Invoice({pr: paymentRequest, verify: verifyURL})
+    const invoiceArgs: InvoiceArgs = {pr: paymentRequest};
+
+    if (json && json.verify) invoiceArgs.verify = json.verify.toString();
+
+    const invoice = new Invoice(invoiceArgs)
 
     return invoice;
   }

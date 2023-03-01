@@ -2,18 +2,19 @@ import fetch from 'cross-fetch';
 import { getHashFromInvoice } from "./utils/invoice";
 import Hex from "crypto-js/enc-hex";
 import sha256 from "crypto-js/sha256";
+import { InvoiceArgs } from './types';
 
 export default class Invoice {
   paymentRequest: string;
   paymentHash: string;
-  preimage: string;
-  verify: string;
+  preimage: string | null;
+  verify: string | null;
 
-  constructor(lnUrlPayResponse: {pr: string, verify: string, preimage?: string}) {
-    this.paymentRequest = lnUrlPayResponse.pr;
-    this.verify = lnUrlPayResponse.verify;
+  constructor(args: InvoiceArgs) {
+    this.paymentRequest = args.pr;
     this.paymentHash = getHashFromInvoice(this.paymentRequest) as string;
-    this.preimage = lnUrlPayResponse.preimage ?? '';
+    this.verify = args.verify ?? null;
+    this.preimage = args.preimage ?? null;
   }
 
   async isPaid(): Promise<boolean> {
