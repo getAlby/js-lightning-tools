@@ -1,7 +1,8 @@
 import fetch from 'cross-fetch';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
-import { InvoiceArgs } from './types';
+import { InvoiceArgs, ZapArgs } from './types';
+import { generateZapEvent } from './utils/nostr';
 
 const LN_ADDRESS_REGEX =
 /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -13,8 +14,9 @@ export default class LightningAddress {
   options: { proxy: string };
   username: string | undefined;
   domain: string | undefined;
+  pubkey: string | undefined;
   keysendData: unknown;
-  lnurlpData: Record<string, string | number>;
+  lnurlpData: Record<string, any>;
 
   constructor(address: string, options: { proxy: string }) {
     this.address = address;
@@ -68,41 +70,42 @@ export default class LightningAddress {
     return `https://${this.domain}/.well-known/keysend/${this.username}`;
   }
 
-  async requestInvoice(
-    amount: number,
-    comment: string
-  ): Promise<Invoice> {
-    await this.fetch();
-    const { callback, commentAllowed, min, max } = parseLnUrlPayResponse(this.lnurlpData);
-    if (!isValidAmount({ amount: amount / 1000, min, max }))
-      throw new Error('Invalid amount')
-  
-    if (!isUrl(callback)) throw new Error('Callback must be a valid url')
-
-    let callbackUrl = new URL(callback)
-
-    const invoiceParams: {amount: string, comment?: string} = { amount: amount.toString() };
-
-    if (comment && commentAllowed > 0 && comment.length > commentAllowed)
-    throw new Error(
-      `The comment length must be ${commentAllowed} characters or fewer`
-    )
-    if (comment) invoiceParams.comment = comment
-
-    callbackUrl.search = new URLSearchParams(invoiceParams).toString()
-  
-    const data = await fetch(callbackUrl)
+  async generateInvoice(url: URL): Promise<Invoice> {
+    const data = await fetch(url)
     const json = await data.json()
     const paymentRequest = json && json.pr && json.pr.toString()
     if (!paymentRequest) throw new Error('Invalid pay service invoice')
 
     const invoiceArgs: InvoiceArgs = {pr: paymentRequest};
-
     if (json && json.verify) invoiceArgs.verify = json.verify.toString();
 
-    const invoice = new Invoice(invoiceArgs)
+    return new Invoice(invoiceArgs);
+  }
 
-    return invoice;
+  async requestInvoice(
+    amount: number,
+    comment?: string
+  ): Promise<Invoice> {
+    if (Object.keys(this.lnurlpData).length === 0) {
+      await this.fetch();
+    }
+    const { callback, commentAllowed, min, max } = parseLnUrlPayResponse(this.lnurlpData);
+
+    if (!isValidAmount({ amount: amount * 1000, min, max }))
+      throw new Error('Invalid amount')
+    if (!isUrl(callback)) throw new Error('Callback must be a valid url')
+    if (comment && commentAllowed > 0 && comment.length > commentAllowed)
+    throw new Error(
+      `The comment length must be ${commentAllowed} characters or fewer`
+    )
+
+    const invoiceParams: {amount: string, comment?: string} = { amount: amount.toString() };
+    if (comment) invoiceParams.comment = comment
+
+    let callbackUrl = new URL(callback)
+    callbackUrl.search = new URLSearchParams(invoiceParams).toString()
+
+    return this.generateInvoice(callbackUrl);
   }
 
   requestInvoiceWithProxy(
@@ -122,4 +125,31 @@ export default class LightningAddress {
         return {pr: response.payment_request};
       });
   };
+
+  async zap({
+    amount, comment, relays, p, e
+  }: ZapArgs): Promise<Invoice> {
+    if (Object.keys(this.lnurlpData).length === 0) {
+      await this.fetch();
+    }
+    const { callback, allowsNostr, min, max } = parseLnUrlPayResponse(this.lnurlpData);
+
+    if (!isValidAmount({ amount: amount * 1000, min, max }))
+      throw new Error('Invalid amount')
+    if (!isUrl(callback)) throw new Error('Callback must be a valid url')
+    if (!allowsNostr) throw new Error('Your provider does not support zaps')
+
+    const event = await generateZapEvent({
+      amount, comment, p, e, relays
+    })
+    const zapParams: {amount: string, nostr: string} = {
+      amount: amount.toString(),
+      nostr: JSON.stringify(event)
+    };
+
+    let callbackUrl = new URL(callback)
+    callbackUrl.search = new URLSearchParams(zapParams).toString()
+
+    return this.generateInvoice(callbackUrl);
+  }
 }

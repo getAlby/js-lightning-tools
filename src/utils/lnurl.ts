@@ -28,7 +28,7 @@ const TAG_PAY_REQUEST = 'payRequest'
 
 // From: https://github.com/dolcalmi/lnurl-pay/blob/main/src/request-pay-service-params.ts
 export const parseLnUrlPayResponse = (
-  data: Record<string, string|number>
+  data: Record<string, any>
 ): LnUrlPayResponse => {
   if (data.tag !== TAG_PAY_REQUEST) throw new Error('Invalid pay service params')
 
@@ -87,5 +87,6 @@ export const parseLnUrlPayResponse = (
     image,
     commentAllowed: Number(data.commentAllowed) || 0,
     rawData: data,
+    allowsNostr: data.allowsNostr || false,
   }
 }
