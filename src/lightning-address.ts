@@ -128,9 +128,6 @@ export default class LightningAddress {
   async zap({
     amount, comment, relays, p, e
   }: ZapArgs): Promise<Invoice> {
-    if (Object.keys(this.lnurlpData).length === 0) {
-      await this.fetch();
-    }
     const msat = amount * 1000;
     const { callback, allowsNostr, min, max } = parseLnUrlPayResponse(this.lnurlpData);
 

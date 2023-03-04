@@ -1,17 +1,11 @@
 import fetch from 'cross-fetch';
 import MemoryStorage from "../utils/MemoryStorage";
 
-declare global {
-  interface Window {
-    webln:any;
-  }
-}
-
 export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
   if (!options) {
     options = {};
   }
-  const webln = options.webln || (typeof window !== 'undefined' && window.webln);
+  const webln = options.webln || globalThis.webln;
   if (!webln) {
     throw new Error("WebLN is missing");
   }

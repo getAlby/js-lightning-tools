@@ -2,16 +2,10 @@ import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
 import { Event, ZapArgs } from '../types';
 
-declare global {
-  interface Window {
-    nostr:any;
-  }
-}
-
 export async function generateZapEvent({
   amount, comment, p, e, relays
 }: ZapArgs): Promise<Event> {
-  if (!window.nostr) {
+  if (!globalThis.nostr) {
     throw new Error("Please use a nostr extension");
   }
 
@@ -25,7 +19,7 @@ export async function generateZapEvent({
     nostrTags.push([ "e", e ])
   }
 
-  const pubkey = await window.nostr.getPublicKey();
+  const pubkey = await globalThis.nostr.getPublicKey();
 
   const nostrEvent: Event = {
     pubkey,
@@ -36,7 +30,7 @@ export async function generateZapEvent({
   }
 
   nostrEvent.id = getEventHash(nostrEvent)
-  return await window.nostr.signEvent(nostrEvent)
+  return await globalThis.nostr.signEvent(nostrEvent)
 }
 
 export function validateEvent(event: Event): boolean {
