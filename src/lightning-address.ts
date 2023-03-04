@@ -89,9 +89,10 @@ export default class LightningAddress {
     if (Object.keys(this.lnurlpData).length === 0) {
       await this.fetch();
     }
+    amount = amount * 1000;
     const { callback, commentAllowed, min, max } = parseLnUrlPayResponse(this.lnurlpData);
 
-    if (!isValidAmount({ amount: amount * 1000, min, max }))
+    if (!isValidAmount({ amount: amount, min, max }))
       throw new Error('Invalid amount')
     if (!isUrl(callback)) throw new Error('Callback must be a valid url')
     if (comment && commentAllowed > 0 && comment.length > commentAllowed)
@@ -132,9 +133,10 @@ export default class LightningAddress {
     if (Object.keys(this.lnurlpData).length === 0) {
       await this.fetch();
     }
+    amount = amount * 1000;
     const { callback, allowsNostr, min, max } = parseLnUrlPayResponse(this.lnurlpData);
 
-    if (!isValidAmount({ amount: amount * 1000, min, max }))
+    if (!isValidAmount({ amount, min, max }))
       throw new Error('Invalid amount')
     if (!isUrl(callback)) throw new Error('Callback must be a valid url')
     if (!allowsNostr) throw new Error('Your provider does not support zaps')
