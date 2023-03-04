@@ -24,6 +24,7 @@ export default class LightningAddress {
     this.options = Object.assign(this.options, options);
     this.parse();
     this.lnurlpData = {};
+    this.keysendData = {};
   }
 
   parse() {
@@ -71,9 +72,9 @@ export default class LightningAddress {
   }
 
   async generateInvoice(url: URL): Promise<Invoice> {
-    const data = await fetch(url)
-    const json = await data.json()
-    const paymentRequest = json && json.pr && json.pr.toString()
+    const data = await fetch(url);
+    const json = await data.json();
+    const paymentRequest = json && json.pr && json.pr.toString();
     if (!paymentRequest) throw new Error('Invalid pay service invoice')
 
     const invoiceArgs: InvoiceArgs = {pr: paymentRequest};
@@ -86,13 +87,10 @@ export default class LightningAddress {
     amount: number,
     comment?: string
   ): Promise<Invoice> {
-    if (Object.keys(this.lnurlpData).length === 0) {
-      await this.fetch();
-    }
-    amount = amount * 1000;
+    const msat = amount * 1000;
     const { callback, commentAllowed, min, max } = parseLnUrlPayResponse(this.lnurlpData);
 
-    if (!isValidAmount({ amount: amount, min, max }))
+    if (!isValidAmount({ amount: msat, min, max }))
       throw new Error('Invalid amount')
     if (!isUrl(callback)) throw new Error('Callback must be a valid url')
     if (comment && commentAllowed > 0 && comment.length > commentAllowed)
@@ -100,7 +98,7 @@ export default class LightningAddress {
       `The comment length must be ${commentAllowed} characters or fewer`
     )
 
-    const invoiceParams: {amount: string, comment?: string} = { amount: amount.toString() };
+    const invoiceParams: {amount: string, comment?: string} = { amount: msat.toString() };
     if (comment) invoiceParams.comment = comment
 
     let callbackUrl = new URL(callback)
@@ -133,19 +131,19 @@ export default class LightningAddress {
     if (Object.keys(this.lnurlpData).length === 0) {
       await this.fetch();
     }
-    amount = amount * 1000;
+    const msat = amount * 1000;
     const { callback, allowsNostr, min, max } = parseLnUrlPayResponse(this.lnurlpData);
 
-    if (!isValidAmount({ amount, min, max }))
+    if (!isValidAmount({ amount: msat, min, max }))
       throw new Error('Invalid amount')
     if (!isUrl(callback)) throw new Error('Callback must be a valid url')
     if (!allowsNostr) throw new Error('Your provider does not support zaps')
 
     const event = await generateZapEvent({
-      amount, comment, p, e, relays
+      amount: msat, comment, p, e, relays
     })
     const zapParams: {amount: string, nostr: string} = {
-      amount: amount.toString(),
+      amount: msat.toString(),
       nostr: JSON.stringify(event)
     };
 

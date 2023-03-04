@@ -1,5 +1,5 @@
-import Hex from "crypto-js/enc-hex";
-import sha256 from "crypto-js/sha256";
+import Hex from "crypto-js/enc-hex.js";
+import sha256 from "crypto-js/sha256.js";
 import { Event, ZapArgs } from '../types';
 
 declare global {

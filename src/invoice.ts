@@ -1,7 +1,7 @@
 import fetch from 'cross-fetch';
 import { getHashFromInvoice } from "./utils/invoice";
-import Hex from "crypto-js/enc-hex";
-import sha256 from "crypto-js/sha256";
+import Hex from "crypto-js/enc-hex.js";
+import sha256 from "crypto-js/sha256.js";
 import { InvoiceArgs } from './types';
 
 export default class Invoice {
@@ -31,7 +31,7 @@ export default class Invoice {
     if (!preimage || !this.paymentHash) return false
   
     try {
-      const preimageHash = sha256(preimage).toString(Hex)
+      const preimageHash = sha256(Hex.parse(preimage)).toString(Hex)
       return this.paymentHash === preimageHash
     } catch {
       return false
@@ -43,6 +43,9 @@ export default class Invoice {
 
     const result = await fetch(this.verify);
     const json = await result.json();
+    if (json.preimage) {
+      this.preimage = json.preimage;
+    }
   
     return json.settled;
   }
