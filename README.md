@@ -1,15 +1,17 @@
-# alby-tools
+<p align="center">
+  <img width="100%" src="docs/Header.png">
+</p>
 
 An npm package that provides useful tools to build on the lightning network.
 
-## Installation
+## 🚀 Quick Start
 
 ```
 npm install alby-tools
 yarn add alby-tools
 ```
 
-## Usage
+## 🤙 Usage
 
 Generating an Invoice:
 
@@ -55,7 +57,7 @@ if (await invoice.isPaid()) {
 }
 ```
 
-## Development
+## 🛠 Development
 
 ```
 yarn install
