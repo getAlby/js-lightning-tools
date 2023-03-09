@@ -29,9 +29,12 @@
     "dev": "microbundle watch"
   },
   "dependencies": {
-    "cross-fetch": "^3.1.5"
+    "cross-fetch": "^3.1.5",
+    "crypto-js": "^4.1.1",
+    "light-bolt11-decoder": "^3.0.0"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.1.1",
     "@types/node": "^18.11.0",
     "microbundle": "^0.15.1",
     "typescript": "^4.8.4"

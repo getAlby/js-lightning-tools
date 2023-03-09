@@ -12,7 +12,8 @@
     "target": "es2020",
     "rootDir": "./src",
     "moduleResolution": "node",
-    "sourceMap": true
+    "sourceMap": true,
+    "noImplicitAny": false
   },
   "include": ["src/**/*"],
   "exclude": ["examples/*", "scripts/*", "node_modules"]

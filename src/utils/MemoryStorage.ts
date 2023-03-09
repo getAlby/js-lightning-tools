@@ -1,5 +1,7 @@
 class MemoryStorage {
-  constructor(initial) {
+  storage;
+
+  constructor(initial?: any) {
     this.storage = initial || {};
   }
 
