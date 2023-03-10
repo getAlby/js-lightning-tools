@@ -31,9 +31,15 @@ export type Event = {
 };
 
 export type ZapArgs = {
-  amount: number
+  satoshi: number
   comment?: string
   relays: string[]
   p: string // nostr pubkey of person you are zapping
   e?: string // note you are zapping, optional
+}
+
+export type RequestInvoiceArgs = {
+  satoshi: number,
+  comment?: string,
+  payerdata?: Record<string, unknown>
 }

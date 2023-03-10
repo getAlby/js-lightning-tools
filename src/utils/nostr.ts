@@ -3,20 +3,20 @@ import sha256 from "crypto-js/sha256.js";
 import { Event, ZapArgs } from '../types';
 
 export async function generateZapEvent({
-  amount, comment, p, e, relays
+  satoshi, comment, p, e, relays
 }: ZapArgs): Promise<Event> {
   if (!globalThis.nostr) {
     throw new Error("Please use a nostr extension");
   }
 
   const nostrTags = [
-    [ "p", p ],
-    ["relays", ...relays ],
-    ["amount", amount.toString() ]
+    ["p", p],
+    ["relays", ...relays],
+    ["amount", satoshi.toString()]
   ]
 
   if (e) {
-    nostrTags.push([ "e", e ])
+    nostrTags.push(["e", e])
   }
 
   const pubkey = await globalThis.nostr.getPublicKey();

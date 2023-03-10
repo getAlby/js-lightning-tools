@@ -21,7 +21,7 @@ const { LightningAddress } = require("alby-tools");
 const ln = new LightningAddress("satoshi@getalby.com");
 
 await ln.fetch();
-const invoice = await ln.requestInvoice(1000); // request an invoice for 1000 satoshis
+const invoice = await ln.requestInvoice({satoshi: 1000}); // request an invoice for 1000 satoshis
 console.log(invoice.paymentRequest); // print the payment request
 ```
 
@@ -31,7 +31,7 @@ Zapping an event on nostr:
 const ln = new LightningAddress("satoshi@getalby.com");
 
 const zapArgs = {
-  amount: 1000,
+  satoshi: 1000,
   comment: "Awesome post",
   relays: ["wss://relay.damus.io"],
   p: "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245",
