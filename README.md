@@ -2,18 +2,42 @@
   <img width="100%" src="docs/Header.png">
 </p>
 
-An npm package that provides useful tools to build on the lightning network.
+# Lightning Web SDK
+
+An npm package that provides useful and common tools and helpers to build lightning web applications.
 
 ## 🚀 Quick Start
 
 ```
 npm install alby-tools
+```
+or
+```
 yarn add alby-tools
 ```
 
 ## 🤙 Usage
 
-Generating an Invoice:
+### Lightning Address
+
+The `LightningAddress` class provides helpers to work with lightning addresses
+
+```js
+const { LightningAddress } = require("alby-tools");
+
+const ln = new LightningAddress("satoshi@getalby.com");
+
+// fetch the LNURL data
+await ln.fetch();
+
+// get the LNURL-pay data:
+console.log(ln.lnurlpData); // returns a [LNURLPayPesponse](https://github.com/getAlby/alby-tools/blob/master/src/types.ts#L1-L15)
+// get the keysend data:
+console.log(ln.keysendData);
+
+```
+
+#### Get an invoice:
 
 ```js
 const { LightningAddress } = require("alby-tools");
@@ -21,14 +45,64 @@ const { LightningAddress } = require("alby-tools");
 const ln = new LightningAddress("satoshi@getalby.com");
 
 await ln.fetch();
-const invoice = await ln.requestInvoice({satoshi: 1000}); // request an invoice for 1000 satoshis
+// request an invoice for 1000 satoshis
+// this returns a new `Invoice` class that can also be used to validate the payment
+const invoice = await ln.requestInvoice({satoshi: 1000}); 
+
 console.log(invoice.paymentRequest); // print the payment request
+console.log(invoice.paymentHash); // print the payment hash
 ```
 
-Zapping an event on nostr:
+#### Verify a payment
 
 ```js
+const { LightningAddress } = require("alby-tools");
 const ln = new LightningAddress("satoshi@getalby.com");
+await ln.fetch();
+
+const invoice = await ln.requestInvoice({satoshi: 1000});
+
+// if the LNURL providers supports LNURL-verify:
+const paid = await invoice.verifyPayment(); // returns true of false
+if (paid) {
+  console.log(invoice.preimage);
+}
+
+// if you have the preimage for example in a WebLN context
+await window.webln.enable();
+const response = await window.webln.sendPayment(invoice.paymentRequest);
+const paid = invoice.validatePreimage(response.preimage); // returns true or false
+if (paid) {
+  console.log('paid');
+}
+
+// or use the convenenice method: 
+await invoice.isPaid();
+
+```
+
+It is also possible to manually initialize the `Invoice`
+
+```js
+const { Invoice } = require("alby-tools");
+
+const invoice = new Invoice({paymentRequest: pr, preimage: preimage});
+await invoice.isPaid();
+```
+
+
+
+#### Zapping an event on Nostr:
+
+Nostr is a simple, open protocol that enables truly censorship-resistant and global value-for-value publishing on the web. Nostr integrates deeply with Lightning. [more info](https://nostr.how/)
+
+alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md)
+
+
+```js
+const { LightningAddress } = require("alby-tools");
+const ln = new LightningAddress("satoshi@getalby.com");
+await ln.fetch();
 
 const zapArgs = {
   satoshi: 1000,
@@ -38,24 +112,34 @@ const zapArgs = {
   e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
 }
 
-await ln.fetch();
 const invoice = await ln.zap(zapArgs); // generates a zap invoice
 console.log(invoice.paymentRequest); // print the payment request
+await invoice.isPaid(); // check the payment status as descibed above
 ```
 
-To check if an invoice has been paid:
+
+### Fiat conversions
+Helpers to convert sats values to fiat and fiat values to sats.
+
+#### Methods
+
+##### getFiatValue(satoshi: number, currency: string): number
+Returns the fiat value for a specified currrency of a satoshi amount
+
+##### getSatoshiValue(amount: number, currency: string): number
+Returns the satoshi value for a specified amount (in the smallest denomination) and currency
+
+##### getFormattedFiatValue(satoshi: number, currency: string, locale: string): string
+Like `getFiatValue` but returns a formatted string for a given locale using JavaScript's `toLocaleString`
+
+#### Examples
 
 ```js
-const invoice = await ln.requestInvoice(1000);
-
-// wait for payment
-
-if (await invoice.isPaid()) {
-  // payment successful
-} else {
-  // retry
-}
+await getFiatValue(satoshi: 2100, currency: 'eur');
+await getSatoshiValue(amount: 100, currency: 'eur'); // for 1 EUR
+await getFormattedFiatValue(stoshi: 2100, currency: 'usd', locale: 'en')
 ```
+
 
 ## 🛠 Development
 
