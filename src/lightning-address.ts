@@ -9,16 +9,20 @@ const LN_ADDRESS_REGEX =
 
 const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com/lightning-address-details";
 
+type LightningAddressOptions = {
+  proxy?: string | false;
+}
+
 export default class LightningAddress {
   address: string;
-  options: { proxy: string };
+  options: LightningAddressOptions;
   username: string | undefined;
   domain: string | undefined;
   pubkey: string | undefined;
   keysendData: unknown;
   lnurlpData: Record<string, any>;
 
-  constructor(address: string, options: { proxy: string }) {
+  constructor(address: string, options?: LightningAddressOptions) {
     this.address = address;
     this.options = { proxy: DEFAULT_PROXY };
     this.options = Object.assign(this.options, options);
