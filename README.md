@@ -127,10 +127,10 @@ alby-tools uses a [proxy](https://github.com/getAlby/lightning-address-details-p
 - Many ln addresses don't support CORS, which means fetching the data directly in a browser environment will not always work.
 - Two requests are required to retrieve lnurlp and keysend data for a lightning address. The proxy will do these for you with a single request.
 
-You can disable the proxy by explicitly setting the proxy to undefined when initializing a lightning address:
+You can disable the proxy by explicitly setting the proxy to false when initializing a lightning address:
 
 ```
-const lightningAddress = new LightningAddress("roland@getalby.com", {proxy: undefined});
+const lightningAddress = new LightningAddress("roland@getalby.com", {proxy: false});
 ```
 
 #### Methods

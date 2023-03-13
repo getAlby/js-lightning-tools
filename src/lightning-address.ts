@@ -10,7 +10,7 @@ const LN_ADDRESS_REGEX =
 const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com/lightning-address-details";
 
 type LightningAddressOptions = {
-  proxy?: string;
+  proxy?: string | false;
 }
 
 export default class LightningAddress {
