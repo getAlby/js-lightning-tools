@@ -18,8 +18,8 @@ export default class LightningAddress {
   username: string | undefined;
   domain: string | undefined;
   pubkey: string | undefined;
-  keysendData: unknown;
   lnurlpData: Record<string, any>;
+  keysendData: Record<string, any>;
 
   constructor(address: string, options: { proxy: string }) {
     this.address = address;
@@ -108,7 +108,7 @@ export default class LightningAddress {
   }
 
   async boost(boost: Boost, amount: number = 0) {
-    const { destination, customKey, customValue } = parseKeysendResponse(this.lnurlpData);
+    const { destination, customKey, customValue } = parseKeysendResponse(this.keysendData);
     return booster({
       destination,
       customKey,
