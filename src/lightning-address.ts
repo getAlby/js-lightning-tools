@@ -71,7 +71,7 @@ export default class LightningAddress {
     return `https://${this.domain}/.well-known/keysend/${this.username}`;
   }
 
-  async generateInvoice(url: URL, params: { amount: string, comment?: string, nostr?: string }): Promise<Invoice> {
+  async generateInvoice(url: URL, params: Record< string, string | number >): Promise<Invoice> {
     let data;
     if (this.options.proxy) {
       const invoiceResult = await fetch(`${this.options.proxy}/generate-invoice?${new URLSearchParams({ ln: this.address, ...params }).toString()}`);
