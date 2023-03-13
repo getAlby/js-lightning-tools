@@ -7,7 +7,7 @@ import { generateZapEvent } from './utils/nostr';
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
-const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com/lightning-address-details";
+const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
 
 export default class LightningAddress {
   address: string;
@@ -44,7 +44,7 @@ export default class LightningAddress {
   }
 
   async fetchWithProxy() {
-    const result = await fetch(`${this.options.proxy}?${new URLSearchParams({ ln: this.address }).toString()}`);
+    const result = await fetch(`${this.options.proxy}/lightning-address-details?${new URLSearchParams({ ln: this.address }).toString()}`);
     const json = await result.json();
     this.lnurlpData = json.lnurlp;
     this.keysendData = json.keysend;
@@ -71,14 +71,22 @@ export default class LightningAddress {
     return `https://${this.domain}/.well-known/keysend/${this.username}`;
   }
 
-  async generateInvoice(url: URL): Promise<Invoice> {
-    const data = await fetch(url);
-    const json = await data.json();
-    const paymentRequest = json && json.pr && json.pr.toString();
+  async generateInvoice(url: URL, params: { amount: string, comment?: string, nostr?: string }): Promise<Invoice> {
+    let data;
+    if (this.options.proxy) {
+      const invoiceResult = await fetch(`${this.options.proxy}/generate-invoice?${new URLSearchParams({ ln: this.address, ...params }).toString()}`);
+      const json = await invoiceResult.json();
+      data = json.invoice;
+    } else {
+      const invoiceResult = await fetch(url);
+      data = await invoiceResult.json();
+    }
+
+    const paymentRequest = data && data.pr && data.pr.toString();
     if (!paymentRequest) throw new Error('Invalid pay service invoice')
 
     const invoiceArgs: InvoiceArgs = { pr: paymentRequest };
-    if (json && json.verify) invoiceArgs.verify = json.verify.toString();
+    if (data && data.verify) invoiceArgs.verify = data.verify.toString();
 
     return new Invoice(invoiceArgs);
   }
@@ -101,7 +109,7 @@ export default class LightningAddress {
     let callbackUrl = new URL(callback)
     callbackUrl.search = new URLSearchParams(invoiceParams).toString()
 
-    return this.generateInvoice(callbackUrl);
+    return this.generateInvoice(callbackUrl, invoiceParams);
   }
 
   async zap({
@@ -126,6 +134,6 @@ export default class LightningAddress {
     let callbackUrl = new URL(callback)
     callbackUrl.search = new URLSearchParams(zapParams).toString()
 
-    return this.generateInvoice(callbackUrl);
+    return this.generateInvoice(callbackUrl, zapParams);
   }
 }
