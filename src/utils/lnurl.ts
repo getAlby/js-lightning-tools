@@ -34,8 +34,8 @@ export const parseLnUrlPayResponse = (
 
   const callback = (data.callback + '').trim();
 
-  const min = Math.ceil(Number(data.minSendable || 0) / 1000)
-  const max = Math.floor(Number(data.maxSendable) / 1000)
+  const min = Math.ceil(Number(data.minSendable || 0))
+  const max = Math.floor(Number(data.maxSendable))
   if (!(min && max) || min > max) throw new Error('Invalid pay service params')
 
   let metadata: Array<Array<string>>
