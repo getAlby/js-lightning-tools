@@ -130,7 +130,7 @@ alby-tools uses a [proxy](https://github.com/getAlby/lightning-address-details-p
 You can disable the proxy by explicitly setting the proxy to false when initializing a lightning address:
 
 ```
-const lightningAddress = new LightningAddress("roland@getalby.com", {proxy: false});
+const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
 ```
 
 #### Methods
