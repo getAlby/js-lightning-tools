@@ -1,3 +1,9 @@
+export type KeysendResponse = {
+  customKey: string
+  customValue: string
+  destination: string
+}
+
 export type LnUrlPayResponse = {
   callback: string
   fixed: boolean

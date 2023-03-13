@@ -1,8 +1,11 @@
 import fetch from 'cross-fetch';
+import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
 import { InvoiceArgs, RequestInvoiceArgs, ZapArgs } from './types';
 import { generateZapEvent } from './utils/nostr';
+import type { Boost } from './podcasting2/boostagrams';
+import { boost as booster } from './podcasting2/boostagrams';
 
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -102,6 +105,17 @@ export default class LightningAddress {
     callbackUrl.search = new URLSearchParams(invoiceParams).toString()
 
     return this.generateInvoice(callbackUrl);
+  }
+
+  async boost(boost: Boost, amount: number = 0) {
+    const { destination, customKey, customValue } = parseKeysendResponse(this.lnurlpData);
+    return booster({
+      destination,
+      customKey,
+      customValue,
+      amount,
+      boost,
+    })
   }
 
   async zap({

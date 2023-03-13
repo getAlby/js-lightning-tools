@@ -17,7 +17,7 @@ type WeblnBoostParams = {
   customRecords: Record<string, string>;
 }
 
-type Boost = {
+export type Boost = {
   action: string;
   value_msat: number;
   value_msat_total: number;
