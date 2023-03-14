@@ -50,7 +50,7 @@ export default class LightningAddress {
     const result = await fetch(`${this.options.proxy}?${new URLSearchParams({ ln: this.address }).toString()}`);
     const json = await result.json();
     this.lnurlpData = json.lnurlp;
-    this.keysendData = json.keysend;
+    this.keysendData = parseKeysendResponse(json.keysend);
   }
 
   async fetchWithoutProxy() {
@@ -61,7 +61,7 @@ export default class LightningAddress {
     }
     try {
       const keysendResult = await fetch(this.keysendUrl());
-      this.keysendData = await keysendResult.json();
+      this.keysendData = parseKeysendResponse(await keysendResult.json());
     } catch (e) {
     }
   }
@@ -108,7 +108,7 @@ export default class LightningAddress {
   }
 
   async boost(boost: Boost, amount: number = 0) {
-    const { destination, customKey, customValue } = parseKeysendResponse(this.keysendData);
+    const { destination, customKey, customValue } = this.keysendData;
     return booster({
       destination,
       customKey,
