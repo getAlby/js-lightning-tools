@@ -33,6 +33,7 @@ export const parseLnUrlPayResponse = (
   if (data.tag !== TAG_PAY_REQUEST) throw new Error('Invalid pay service params')
 
   const callback = (data.callback + '').trim();
+  if (!isUrl(callback)) throw new Error('Callback must be a valid url')
 
   const min = Math.ceil(Number(data.minSendable || 0) / 1000)
   const max = Math.floor(Number(data.maxSendable) / 1000)
