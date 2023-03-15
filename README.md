@@ -118,22 +118,8 @@ await invoice.isPaid(); // check the payment status as descibed above
 ```
 
 
-### Fiat conversions
+### 💵 Fiat conversions
 Helpers to convert sats values to fiat and fiat values to sats.
-
-### Lightning Address Proxy
-alby-tools uses a [proxy](https://github.com/getAlby/lightning-address-details-proxy) to simplify requests to lightning providers.
-
-- Many ln addresses don't support CORS, which means fetching the data directly in a browser environment will not always work.
-- Two requests are required to retrieve lnurlp and keysend data for a lightning address. The proxy will do these for you with a single request.
-
-You can disable the proxy by explicitly setting the proxy to false when initializing a lightning address:
-
-```
-const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
-```
-
-#### Methods
 
 ##### getFiatValue(satoshi: number, currency: string): number
 Returns the fiat value for a specified currrency of a satoshi amount
@@ -152,6 +138,17 @@ await getSatoshiValue(amount: 100, currency: 'eur'); // for 1 EUR
 await getFormattedFiatValue(stoshi: 2100, currency: 'usd', locale: 'en')
 ```
 
+### 🤖 Lightning Address Proxy
+alby-tools uses a [proxy](https://github.com/getAlby/lightning-address-details-proxy) to simplify requests to lightning providers.
+
+- Many ln addresses don't support CORS, which means fetching the data directly in a browser environment will not always work.
+- Two requests are required to retrieve lnurlp and keysend data for a lightning address. The proxy will do these for you with a single request.
+
+You can disable the proxy by explicitly setting the proxy to false when initializing a lightning address:
+
+```
+const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
+```
 
 ## 🛠 Development
 
