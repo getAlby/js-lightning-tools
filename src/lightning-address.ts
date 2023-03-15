@@ -10,18 +10,22 @@ import { boost as booster } from './podcasting2/boostagrams';
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
-const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com/lightning-address-details";
+const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
+
+type LightningAddressOptions = {
+  proxy?: string | false;
+}
 
 export default class LightningAddress {
   address: string;
-  options: { proxy: string };
+  options: LightningAddressOptions;
   username: string | undefined;
   domain: string | undefined;
   pubkey: string | undefined;
   lnurlpData: Record<string, any>;
   keysendData: Record<string, any>;
 
-  constructor(address: string, options: { proxy: string }) {
+  constructor(address: string, options?: LightningAddressOptions) {
     this.address = address;
     this.options = { proxy: DEFAULT_PROXY };
     this.options = Object.assign(this.options, options);
@@ -47,16 +51,16 @@ export default class LightningAddress {
   }
 
   async fetchWithProxy() {
-    const result = await fetch(`${this.options.proxy}?${new URLSearchParams({ ln: this.address }).toString()}`);
+    const result = await fetch(`${this.options.proxy}/lightning-address-details?${new URLSearchParams({ ln: this.address }).toString()}`);
     const json = await result.json();
-    this.lnurlpData = json.lnurlp;
+    this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
     this.keysendData = parseKeysendResponse(json.keysend);
   }
 
   async fetchWithoutProxy() {
     try {
       const lnurlResult = await fetch(this.lnurlpUrl());
-      this.lnurlpData = await lnurlResult.json();
+      this.lnurlpData = parseLnUrlPayResponse(await lnurlResult.json());
     } catch (e) {
     }
     try {
@@ -74,25 +78,35 @@ export default class LightningAddress {
     return `https://${this.domain}/.well-known/keysend/${this.username}`;
   }
 
-  async generateInvoice(url: URL): Promise<Invoice> {
-    const data = await fetch(url);
-    const json = await data.json();
-    const paymentRequest = json && json.pr && json.pr.toString();
+  async generateInvoice(params: Record< string, string >): Promise<Invoice> {
+    let data;
+    if (this.options.proxy) {
+      const invoiceResult = await fetch(`${this.options.proxy}/generate-invoice?${new URLSearchParams({ ln: this.address, ...params }).toString()}`);
+      const json = await invoiceResult.json();
+      data = json.invoice;
+    } else {
+      if (!this.lnurlpData.callback || !isUrl(this.lnurlpData.callback)) throw new Error('Valid callback does not exist in lnurlpData')
+      const callbackUrl = new URL(this.lnurlpData.callback)
+      callbackUrl.search = new URLSearchParams(params).toString()
+      const invoiceResult = await fetch(callbackUrl);
+      data = await invoiceResult.json();
+    }
+
+    const paymentRequest = data && data.pr && data.pr.toString();
     if (!paymentRequest) throw new Error('Invalid pay service invoice')
 
     const invoiceArgs: InvoiceArgs = { pr: paymentRequest };
-    if (json && json.verify) invoiceArgs.verify = json.verify.toString();
+    if (data && data.verify) invoiceArgs.verify = data.verify.toString();
 
     return new Invoice(invoiceArgs);
   }
 
   async requestInvoice(args: RequestInvoiceArgs): Promise<Invoice> {
     const msat = args.satoshi * 1000;
-    const { callback, commentAllowed, min, max } = parseLnUrlPayResponse(this.lnurlpData);
+    const { commentAllowed, min, max } = this.lnurlpData;
 
     if (!isValidAmount({ amount: msat, min, max }))
       throw new Error('Invalid amount')
-    if (!isUrl(callback)) throw new Error('Callback must be a valid url')
     if (args.comment && commentAllowed > 0 && args.comment.length > commentAllowed)
       throw new Error(
         `The comment length must be ${commentAllowed} characters or fewer`
@@ -101,10 +115,7 @@ export default class LightningAddress {
     const invoiceParams: { amount: string, comment?: string } = { amount: msat.toString() };
     if (args.comment) invoiceParams.comment = args.comment
 
-    let callbackUrl = new URL(callback)
-    callbackUrl.search = new URLSearchParams(invoiceParams).toString()
-
-    return this.generateInvoice(callbackUrl);
+    return this.generateInvoice(invoiceParams);
   }
 
   async boost(boost: Boost, amount: number = 0) {
@@ -122,11 +133,10 @@ export default class LightningAddress {
     satoshi, comment, relays, p, e
   }: ZapArgs): Promise<Invoice> {
     const msat = satoshi * 1000;
-    const { callback, allowsNostr, min, max } = parseLnUrlPayResponse(this.lnurlpData);
+    const { allowsNostr, min, max } = this.lnurlpData;
 
     if (!isValidAmount({ amount: msat, min, max }))
       throw new Error('Invalid amount')
-    if (!isUrl(callback)) throw new Error('Callback must be a valid url')
     if (!allowsNostr) throw new Error('Your provider does not support zaps')
 
     const event = await generateZapEvent({
@@ -137,9 +147,6 @@ export default class LightningAddress {
       nostr: JSON.stringify(event)
     };
 
-    let callbackUrl = new URL(callback)
-    callbackUrl.search = new URLSearchParams(zapParams).toString()
-
-    return this.generateInvoice(callbackUrl);
+    return this.generateInvoice(zapParams);
   }
 }

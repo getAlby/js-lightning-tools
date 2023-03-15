@@ -23,7 +23,7 @@ yarn add alby-tools
 The `LightningAddress` class provides helpers to work with lightning addresses
 
 ```js
-const { LightningAddress } = require("alby-tools");
+import { LightningAddress } from "alby-tools";
 
 const ln = new LightningAddress("satoshi@getalby.com");
 
@@ -40,7 +40,7 @@ console.log(ln.keysendData);
 #### Get an invoice:
 
 ```js
-const { LightningAddress } = require("alby-tools");
+import { LightningAddress } from "alby-tools";
 
 const ln = new LightningAddress("satoshi@getalby.com");
 
@@ -56,7 +56,7 @@ console.log(invoice.paymentHash); // print the payment hash
 #### Verify a payment
 
 ```js
-const { LightningAddress } = require("alby-tools");
+import { LightningAddress } from "alby-tools";
 const ln = new LightningAddress("satoshi@getalby.com");
 await ln.fetch();
 
@@ -100,7 +100,7 @@ alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/n
 
 
 ```js
-const { LightningAddress } = require("alby-tools");
+import { LightningAddress } from "alby-tools";
 const ln = new LightningAddress("satoshi@getalby.com");
 await ln.fetch();
 
@@ -120,6 +120,18 @@ await invoice.isPaid(); // check the payment status as descibed above
 
 ### Fiat conversions
 Helpers to convert sats values to fiat and fiat values to sats.
+
+### Lightning Address Proxy
+alby-tools uses a [proxy](https://github.com/getAlby/lightning-address-details-proxy) to simplify requests to lightning providers.
+
+- Many ln addresses don't support CORS, which means fetching the data directly in a browser environment will not always work.
+- Two requests are required to retrieve lnurlp and keysend data for a lightning address. The proxy will do these for you with a single request.
+
+You can disable the proxy by explicitly setting the proxy to false when initializing a lightning address:
+
+```
+const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
+```
 
 #### Methods
 
