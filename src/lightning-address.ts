@@ -1,8 +1,11 @@
 import fetch from 'cross-fetch';
+import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
 import { InvoiceArgs, RequestInvoiceArgs, ZapArgs } from './types';
 import { generateZapEvent } from './utils/nostr';
+import type { Boost } from './podcasting2/boostagrams';
+import { boost as booster } from './podcasting2/boostagrams';
 
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -19,8 +22,8 @@ export default class LightningAddress {
   username: string | undefined;
   domain: string | undefined;
   pubkey: string | undefined;
-  keysendData: unknown;
   lnurlpData: Record<string, any>;
+  keysendData: Record<string, any>;
 
   constructor(address: string, options?: LightningAddressOptions) {
     this.address = address;
@@ -51,7 +54,7 @@ export default class LightningAddress {
     const result = await fetch(`${this.options.proxy}/lightning-address-details?${new URLSearchParams({ ln: this.address }).toString()}`);
     const json = await result.json();
     this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
-    this.keysendData = json.keysend;
+    this.keysendData = parseKeysendResponse(json.keysend);
   }
 
   async fetchWithoutProxy() {
@@ -62,7 +65,7 @@ export default class LightningAddress {
     }
     try {
       const keysendResult = await fetch(this.keysendUrl());
-      this.keysendData = await keysendResult.json();
+      this.keysendData = parseKeysendResponse(await keysendResult.json());
     } catch (e) {
     }
   }
@@ -113,6 +116,17 @@ export default class LightningAddress {
     if (args.comment) invoiceParams.comment = args.comment
 
     return this.generateInvoice(invoiceParams);
+  }
+
+  async boost(boost: Boost, amount: number = 0) {
+    const { destination, customKey, customValue } = this.keysendData;
+    return booster({
+      destination,
+      customKey,
+      customValue,
+      amount,
+      boost,
+    })
   }
 
   async zap({
