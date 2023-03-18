@@ -25,7 +25,7 @@ The `LightningAddress` class provides helpers to work with lightning addresses
 ```js
 import { LightningAddress } from "alby-tools";
 
-const ln = new LightningAddress("satoshi@getalby.com");
+const ln = new LightningAddress("alby@getalby.com");
 
 // fetch the LNURL data
 await ln.fetch();
@@ -42,7 +42,7 @@ console.log(ln.keysendData);
 ```js
 import { LightningAddress } from "alby-tools";
 
-const ln = new LightningAddress("satoshi@getalby.com");
+const ln = new LightningAddress("alby@getalby.com");
 
 await ln.fetch();
 // request an invoice for 1000 satoshis
@@ -57,7 +57,10 @@ console.log(invoice.paymentHash); // print the payment hash
 
 ```js
 import { LightningAddress } from "alby-tools";
-const ln = new LightningAddress("satoshi@getalby.com");
+const ln = new LightningAddress("
+
+
+");
 await ln.fetch();
 
 const invoice = await ln.requestInvoice({satoshi: 1000});
