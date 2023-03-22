@@ -100,7 +100,7 @@ const ln = new LightningAddress("satoshi@getalby.com");
 await ln.fetch();
 
 const boost = {
-  action: "boost-action-123",
+  action: "boost",
   value_msat: 21000,
   value_msat_total: 21000,
   app_name: "Podcastr",
