@@ -90,7 +90,30 @@ const invoice = new Invoice({paymentRequest: pr, preimage: preimage});
 await invoice.isPaid();
 ```
 
+#### Boost an LN address:
 
+You can also attach additional metadata information like app name, version, name of the podcast which is boosted etc. to the keysend payment.
+
+```js
+import { LightningAddress } from "alby-tools";
+const ln = new LightningAddress("satoshi@getalby.com");
+await ln.fetch();
+
+const boost = {
+  action: "boost",
+  value_msat: 21000,
+  value_msat_total: 21000,
+  app_name: "Podcastr",
+  app_version: "v2.1",
+  feedId: "21",
+  podcast: "random podcast",
+  episode: "1",
+  ts: 2121,
+  name: "Satoshi",
+  sender_name: "Alby",
+}
+await ln.boost(boost);
+```
 
 #### Zapping an event on Nostr:
 
