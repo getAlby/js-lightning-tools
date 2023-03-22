@@ -6,6 +6,7 @@ import { InvoiceArgs, RequestInvoiceArgs, ZapArgs } from './types';
 import { generateZapEvent } from './utils/nostr';
 import type { Boost } from './podcasting2/boostagrams';
 import { boost as booster } from './podcasting2/boostagrams';
+import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
 
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -14,6 +15,7 @@ const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
 
 type LightningAddressOptions = {
   proxy?: string | false;
+  webln?: WebLNProvider;
 }
 
 export default class LightningAddress {
@@ -24,14 +26,16 @@ export default class LightningAddress {
   pubkey: string | undefined;
   lnurlpData: Record<string, any>;
   keysendData: Record<string, any>;
+  webln: WebLNProvider | undefined;
 
   constructor(address: string, options?: LightningAddressOptions) {
     this.address = address;
-    this.options = { proxy: DEFAULT_PROXY };
+    this.options = { proxy: DEFAULT_PROXY, webln: globalThis.webln };
     this.options = Object.assign(this.options, options);
     this.parse();
     this.lnurlpData = {};
     this.keysendData = {};
+    this.webln = this.options.webln;
   }
 
   parse() {
@@ -78,7 +82,7 @@ export default class LightningAddress {
     return `https://${this.domain}/.well-known/keysend/${this.username}`;
   }
 
-  async generateInvoice(params: Record< string, string >): Promise<Invoice> {
+  async generateInvoice(params: Record<string, string>): Promise<Invoice> {
     let data;
     if (this.options.proxy) {
       const invoiceResult = await fetch(`${this.options.proxy}/generate-invoice?${new URLSearchParams({ ln: this.address, ...params }).toString()}`);
@@ -126,10 +130,12 @@ export default class LightningAddress {
       customValue,
       amount,
       boost,
+    }, {
+      webln: this.webln,
     })
   }
 
-  async zap({
+  async zapInvoice({
     satoshi, comment, relays, p, e
   }: ZapArgs): Promise<Invoice> {
     const msat = satoshi * 1000;
@@ -147,6 +153,22 @@ export default class LightningAddress {
       nostr: JSON.stringify(event)
     };
 
-    return this.generateInvoice(zapParams);
+    const invoice = await this.generateInvoice(zapParams);
+    return invoice;
+  }
+
+  async zap({
+    satoshi, comment, relays, p, e
+  }: ZapArgs): Promise<SendPaymentResponse> {
+    const invoice = this.zapInvoice({
+      satoshi, comment, relays, p, e
+    })
+    if (!this.webln) {
+      // mainly for TS
+      throw new Error("WebLN not available");
+    }
+    await this.webln.enable();
+    const response = this.webln.sendPayment((await invoice).paymentRequest);
+    return response;
   }
 }

@@ -1652,6 +1652,11 @@
   dependencies:
     "@types/yargs-parser" "*"
 
+"@webbtc/webln-types@^1.0.10":
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/@webbtc/webln-types/-/webln-types-1.0.10.tgz#03e41779df6ba9bdca57635ca6b5a70c7233c8c6"
+  integrity sha512-Cy9+uNqvRct3yHB+bs5hJ3idf4VEmnyKxwMpe1/lWpOXbbdi/h7GgAB1JMsnblwN74QKSBEnOPvURoA+RAG9qg==
+
 acorn-walk@^8.1.1:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/acorn-walk/-/acorn-walk-8.2.0.tgz#741210f2e2426454508853a2f44d0ab83b7f69c1"
