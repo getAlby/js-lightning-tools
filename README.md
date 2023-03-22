@@ -135,9 +135,15 @@ const zapArgs = {
   e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
 }
 
-const invoice = await ln.zap(zapArgs); // generates a zap invoice
+// in one go with WebLN
+const response = await ln.zap(zapArgs); // generates a zap invoice
+console.log(response.preimage); // print the preimage
+
+// or manually
+const invoice = await ln.zapInvoice(zapArgs); // generates a zap invoice
 console.log(invoice.paymentRequest); // print the payment request
 await invoice.isPaid(); // check the payment status as descibed above
+
 ```
 
 
