@@ -1,12 +1,13 @@
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
-import { Event, ZapArgs } from '../types';
+import { Event, ZapArgs, ZapOptions } from '../types';
 
 export async function generateZapEvent({
   satoshi, comment, p, e, relays
-}: ZapArgs): Promise<Event> {
-  if (!globalThis.nostr) {
-    throw new Error("Please use a nostr extension");
+}: ZapArgs, options: ZapOptions = {}): Promise<Event> {
+  const nostr = options.nostr || globalThis.nostr;
+  if (!nostr) {
+    throw new Error("nostr option or window.nostr is not available");
   }
 
   const nostrTags = [
@@ -19,7 +20,7 @@ export async function generateZapEvent({
     nostrTags.push(["e", e])
   }
 
-  const pubkey = await globalThis.nostr.getPublicKey();
+  const pubkey = await nostr.getPublicKey();
 
   const nostrEvent: Event = {
     pubkey,
@@ -30,7 +31,7 @@ export async function generateZapEvent({
   }
 
   nostrEvent.id = getEventHash(nostrEvent)
-  return await globalThis.nostr.signEvent(nostrEvent)
+  return await nostr.signEvent(nostrEvent)
 }
 
 export function validateEvent(event: Event): boolean {
