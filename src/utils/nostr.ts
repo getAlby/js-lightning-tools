@@ -11,11 +11,12 @@ export async function generateZapEvent({
   }
 
   const nostrTags = [
-    ["p", p],
     ["relays", ...relays],
     ["amount", satoshi.toString()]
   ]
-
+  if (p) {
+    nostrTags.push(["p", p]);
+  }
   if (e) {
     nostrTags.push(["e", e])
   }
