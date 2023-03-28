@@ -90,7 +90,7 @@ const invoice = new Invoice({paymentRequest: pr, preimage: preimage});
 await invoice.isPaid();
 ```
 
-#### Boost an LN address:
+#### Boost a LN address:
 
 You can also attach additional metadata information like app name, version, name of the podcast which is boosted etc. to the keysend payment.
 
@@ -115,7 +115,7 @@ const boost = {
 await ln.boost(boost);
 ```
 
-#### Zapping an event on Nostr:
+#### Zapping a LN address on Nostr:
 
 Nostr is a simple, open protocol that enables truly censorship-resistant and global value-for-value publishing on the web. Nostr integrates deeply with Lightning. [more info](https://nostr.how/)
 
@@ -127,11 +127,14 @@ import { LightningAddress } from "alby-tools";
 const ln = new LightningAddress("satoshi@getalby.com");
 await ln.fetch();
 
+if (!ln.nostrPubkey) {
+  alert('No nostr pubkey available'); // seems the lightning address is no NIP05 address
+}
+
 const zapArgs = {
   satoshi: 1000,
   comment: "Awesome post",
   relays: ["wss://relay.damus.io"],
-  p: "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245",
   e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
 }
 
@@ -143,7 +146,6 @@ console.log(response.preimage); // print the preimage
 const invoice = await ln.zapInvoice(zapArgs); // generates a zap invoice
 console.log(invoice.paymentRequest); // print the payment request
 await invoice.isPaid(); // check the payment status as descibed above
-
 ```
 
 

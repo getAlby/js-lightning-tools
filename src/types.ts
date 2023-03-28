@@ -1,23 +1,23 @@
 export type KeysendResponse = {
-  customKey: string
-  customValue: string
-  destination: string
+  customKey: string;
+  customValue: string;
+  destination: string;
 }
 
 export type LnUrlPayResponse = {
-  callback: string
-  fixed: boolean
-  min: number
-  max: number
-  domain?: string
-  metadata: Array<Array<string>>
-  metadataHash: string
-  identifier: string
-  description: string
-  image: string
-  commentAllowed: number
-  rawData: { [key: string]: string | number }
-  allowsNostr: boolean
+  callback: string;
+  fixed: boolean;
+  min: number;
+  max: number;
+  domain?: string;
+  metadata: Array<Array<string>>;
+  metadataHash: string;
+  identifier: string;
+  description: string;
+  image: string;
+  commentAllowed: number;
+  rawData: { [key: string]: string | number };
+  allowsNostr: boolean;
 }
 
 export type InvoiceArgs = {
@@ -37,15 +37,24 @@ export type Event = {
 };
 
 export type ZapArgs = {
-  satoshi: number
-  comment?: string
-  relays: string[]
-  p: string // nostr pubkey of person you are zapping
-  e?: string // note you are zapping, optional
+  satoshi: number;
+  comment?: string;
+  relays: string[];
+  p?: string;
+  e?: string; // note you are zapping, optional
+}
+
+export type NostrProvider = {
+  getPublicKey(): Promise<string>;
+  signEvent(): Promise<Event>;
+}
+
+export type ZapOptions = {
+  nostr?: NostrProvider;
 }
 
 export type RequestInvoiceArgs = {
-  satoshi: number,
-  comment?: string,
-  payerdata?: Record<string, unknown>
+  satoshi: number;
+  comment?: string;
+  payerdata?: Record<string, unknown>;
 }

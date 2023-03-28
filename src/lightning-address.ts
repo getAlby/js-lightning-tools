@@ -2,7 +2,7 @@ import fetch from 'cross-fetch';
 import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
-import { InvoiceArgs, RequestInvoiceArgs, ZapArgs } from './types';
+import { InvoiceArgs, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
 import { generateZapEvent } from './utils/nostr';
 import type { Boost } from './podcasting2/boostagrams';
 import { boost as booster } from './podcasting2/boostagrams';
@@ -26,6 +26,8 @@ export default class LightningAddress {
   pubkey: string | undefined;
   lnurlpData: Record<string, any>;
   keysendData: Record<string, any>;
+  nostrData: [Record<string, string>?];
+  nostrPubkey: string | undefined;
   webln: WebLNProvider | undefined;
 
   constructor(address: string, options?: LightningAddressOptions) {
@@ -35,6 +37,7 @@ export default class LightningAddress {
     this.parse();
     this.lnurlpData = {};
     this.keysendData = {};
+    this.nostrData = [];
     this.webln = this.options.webln;
   }
 
@@ -59,9 +62,16 @@ export default class LightningAddress {
     const json = await result.json();
     this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
     this.keysendData = parseKeysendResponse(json.keysend);
+    this.nostrData = json.nostr.names;
+    if (this.username) {
+      this.nostrPubkey = this.nostrData?.[this.username];
+    }
   }
 
   async fetchWithoutProxy() {
+    if (!this.domain || !this.username) {
+      return;
+    }
     try {
       const lnurlResult = await fetch(this.lnurlpUrl());
       this.lnurlpData = parseLnUrlPayResponse(await lnurlResult.json());
@@ -72,6 +82,13 @@ export default class LightningAddress {
       this.keysendData = parseKeysendResponse(await keysendResult.json());
     } catch (e) {
     }
+    try {
+      const nostrResult = await fetch(this.nostrUrl());
+      const data = await nostrResult.json();
+      this.nostrData = data.names;
+      this.nostrPubkey = this.nostrData?.[this.username];
+    } catch (e) {
+    }
   }
 
   lnurlpUrl() {
@@ -80,6 +97,10 @@ export default class LightningAddress {
 
   keysendUrl() {
     return `https://${this.domain}/.well-known/keysend/${this.username}`;
+  }
+
+  nostrUrl() {
+    return `https://${this.domain}/.well-known/nostr.json?name=${this.username}`;
   }
 
   async generateInvoice(params: Record<string, string>): Promise<Invoice> {
@@ -136,8 +157,12 @@ export default class LightningAddress {
   }
 
   async zapInvoice({
-    satoshi, comment, relays, p, e
-  }: ZapArgs): Promise<Invoice> {
+    satoshi, comment, relays, e
+  }: ZapArgs, options: ZapOptions = {}): Promise<Invoice> {
+    if (!this.nostrPubkey) {
+      throw new Error("Nostr Pubkey is missing");
+    }
+    const p = this.nostrPubkey;
     const msat = satoshi * 1000;
     const { allowsNostr, min, max } = this.lnurlpData;
 
@@ -147,7 +172,7 @@ export default class LightningAddress {
 
     const event = await generateZapEvent({
       satoshi: msat, comment, p, e, relays
-    })
+    }, options);
     const zapParams: { amount: string, nostr: string } = {
       amount: msat.toString(),
       nostr: JSON.stringify(event)
@@ -157,12 +182,8 @@ export default class LightningAddress {
     return invoice;
   }
 
-  async zap({
-    satoshi, comment, relays, p, e
-  }: ZapArgs): Promise<SendPaymentResponse> {
-    const invoice = this.zapInvoice({
-      satoshi, comment, relays, p, e
-    })
+  async zap(args: ZapArgs, options: ZapOptions = {}): Promise<SendPaymentResponse> {
+    const invoice = this.zapInvoice(args, options);
     if (!this.webln) {
       // mainly for TS
       throw new Error("WebLN not available");
