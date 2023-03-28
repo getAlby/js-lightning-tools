@@ -132,7 +132,6 @@ if (!ln.nostrPubkey) {
 }
 
 const zapArgs = {
- = {
   satoshi: 1000,
   comment: "Awesome post",
   relays: ["wss://relay.damus.io"],
