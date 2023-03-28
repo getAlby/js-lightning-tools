@@ -131,7 +131,7 @@ if (!ln.nostrPubkey) {
   alert('No nostr pubkey available'); // seems the lightning address is no NIP05 address
 }
 
-const 
+const zapArgs = {
  = {
   satoshi: 1000,
   comment: "Awesome post",
