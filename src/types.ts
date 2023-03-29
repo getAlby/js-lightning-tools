@@ -46,7 +46,7 @@ export type ZapArgs = {
 
 export type NostrProvider = {
   getPublicKey(): Promise<string>;
-  signEvent(): Promise<Event>;
+  signEvent(event: Event): Promise<Event>;
 }
 
 export type ZapOptions = {
