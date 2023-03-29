@@ -26,8 +26,9 @@ export default class LightningAddress {
   pubkey: string | undefined;
   lnurlpData: Record<string, any>;
   keysendData: Record<string, any>;
-  nostrData: [Record<string, string>?];
+  nostrData: Record<string, any>;
   nostrPubkey: string | undefined;
+  nostrRelays: string[] | undefined;
   webln: WebLNProvider | undefined;
 
   constructor(address: string, options?: LightningAddressOptions) {
@@ -62,9 +63,10 @@ export default class LightningAddress {
     const json = await result.json();
     this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
     this.keysendData = parseKeysendResponse(json.keysend);
-    this.nostrData = json.nostr.names;
+    this.nostrData = json.nostr;
     if (this.username) {
-      this.nostrPubkey = this.nostrData?.[this.username];
+      this.nostrPubkey = this.nostrData.names?.[this.username];
+      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : [];
     }
   }
 
@@ -85,8 +87,9 @@ export default class LightningAddress {
     try {
       const nostrResult = await fetch(this.nostrUrl());
       const data = await nostrResult.json();
-      this.nostrData = data.names;
-      this.nostrPubkey = this.nostrData?.[this.username];
+      this.nostrData = data;
+      this.nostrPubkey = this.nostrData.names?.[this.username];
+      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : [];
     } catch (e) {
     }
   }
