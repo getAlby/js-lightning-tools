@@ -66,7 +66,7 @@ export default class LightningAddress {
     this.nostrData = json.nostr;
     if (this.username) {
       this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : [];
+      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
     }
   }
 
@@ -89,7 +89,7 @@ export default class LightningAddress {
       const data = await nostrResult.json();
       this.nostrData = data;
       this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : [];
+      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
     } catch (e) {
     }
   }
