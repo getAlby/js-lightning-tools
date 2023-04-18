@@ -15,9 +15,14 @@ export type LnUrlPayResponse = {
   identifier: string;
   description: string;
   image: string;
-  commentAllowed: number;
+  commentAllowed?: number;
   rawData: { [key: string]: string | number };
   allowsNostr: boolean;
+}
+
+export type NostrResponse = {
+  names: Record<string, string>
+  relays: Record<string, string[]>
 }
 
 export type InvoiceArgs = {

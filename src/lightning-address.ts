@@ -2,11 +2,12 @@ import fetch from 'cross-fetch';
 import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
-import { InvoiceArgs, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
+import { InvoiceArgs, LnUrlPayResponse, NostrResponse, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
 import { generateZapEvent } from './utils/nostr';
 import type { Boost } from './podcasting2/boostagrams';
 import { boost as booster } from './podcasting2/boostagrams';
 import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
+import { KeysendResponse } from './types';
 
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -24,9 +25,9 @@ export default class LightningAddress {
   username: string | undefined;
   domain: string | undefined;
   pubkey: string | undefined;
-  lnurlpData: Record<string, any>;
-  keysendData: Record<string, any>;
-  nostrData: Record<string, any>;
+  lnurlpData: LnUrlPayResponse | undefined;
+  keysendData: KeysendResponse | undefined;
+  nostrData: NostrResponse | undefined;
   nostrPubkey: string | undefined;
   nostrRelays: string[] | undefined;
   webln: WebLNProvider | undefined;
@@ -36,9 +37,6 @@ export default class LightningAddress {
     this.options = { proxy: DEFAULT_PROXY, webln: globalThis.webln };
     this.options = Object.assign(this.options, options);
     this.parse();
-    this.lnurlpData = {};
-    this.keysendData = {};
-    this.nostrData = [];
     this.webln = this.options.webln;
   }
 
@@ -65,8 +63,8 @@ export default class LightningAddress {
     this.keysendData = parseKeysendResponse(json.keysend);
     this.nostrData = json.nostr;
     if (this.username) {
-      this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
+      this.nostrPubkey = this.nostrData?.names?.[this.username];
+      this.nostrRelays = this.nostrPubkey ? this.nostrData?.relays?.[this.nostrPubkey] : undefined;
     }
   }
 
@@ -88,8 +86,8 @@ export default class LightningAddress {
       const nostrResult = await fetch(this.nostrUrl());
       const data = await nostrResult.json();
       this.nostrData = data;
-      this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
+      this.nostrPubkey = this.nostrData?.names?.[this.username];
+      this.nostrRelays = this.nostrPubkey ? this.nostrData?.relays?.[this.nostrPubkey] : undefined;
     } catch (e) {
     }
   }
@@ -113,6 +111,9 @@ export default class LightningAddress {
       const json = await invoiceResult.json();
       data = json.invoice;
     } else {
+      if (!this.lnurlpData) {
+        throw new Error("No lnurlpData available. Please fetch first.")
+      }
       if (!this.lnurlpData.callback || !isUrl(this.lnurlpData.callback)) throw new Error('Valid callback does not exist in lnurlpData')
       const callbackUrl = new URL(this.lnurlpData.callback)
       callbackUrl.search = new URLSearchParams(params).toString()
@@ -130,12 +131,15 @@ export default class LightningAddress {
   }
 
   async requestInvoice(args: RequestInvoiceArgs): Promise<Invoice> {
+    if (!this.lnurlpData) {
+      throw new Error("No lnurlpData available. Please fetch first.")
+    }
     const msat = args.satoshi * 1000;
     const { commentAllowed, min, max } = this.lnurlpData;
 
     if (!isValidAmount({ amount: msat, min, max }))
       throw new Error('Invalid amount')
-    if (args.comment && commentAllowed > 0 && args.comment.length > commentAllowed)
+    if (args.comment && commentAllowed && commentAllowed > 0 && args.comment.length > commentAllowed)
       throw new Error(
         `The comment length must be ${commentAllowed} characters or fewer`
       )
@@ -147,6 +151,9 @@ export default class LightningAddress {
   }
 
   async boost(boost: Boost, amount: number = 0) {
+    if (!this.keysendData) {
+      throw new Error("No keysendData available. Please fetch first.")
+    }
     const { destination, customKey, customValue } = this.keysendData;
     return booster({
       destination,
@@ -164,6 +171,9 @@ export default class LightningAddress {
   }: ZapArgs, options: ZapOptions = {}): Promise<Invoice> {
     if (!this.nostrPubkey) {
       throw new Error("Nostr Pubkey is missing");
+    }
+    if (!this.lnurlpData) {
+      throw new Error("No lnurlpData available. Please fetch first.")
     }
     const p = this.nostrPubkey;
     const msat = satoshi * 1000;
