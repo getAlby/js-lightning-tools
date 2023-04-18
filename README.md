@@ -25,7 +25,7 @@ The `LightningAddress` class provides helpers to work with lightning addresses
 ```js
 import { LightningAddress } from "alby-tools";
 
-const ln = new LightningAddress("alby@getalby.com");
+const ln = new LightningAddress("hello@getalby.com");
 
 // fetch the LNURL data
 await ln.fetch();
