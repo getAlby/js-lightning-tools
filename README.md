@@ -42,7 +42,7 @@ console.log(ln.keysendData);
 ```js
 import { LightningAddress } from "alby-tools";
 
-const ln = new LightningAddress("alby@getalby.com");
+const ln = new LightningAddress("hello@getalby.com");
 
 await ln.fetch();
 // request an invoice for 1000 satoshis
