@@ -112,7 +112,7 @@ export default class LightningAddress {
       data = json.invoice;
     } else {
       if (!this.lnurlpData) {
-        throw new Error("No lnurlpData available. Please fetch first.")
+        throw new Error("No lnurlpData available. Please call fetch() first.")
       }
       if (!this.lnurlpData.callback || !isUrl(this.lnurlpData.callback)) throw new Error('Valid callback does not exist in lnurlpData')
       const callbackUrl = new URL(this.lnurlpData.callback)
@@ -132,7 +132,7 @@ export default class LightningAddress {
 
   async requestInvoice(args: RequestInvoiceArgs): Promise<Invoice> {
     if (!this.lnurlpData) {
-      throw new Error("No lnurlpData available. Please fetch first.")
+      throw new Error("No lnurlpData available. Please call fetch() first.")
     }
     const msat = args.satoshi * 1000;
     const { commentAllowed, min, max } = this.lnurlpData;
@@ -152,7 +152,7 @@ export default class LightningAddress {
 
   async boost(boost: Boost, amount: number = 0) {
     if (!this.keysendData) {
-      throw new Error("No keysendData available. Please fetch first.")
+      throw new Error("No keysendData available. Please call fetch() first.")
     }
     const { destination, customKey, customValue } = this.keysendData;
     return booster({
@@ -173,7 +173,7 @@ export default class LightningAddress {
       throw new Error("Nostr Pubkey is missing");
     }
     if (!this.lnurlpData) {
-      throw new Error("No lnurlpData available. Please fetch first.")
+      throw new Error("No lnurlpData available. Please call fetch() first.")
     }
     const p = this.nostrPubkey;
     const msat = satoshi * 1000;

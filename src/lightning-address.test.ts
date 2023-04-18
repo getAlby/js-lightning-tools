@@ -5,7 +5,7 @@ describe("requestInvoice", () => {
     const ln = new LightningAddress("hello@getalby.com");
     await expect(ln.requestInvoice({
       satoshi: 1,
-    })).rejects.toThrowError("No lnurlpData available. Please fetch first.");
+    })).rejects.toThrowError("No lnurlpData available. Please call fetch() first.");
   })
   
   it("generates an invoice ", async () => {
