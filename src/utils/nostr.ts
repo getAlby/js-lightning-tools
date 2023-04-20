@@ -1,6 +1,6 @@
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
-import { Event, ZapArgs, ZapOptions } from '../types';
+import { Event, NostrResponse, ZapArgs, ZapOptions } from '../types';
 
 export async function generateZapEvent({
   satoshi, comment, p, e, relays

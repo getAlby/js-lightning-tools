@@ -2,7 +2,7 @@ import fetch from 'cross-fetch';
 import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
-import { InvoiceArgs, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
+import { InvoiceArgs, NostrResponse, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
 import { generateZapEvent } from './utils/nostr';
 import type { Boost } from './podcasting2/boostagrams';
 import { boost as booster } from './podcasting2/boostagrams';
@@ -11,7 +11,7 @@ import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
-const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
+export const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
 
 type LightningAddressOptions = {
   proxy?: string | false;
@@ -38,7 +38,7 @@ export default class LightningAddress {
     this.parse();
     this.lnurlpData = {};
     this.keysendData = {};
-    this.nostrData = [];
+    this.nostrData = {};
     this.webln = this.options.webln;
   }
 
@@ -61,12 +61,20 @@ export default class LightningAddress {
   async fetchWithProxy() {
     const result = await fetch(`${this.options.proxy}/lightning-address-details?${new URLSearchParams({ ln: this.address }).toString()}`);
     const json = await result.json();
-    this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
-    this.keysendData = parseKeysendResponse(json.keysend);
-    this.nostrData = json.nostr;
-    if (this.username) {
-      this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
+
+    // TODO: improve error handling
+    // TODO: reduce duplication between fetchWithProxy and fetchWithoutProxy
+    try {
+      this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
+    } catch(e) {
+    }
+    try {
+      this.keysendData = parseKeysendResponse(json.keysend);
+    } catch(e) {
+    }
+    try {
+      this.parseNostrResponse(json.nostr);
+    } catch(e) {
     }
   }
 
@@ -74,6 +82,8 @@ export default class LightningAddress {
     if (!this.domain || !this.username) {
       return;
     }
+    // TODO: improve error handling
+    // TODO: reduce duplication between fetchWithProxy and fetchWithoutProxy
     try {
       const lnurlResult = await fetch(this.lnurlpUrl());
       this.lnurlpData = parseLnUrlPayResponse(await lnurlResult.json());
@@ -86,10 +96,7 @@ export default class LightningAddress {
     }
     try {
       const nostrResult = await fetch(this.nostrUrl());
-      const data = await nostrResult.json();
-      this.nostrData = data;
-      this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
+      this.parseNostrResponse(await nostrResult.json());
     } catch (e) {
     }
   }
@@ -194,5 +201,17 @@ export default class LightningAddress {
     await this.webln.enable();
     const response = this.webln.sendPayment((await invoice).paymentRequest);
     return response;
+  }
+
+  private parseNostrResponse(data: NostrResponse) {
+    if (!data) {
+      throw new Error("No nostr response");
+    }
+    this.nostrData = data;
+  
+    if (this.username && this.nostrData) {
+      this.nostrPubkey = this.nostrData.names?.[this.username];
+      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
+    }
   }
 }
