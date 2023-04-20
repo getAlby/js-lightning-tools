@@ -30,9 +30,6 @@ const TAG_PAY_REQUEST = 'payRequest'
 export const parseLnUrlPayResponse = (
   data: Record<string, any>
 ): LnUrlPayResponse => {
-  if (!data) {
-    throw new Error("No lnurlpay response");
-  }
   if (data.tag !== TAG_PAY_REQUEST) throw new Error('Invalid pay service params')
 
   const callback = (data.callback + '').trim();

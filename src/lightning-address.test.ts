@@ -19,7 +19,14 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
         // TODO: consider mocking responses
         const ln = new LightningAddress("hello@getalby.com", {proxy});
         await ln.fetch();
-        expect(ln.lnurlpData?.max).toBe(11000000000);
+        expect(ln.lnurlpData.max).toBe(11000000000);
+      }, SPEC_TIMEOUT)
+      
+      it("retrieves keysend data", async () => {
+        // TODO: consider mocking responses
+        const ln = new LightningAddress("hello@getalby.com", {proxy});
+        await ln.fetch();
+        expect(ln.keysendData.destination).toBe("030a58b8653d32b99200a2334cfe913e51dc7d155aa0116c176657a4f1722677a3");
       }, SPEC_TIMEOUT)
     
       it("retrieves nostr data", async () => {

@@ -71,3 +71,14 @@ export function serializeEvent(evt: Event): string {
 export function getEventHash(event: Event): string {
   return sha256(serializeEvent(event)).toString(Hex);
 }
+
+export function parseNostrResponse(nostrData: Record<string, string>, username: string | undefined) {
+  let nostrPubkey: string | undefined;
+  let nostrRelays: string[] | undefined;
+  if (username && nostrData) {
+    nostrPubkey = nostrData.names?.[username];
+    nostrRelays = nostrPubkey ? nostrData.relays?.[nostrPubkey] : undefined;
+  }
+
+  return [nostrData, nostrPubkey, nostrRelays] as const;
+}

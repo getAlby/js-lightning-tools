@@ -2,8 +2,8 @@ import fetch from 'cross-fetch';
 import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
-import { InvoiceArgs, NostrResponse, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
-import { generateZapEvent } from './utils/nostr';
+import { InvoiceArgs, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
+import { generateZapEvent, parseNostrResponse } from './utils/nostr';
 import type { Boost } from './podcasting2/boostagrams';
 import { boost as booster } from './podcasting2/boostagrams';
 import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
@@ -62,43 +62,31 @@ export default class LightningAddress {
     const result = await fetch(`${this.options.proxy}/lightning-address-details?${new URLSearchParams({ ln: this.address }).toString()}`);
     const json = await result.json();
 
-    // TODO: improve error handling
-    // TODO: reduce duplication between fetchWithProxy and fetchWithoutProxy
-    try {
-      this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
-    } catch(e) {
-    }
-    try {
-      this.keysendData = parseKeysendResponse(json.keysend);
-    } catch(e) {
-    }
-    try {
-      this.parseNostrResponse(json.nostr);
-    } catch(e) {
-    }
+    this.parseResponse(json.lnurlp, json.keysend, json.nostr);
   }
 
   async fetchWithoutProxy() {
     if (!this.domain || !this.username) {
       return;
     }
-    // TODO: improve error handling
-    // TODO: reduce duplication between fetchWithProxy and fetchWithoutProxy
-    try {
-      const lnurlResult = await fetch(this.lnurlpUrl());
-      this.lnurlpData = parseLnUrlPayResponse(await lnurlResult.json());
-    } catch (e) {
-    }
-    try {
-      const keysendResult = await fetch(this.keysendUrl());
-      this.keysendData = parseKeysendResponse(await keysendResult.json());
-    } catch (e) {
-    }
-    try {
-      const nostrResult = await fetch(this.nostrUrl());
-      this.parseNostrResponse(await nostrResult.json());
-    } catch (e) {
-    }
+    const lnurlResult = await fetch(this.lnurlpUrl());
+    const keysendResult = await fetch(this.keysendUrl());
+    const nostrResult = await fetch(this.nostrUrl());
+
+    let lnurlData: Record<string, string> | undefined;
+    if (lnurlResult.ok) {
+      lnurlData = await lnurlResult.json();
+    } 
+    let keysendData: Record<string, string> | undefined;
+    if (keysendResult.ok) {
+      keysendData = await keysendResult.json();
+    } 
+    let nostrData: Record<string, string> | undefined;
+    if (nostrResult.ok) {
+      nostrData = await nostrResult.json();
+    } 
+    
+    this.parseResponse(lnurlData, keysendData, nostrData);
   }
 
   lnurlpUrl() {
@@ -203,15 +191,15 @@ export default class LightningAddress {
     return response;
   }
 
-  private parseNostrResponse(data: NostrResponse) {
-    if (!data) {
-      throw new Error("No nostr response");
+  private parseResponse(lnurlpData: Record<string, string> | undefined, keysendData: Record<string, string> | undefined, nostrData: Record<string, string> | undefined) {
+    if (lnurlpData) {
+      this.lnurlpData = parseLnUrlPayResponse(lnurlpData);
     }
-    this.nostrData = data;
-  
-    if (this.username && this.nostrData) {
-      this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
+    if (keysendData) {
+      this.keysendData = parseKeysendResponse(keysendData);
+    }
+    if (nostrData) {
+      [this.nostrData, this.nostrPubkey, this.nostrRelays] = parseNostrResponse(nostrData, this.username);
     }
   }
 }
