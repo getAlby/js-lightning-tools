@@ -3,7 +3,7 @@ import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';
 import { InvoiceArgs, RequestInvoiceArgs, ZapArgs, ZapOptions } from './types';
-import { generateZapEvent } from './utils/nostr';
+import { generateZapEvent, parseNostrResponse } from './utils/nostr';
 import type { Boost } from './podcasting2/boostagrams';
 import { boost as booster } from './podcasting2/boostagrams';
 import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
@@ -11,7 +11,7 @@ import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
-const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
+export const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
 
 type LightningAddressOptions = {
   proxy?: string | false;
@@ -38,7 +38,7 @@ export default class LightningAddress {
     this.parse();
     this.lnurlpData = {};
     this.keysendData = {};
-    this.nostrData = [];
+    this.nostrData = {};
     this.webln = this.options.webln;
   }
 
@@ -61,37 +61,32 @@ export default class LightningAddress {
   async fetchWithProxy() {
     const result = await fetch(`${this.options.proxy}/lightning-address-details?${new URLSearchParams({ ln: this.address }).toString()}`);
     const json = await result.json();
-    this.lnurlpData = parseLnUrlPayResponse(json.lnurlp);
-    this.keysendData = parseKeysendResponse(json.keysend);
-    this.nostrData = json.nostr;
-    if (this.username) {
-      this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
-    }
+
+    this.parseResponse(json.lnurlp, json.keysend, json.nostr);
   }
 
   async fetchWithoutProxy() {
     if (!this.domain || !this.username) {
       return;
     }
-    try {
-      const lnurlResult = await fetch(this.lnurlpUrl());
-      this.lnurlpData = parseLnUrlPayResponse(await lnurlResult.json());
-    } catch (e) {
-    }
-    try {
-      const keysendResult = await fetch(this.keysendUrl());
-      this.keysendData = parseKeysendResponse(await keysendResult.json());
-    } catch (e) {
-    }
-    try {
-      const nostrResult = await fetch(this.nostrUrl());
-      const data = await nostrResult.json();
-      this.nostrData = data;
-      this.nostrPubkey = this.nostrData.names?.[this.username];
-      this.nostrRelays = this.nostrPubkey ? this.nostrData.relays?.[this.nostrPubkey] : undefined;
-    } catch (e) {
-    }
+    const lnurlResult = await fetch(this.lnurlpUrl());
+    const keysendResult = await fetch(this.keysendUrl());
+    const nostrResult = await fetch(this.nostrUrl());
+
+    let lnurlData: Record<string, string> | undefined;
+    if (lnurlResult.ok) {
+      lnurlData = await lnurlResult.json();
+    } 
+    let keysendData: Record<string, string> | undefined;
+    if (keysendResult.ok) {
+      keysendData = await keysendResult.json();
+    } 
+    let nostrData: Record<string, string> | undefined;
+    if (nostrResult.ok) {
+      nostrData = await nostrResult.json();
+    } 
+    
+    this.parseResponse(lnurlData, keysendData, nostrData);
   }
 
   lnurlpUrl() {
@@ -194,5 +189,17 @@ export default class LightningAddress {
     await this.webln.enable();
     const response = this.webln.sendPayment((await invoice).paymentRequest);
     return response;
+  }
+
+  private parseResponse(lnurlpData: Record<string, string> | undefined, keysendData: Record<string, string> | undefined, nostrData: Record<string, string> | undefined) {
+    if (lnurlpData) {
+      this.lnurlpData = parseLnUrlPayResponse(lnurlpData);
+    }
+    if (keysendData) {
+      this.keysendData = parseKeysendResponse(keysendData);
+    }
+    if (nostrData) {
+      [this.nostrData, this.nostrPubkey, this.nostrRelays] = parseNostrResponse(nostrData, this.username);
+    }
   }
 }
