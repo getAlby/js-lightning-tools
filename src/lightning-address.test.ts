@@ -1,6 +1,45 @@
+import { WebLNProvider } from "@webbtc/webln-types";
 import LightningAddress, { DEFAULT_PROXY } from "./lightning-address";
 
+const dummyWebLN: WebLNProvider = {
+  enable: () => Promise.resolve({enabled: false, remember: true}),
+  getInfo: () => Promise.resolve({
+    methods: [],
+    node: {
+      alias: "dummy",
+      pubkey: "dummy"
+    },
+    supports: ["lightning"],
+    version: "1.0.0",
+  }),
+  keysend: () => Promise.resolve({
+    preimage: "dummy"
+  }),
+  lnurl: () => Promise.resolve({
+    status: "OK",
+  }),
+  makeInvoice: () => Promise.resolve({
+    paymentRequest: "lnbc..."
+  }),
+  request: () => Promise.resolve({}),
+  sendPayment: () => Promise.resolve({
+    preimage: "dummy"
+  }),
+  signMessage: () => Promise.resolve({
+    message: "test",
+    signature: "TODO"
+  }),
+  verifyMessage: () => Promise.resolve(),
+};
+
 const SPEC_TIMEOUT = 10000;
+beforeAll(() => {
+  window.webln = dummyWebLN;
+})
+
+afterAll(() => {
+  window.webln = undefined;
+})
 
 for (const proxy of [DEFAULT_PROXY, false] as const) {
   describe("with proxy: " + proxy, () => {
@@ -19,6 +58,58 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
           const invoice = await ln.requestInvoice({satoshi: 1});
           expect(invoice.paymentRequest).toContain("lnbc");
       }, SPEC_TIMEOUT)
+    });
+    
+    describe("boost", () => {
+      it("throws error when fetch hasn't been called", async () => {
+        const ln = new LightningAddress("hello@getalby.com", {proxy});
+        await expect(ln.boost({
+          action: "boost",
+          value_msat: 21000,
+          value_msat_total: 21000,
+          app_name: "Podcastr",
+          app_version: "v2.1",
+          feedId: "21",
+          podcast: "random podcast",
+          episode: "1",
+          ts: 2121,
+          name: "Satoshi",
+          sender_name: "Alby",
+        })).rejects.toThrowError("No keysendData available. Please call fetch() first.");
+      })
+
+      it("successful boost returns preimage", async () => {
+        const ln = new LightningAddress("hello@getalby.com", {proxy});
+        await ln.fetch();
+        const result = await ln.boost({
+          action: "boost",
+          value_msat: 21000,
+          value_msat_total: 21000,
+          app_name: "Podcastr",
+          app_version: "v2.1",
+          feedId: "21",
+          podcast: "random podcast",
+          episode: "1",
+          ts: 2121,
+          name: "Satoshi",
+          sender_name: "Alby",
+        });
+        expect(result.preimage).toBe("dummy") // from dummyWebLN
+      })
+    });
+    
+    describe("zap", () => {
+      it("throws error when fetch hasn't been called", async () => {
+        const ln = new LightningAddress("hello@getalby.com", {proxy});
+        await expect(ln.zap({
+          satoshi: 1000,
+          comment: "Awesome post",
+          relays: ["wss://relay.damus.io"],
+          e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
+        })).rejects.toThrowError("No lnurlpData available. Please call fetch() first.");
+      })
+
+      // TODO: test zaps (requires mocks)
     });
 
     describe("fetch", () => {

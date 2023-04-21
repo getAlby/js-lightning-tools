@@ -164,11 +164,11 @@ export default class LightningAddress {
   async zapInvoice({
     satoshi, comment, relays, e
   }: ZapArgs, options: ZapOptions = {}): Promise<Invoice> {
-    if (!this.nostrPubkey) {
-      throw new Error("Nostr Pubkey is missing");
-    }
     if (!this.lnurlpData) {
       throw new Error("No lnurlpData available. Please call fetch() first.")
+    }
+    if (!this.nostrPubkey) {
+      throw new Error("Nostr Pubkey is missing");
     }
     const p = this.nostrPubkey;
     const msat = satoshi * 1000;
