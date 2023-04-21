@@ -67,7 +67,7 @@ export const parseLnUrlPayResponse = (
         break
     }
   }
-  let payerData = data.payerData as Partial<LUD18ServicePayerData> | undefined;
+  let payerData = data.payerData as LUD18ServicePayerData | undefined;
 
   let domain
   try {

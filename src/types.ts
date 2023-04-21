@@ -18,10 +18,10 @@ export type LnUrlPayResponse = {
   commentAllowed?: number;
   rawData: { [key: string]: string | number };
   allowsNostr: boolean;
-  payerData?: Partial<LUD18ServicePayerData>;
+  payerData?: LUD18ServicePayerData;
 }
 
-export type LUD18ServicePayerData = {
+export type LUD18ServicePayerData = Partial<{
   name: { mandatory: boolean };
   pubkey: { mandatory: boolean };
   identifier: { mandatory: boolean };
@@ -30,7 +30,7 @@ export type LUD18ServicePayerData = {
      mandatory: boolean;
      k1: string;
   };
-}
+}> & Record<string, unknown>;
 
 export type NostrResponse = {
   names: Record<string, string>
