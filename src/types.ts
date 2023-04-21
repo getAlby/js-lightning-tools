@@ -18,6 +18,18 @@ export type LnUrlPayResponse = {
   commentAllowed?: number;
   rawData: { [key: string]: string | number };
   allowsNostr: boolean;
+  payerData?: Partial<LUD18ServicePayerData>;
+}
+
+export type LUD18ServicePayerData = {
+  name: { mandatory: boolean };
+  pubkey: { mandatory: boolean };
+  identifier: { mandatory: boolean };
+  email: { mandatory: boolean };
+  auth: {
+     mandatory: boolean;
+     k1: string;
+  };
 }
 
 export type NostrResponse = {
