@@ -15,9 +15,14 @@ export type LnUrlPayResponse = {
   identifier: string;
   description: string;
   image: string;
-  commentAllowed: number;
+  commentAllowed?: number;
   rawData: { [key: string]: string | number };
   allowsNostr: boolean;
+}
+
+export type NostrResponse = {
+  names: Record<string, string>
+  relays: Record<string, string[]>
 }
 
 export type InvoiceArgs = {
@@ -56,10 +61,14 @@ export type ZapOptions = {
 export type RequestInvoiceArgs = {
   satoshi: number;
   comment?: string;
-  payerdata?: Record<string, unknown>;
-}
-
-export type NostrResponse = {
-  names: Record<string, string>
-  relays: Record<string, string[]>
+  payerdata?: Partial<{
+    name?: string;
+    pubkey?: string;
+    identifier?: string;
+    email?: string;
+    auth?: {
+      key: string;
+      sig: string;
+    };
+  }> & Record<string, unknown>;
 }

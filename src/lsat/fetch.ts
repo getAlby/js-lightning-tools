@@ -1,11 +1,12 @@
 import fetch from 'cross-fetch';
 import MemoryStorage from "../utils/MemoryStorage";
+import { WebLNProvider } from '@webbtc/webln-types';
 
 export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
   if (!options) {
     options = {};
   }
-  const webln = options.webln || globalThis.webln;
+  const webln: WebLNProvider = options.webln || globalThis.webln;
   if (!webln) {
     throw new Error("WebLN is missing");
   }

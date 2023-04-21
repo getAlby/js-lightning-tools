@@ -1,3 +1,4 @@
+import { WebLNProvider } from "@webbtc/webln-types";
 
 type BoostOptions = {
   webln?: unknown;
@@ -36,7 +37,7 @@ export const boost = async (args: BoostArguments, options?: BoostOptions) => {
   if (!options) {
     options = {};
   }
-  const webln = options.webln || globalThis.webln;
+  const webln: WebLNProvider = options.webln || globalThis.webln;
   if (!amount) {
     amount = Math.floor(boost.value_msat / 1000);
   }
