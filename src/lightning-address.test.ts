@@ -100,7 +100,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
           sender_name: "Alby",
         });
         expect(result.preimage).toBe("dummy") // from dummyWebLN
-      })
+      }, SPEC_TIMEOUT)
     });
     
     describe("zap", () => {
@@ -128,7 +128,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
           nostr: nostrProvider
         });
         expect(result.preimage).toBe("dummy") // from dummyWebLN
-      })
+      }, SPEC_TIMEOUT)
     });
 
     describe("fetch", () => {
