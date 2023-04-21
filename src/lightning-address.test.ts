@@ -1,5 +1,7 @@
 import { WebLNProvider } from "@webbtc/webln-types";
 import LightningAddress, { DEFAULT_PROXY } from "./lightning-address";
+import { Event, NostrProvider } from "./types";
+import {UnsignedEvent, generatePrivateKey, getEventHash, getPublicKey, signEvent} from 'nostr-tools'
 
 const dummyWebLN: WebLNProvider = {
   enable: () => Promise.resolve({enabled: false, remember: true}),
@@ -32,14 +34,26 @@ const dummyWebLN: WebLNProvider = {
   verifyMessage: () => Promise.resolve(),
 };
 
-const SPEC_TIMEOUT = 10000;
-beforeAll(() => {
-  window.webln = dummyWebLN;
-})
+const nostrPrivateKey = generatePrivateKey()
+const nostrPublicKey = getPublicKey(nostrPrivateKey)
 
-afterAll(() => {
-  window.webln = undefined;
-})
+const nostrProvider: NostrProvider = {
+  getPublicKey: () => Promise.resolve(nostrPublicKey),
+  signEvent: (event: Event) => {
+    const unsignedEvent: UnsignedEvent = {
+      content: event.content,
+      created_at: event.created_at,
+      kind: event.kind,
+      pubkey: nostrPublicKey,
+      tags: event.tags
+    };
+    const id = getEventHash(unsignedEvent);
+    const sig = signEvent(unsignedEvent, nostrPrivateKey);
+    return Promise.resolve({...event, id, sig});
+  }
+}
+
+const SPEC_TIMEOUT = 10000;
 
 for (const proxy of [DEFAULT_PROXY, false] as const) {
   describe("with proxy: " + proxy, () => {
@@ -62,7 +76,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
     
     describe("boost", () => {
       it("throws error when fetch hasn't been called", async () => {
-        const ln = new LightningAddress("hello@getalby.com", {proxy});
+        const ln = new LightningAddress("hello@getalby.com", {proxy, webln: dummyWebLN});
         await expect(ln.boost({
           action: "boost",
           value_msat: 21000,
@@ -79,7 +93,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
       })
 
       it("successful boost returns preimage", async () => {
-        const ln = new LightningAddress("hello@getalby.com", {proxy});
+        const ln = new LightningAddress("hello@getalby.com", {proxy, webln: dummyWebLN});
         await ln.fetch();
         const result = await ln.boost({
           action: "boost",
@@ -100,16 +114,30 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
     
     describe("zap", () => {
       it("throws error when fetch hasn't been called", async () => {
-        const ln = new LightningAddress("hello@getalby.com", {proxy});
+        const ln = new LightningAddress("hello@getalby.com", {proxy, webln: dummyWebLN});
         await expect(ln.zap({
           satoshi: 1000,
           comment: "Awesome post",
           relays: ["wss://relay.damus.io"],
           e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
+        }, {
+          nostr: nostrProvider
         })).rejects.toThrowError("No lnurlpData available. Please call fetch() first.");
       })
 
-      // TODO: test zaps (requires mocks)
+      it("successful zap returns preimage", async () => {
+        const ln = new LightningAddress("hello@getalby.com", {proxy, webln: dummyWebLN});
+        await ln.fetch();
+        const result = await ln.zap({
+          satoshi: 1000,
+          comment: "Awesome post",
+          relays: ["wss://relay.damus.io"],
+          e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
+        }, {
+          nostr: nostrProvider
+        });
+        expect(result.preimage).toBe("dummy") // from dummyWebLN
+      })
     });
 
     describe("fetch", () => {
