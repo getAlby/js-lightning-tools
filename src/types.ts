@@ -63,3 +63,8 @@ export type RequestInvoiceArgs = {
   comment?: string;
   payerdata?: Record<string, unknown>;
 }
+
+export type NostrResponse = {
+  names: Record<string, string>
+  relays: Record<string, string[]>
+}
