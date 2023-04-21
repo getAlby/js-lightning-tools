@@ -1,7 +1,7 @@
 import { WebLNProvider } from "@webbtc/webln-types";
 import LightningAddress, { DEFAULT_PROXY } from "./lightning-address";
 import { Event, NostrProvider } from "./types";
-import {UnsignedEvent, generatePrivateKey, getEventHash, getPublicKey, signEvent} from 'nostr-tools'
+import {UnsignedEvent, finishEvent, generatePrivateKey, getEventHash, getPublicKey, signEvent} from 'nostr-tools'
 
 const dummyWebLN: WebLNProvider = {
   enable: () => Promise.resolve({enabled: false, remember: true}),
@@ -40,16 +40,7 @@ const nostrPublicKey = getPublicKey(nostrPrivateKey)
 const nostrProvider: NostrProvider = {
   getPublicKey: () => Promise.resolve(nostrPublicKey),
   signEvent: (event: Event) => {
-    const unsignedEvent: UnsignedEvent = {
-      content: event.content,
-      created_at: event.created_at,
-      kind: event.kind,
-      pubkey: nostrPublicKey,
-      tags: event.tags
-    };
-    const id = getEventHash(unsignedEvent);
-    const sig = signEvent(unsignedEvent, nostrPrivateKey);
-    return Promise.resolve({...event, id, sig});
+    return Promise.resolve(finishEvent(event, nostrPrivateKey));
   }
 }
 
