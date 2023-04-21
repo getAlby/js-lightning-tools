@@ -61,7 +61,16 @@ export type ZapOptions = {
 export type RequestInvoiceArgs = {
   satoshi: number;
   comment?: string;
-  payerdata?: Record<string, unknown>;
+  payerdata?: Partial<{
+    name?: string;
+    pubkey?: string;
+    identifier?: string;
+    email?: string;
+    auth?: {
+      key: string;
+      sig: string;
+    };
+  }> & Record<string, unknown>;
 }
 
 export type NostrResponse = {
