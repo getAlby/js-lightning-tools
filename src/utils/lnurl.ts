@@ -1,7 +1,7 @@
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
 
-import type { LnUrlPayResponse } from '../types'
+import type { LUD18ServicePayerData, LnUrlPayResponse } from '../types'
 
 const URL_REGEX = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/;
 
@@ -67,6 +67,7 @@ export const parseLnUrlPayResponse = (
         break
     }
   }
+  let payerData = data.payerData as LUD18ServicePayerData | undefined;
 
   let domain
   try {
@@ -86,6 +87,7 @@ export const parseLnUrlPayResponse = (
     identifier,
     description,
     image,
+    payerData,
     commentAllowed: Number(data.commentAllowed) || 0,
     rawData: data,
     allowsNostr: data.allowsNostr || false,

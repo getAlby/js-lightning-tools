@@ -139,8 +139,9 @@ export default class LightningAddress {
         `The comment length must be ${commentAllowed} characters or fewer`
       )
 
-    const invoiceParams: { amount: string, comment?: string } = { amount: msat.toString() };
+    const invoiceParams: { amount: string, comment?: string, payerdata?: string } = { amount: msat.toString() };
     if (args.comment) invoiceParams.comment = args.comment
+    if (args.payerdata) invoiceParams.payerdata = JSON.stringify(args.payerdata)
 
     return this.generateInvoice(invoiceParams);
   }
