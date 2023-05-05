@@ -1,4 +1,4 @@
-class MemoryStorage {
+export class MemoryStorage {
   storage;
 
   constructor(initial?: any) {
@@ -11,6 +11,18 @@ class MemoryStorage {
 
   setItem(key, value) {
     this.storage[key] = value;
+  }
+}
+
+export class NoStorage {
+  constructor(initial?: any) {
+  }
+
+  getItem(key) {
+    return null;
+  }
+
+  setItem(key, value) {
   }
 }
 

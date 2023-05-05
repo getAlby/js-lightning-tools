@@ -1,6 +1,10 @@
 import fetch from 'cross-fetch';
-import MemoryStorage from "../utils/MemoryStorage";
+import MemoryStorage from "../utils/Storage";
+import NoStorage from "../utils/Storage";
 import { WebLNProvider } from '@webbtc/webln-types';
+
+export * as Storage from "../utils/Storage";
+const memoryStorage = new MemoryStorage();
 
 export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
   if (!options) {
@@ -10,7 +14,7 @@ export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>,
   if (!webln) {
     throw new Error("WebLN is missing");
   }
-  let store = options.store || new MemoryStorage();
+  let store = options.store || memoryStorage;
   if (!fetchArgs) {
     fetchArgs = {};
   }
