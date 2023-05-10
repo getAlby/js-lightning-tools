@@ -96,7 +96,7 @@ You can also attach additional metadata information like app name, version, name
 
 ```js
 import { LightningAddress } from "alby-tools";
-const ln = new LightningAddress("satoshi@getalby.com");
+const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
 const boost = {
@@ -124,7 +124,7 @@ alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/n
 
 ```js
 import { LightningAddress } from "alby-tools";
-const ln = new LightningAddress("satoshi@getalby.com");
+const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
 if (!ln.nostrPubkey) {
