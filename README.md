@@ -144,7 +144,7 @@ console.log(response.preimage); // print the preimage
 
 // or use the alby-js-sdk for apps where WebLN is not available
 ln.webln = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }); // loadNWCUrl() depending on your app. See alby-js-sdk readme 
-const response = await ln.zap(zapArgs); // generates a zap invoice
+const response = await ln.zap(zapArgs, { nostr: yourNostrProvider }); // generates a zap invoice. yourNostrProvider must implement `getPublicKey` and `signEvent` to sign the zap event.
 console.log(response.preimage); // print the preimage
 
 // or manually
