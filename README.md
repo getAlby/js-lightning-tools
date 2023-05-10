@@ -138,7 +138,12 @@ const zapArgs = {
   e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
 }
 
-// in one go with WebLN
+// in one go with WebLN (https://www.webln.guide) (easiest for web apps)
+const response = await ln.zap(zapArgs); // generates a zap invoice
+console.log(response.preimage); // print the preimage
+
+// or use the alby-js-sdk for apps where WebLN is not available
+ln.webln = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }); // loadNWCUrl() depending on your app. See alby-js-sdk readme 
 const response = await ln.zap(zapArgs); // generates a zap invoice
 console.log(response.preimage); // print the preimage
 
