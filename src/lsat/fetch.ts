@@ -1,4 +1,4 @@
-import fetch from 'cross-fetch';
+import fetch from '@inrupt/universal-fetch';
 import MemoryStorage from "../utils/Storage";
 import NoStorage from "../utils/Storage";
 import { WebLNProvider } from '@webbtc/webln-types';

@@ -1,4 +1,4 @@
-import fetch from 'cross-fetch';
+import fetch from '@inrupt/universal-fetch';
 
 const numSatsInBtc = 100_000_000;
 

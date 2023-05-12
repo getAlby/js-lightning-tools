@@ -1,4 +1,4 @@
-import fetch from 'cross-fetch';
+import fetch from '@inrupt/universal-fetch';
 import { getHashFromInvoice } from "./utils/invoice";
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
