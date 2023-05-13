@@ -32,6 +32,18 @@ export type LUD18ServicePayerData = Partial<{
   };
 }> & Record<string, unknown>;
 
+export type LUD18PayerData = Partial<{
+  name?: string;
+  pubkey?: string;
+  identifier?: string;
+  email?: string;
+  auth?: {
+    key: string;
+    sig: string;
+  };
+}> & Record<string, unknown>;
+
+
 export type NostrResponse = {
   names: Record<string, string>
   relays: Record<string, string[]>
@@ -73,14 +85,5 @@ export type ZapOptions = {
 export type RequestInvoiceArgs = {
   satoshi: number;
   comment?: string;
-  payerdata?: Partial<{
-    name?: string;
-    pubkey?: string;
-    identifier?: string;
-    email?: string;
-    auth?: {
-      key: string;
-      sig: string;
-    };
-  }> & Record<string, unknown>;
+  payerdata?: LUD18PayerData;
 }
