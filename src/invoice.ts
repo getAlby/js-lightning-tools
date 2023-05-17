@@ -1,4 +1,3 @@
-import fetch from 'cross-fetch';
 import { getHashFromInvoice } from "./utils/invoice";
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
@@ -40,7 +39,6 @@ export default class Invoice {
 
   async verifyPayment(): Promise<boolean> {
     if (!this.verify) throw new Error('LNURL verify not available');
-
     const result = await fetch(this.verify);
     const json = await result.json();
     if (json.preimage) {

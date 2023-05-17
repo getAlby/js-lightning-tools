@@ -1,4 +1,3 @@
-import fetch from 'cross-fetch';
 import { parseKeysendResponse } from './utils/keysend';
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from './utils/lnurl';
 import Invoice from './invoice';

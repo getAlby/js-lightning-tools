@@ -1,5 +1,3 @@
-import fetch from 'cross-fetch';
-
 const numSatsInBtc = 100_000_000;
 
 export const getFiatBtcRate = async (currency: string): Promise<number> => {

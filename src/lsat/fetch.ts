@@ -1,4 +1,3 @@
-import fetch from 'cross-fetch';
 import MemoryStorage from "../utils/Storage";
 import NoStorage from "../utils/Storage";
 import { WebLNProvider } from '@webbtc/webln-types';
