@@ -156,9 +156,11 @@ await invoice.isPaid(); // check the payment status as descibed above
 
 If you are not in a browser environment or no Nostr/Lightning extension installed you do not have [WebLN](webln.guide) nor [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) provided by the Alby extension. These must be provided and are made possible with Nostr Wallet Connect.
 
+Please note you will need some polyfills for NWC to work in NodeJS. Please see the [alby-js-sdk README](https://github.com/getAlby/alby-js-sdk).
+
 
 ```js
-const nostrWeblnProvider = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }) // loadNWCUrl() depending on your app. See alby-js-sdk readme
+const nostrWeblnProvider = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }) // loadNWCUrl() depending on your app. See alby-js-sdk readme or create a NWC url for yourself at nwc.getalby.com.
 
 const nostrProvider: NostrProvider = { // implement required NIP-07 functions to sign zap request
   getPublicKey: () => Promise.resolve(nostrWeblnProvider.publicKey),
