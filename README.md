@@ -160,6 +160,9 @@ Please note you will need some polyfills for NWC to work in NodeJS. Please see t
 
 
 ```js
+import { LightningAddress, NostrProvider } from "alby-tools";
+import { webln } from "alby-js-sdk";
+
 const nostrWeblnProvider = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }) // loadNWCUrl() depending on your app. See alby-js-sdk readme or create a NWC url for yourself at nwc.getalby.com.
 
 const nostrProvider: NostrProvider = { // implement required NIP-07 functions to sign zap request
