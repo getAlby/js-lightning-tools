@@ -75,7 +75,10 @@ export type ZapArgs = {
 
 export type NostrProvider = {
   getPublicKey(): Promise<string>;
-  signEvent(event: Event): Promise<Event>;
+  signEvent(event: Event & {
+    pubkey: string;
+    id: string;
+}): Promise<Event>;
 }
 
 export type ZapOptions = {

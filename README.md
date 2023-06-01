@@ -16,6 +16,9 @@ or
 yarn add alby-tools
 ```
 
+## 📖 Alby developer guide
+Read the [Alby developer guide](https://guides.getalby.com/overall-guide/alby-for-developers/getting-started) to better understand how Alby packages and APIs can be used to power your app.
+
 ## 🤙 Usage
 
 ### Lightning Address
@@ -115,12 +118,13 @@ const boost = {
 await ln.boost(boost);
 ```
 
-#### Zapping a LN address on Nostr:
+#### Zapping a LN address on Nostr (from the Browser with the Alby extension):
 
 Nostr is a simple, open protocol that enables truly censorship-resistant and global value-for-value publishing on the web. Nostr integrates deeply with Lightning. [more info](https://nostr.how/)
 
-alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md)
+alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md).
 
+Please note users need an extension that implements [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) (to sign the zap request) and [WebLN](webln.guide) (to pay the invoice) for seamless zapping.
 
 ```js
 import { LightningAddress } from "alby-tools";
@@ -135,22 +139,51 @@ const zapArgs = {
   satoshi: 1000,
   comment: "Awesome post",
   relays: ["wss://relay.damus.io"],
-  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
+  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245" // optional, omit to zap profile directly
 }
 
 // in one go with WebLN (https://www.webln.guide) (easiest for web apps)
-const response = await ln.zap(zapArgs); // generates a zap invoice
+const response = await ln.zap(zapArgs); // signs zap request event, generates invoice and pays it
 console.log(response.preimage); // print the preimage
 
-// or use the alby-js-sdk for apps where WebLN is not available
-ln.webln = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }); // loadNWCUrl() depending on your app. See alby-js-sdk readme 
-const response = await ln.zap(zapArgs, { nostr: yourNostrProvider }); // generates a zap invoice. yourNostrProvider must implement `getPublicKey` and `signEvent` to sign the zap event.
-console.log(response.preimage); // print the preimage
-
-// or manually
+// or manually (create an invoice and give it to the user to pay)
 const invoice = await ln.zapInvoice(zapArgs); // generates a zap invoice
 console.log(invoice.paymentRequest); // print the payment request
 await invoice.isPaid(); // check the payment status as descibed above
+```
+
+#### Zapping a LN address on Nostr (Mobile/Backend/No Lightning/Nostr not installed):
+
+If you are not in a browser environment or no Nostr/Lightning extension installed you do not have [WebLN](webln.guide) nor [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) provided by the Alby extension. These must be provided and are made possible with Nostr Wallet Connect.
+
+
+```js
+const nostrWeblnProvider = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }) // loadNWCUrl() depending on your app. See alby-js-sdk readme
+
+const nostrProvider: NostrProvider = { // implement required NIP-07 functions to sign zap request
+  getPublicKey: () => Promise.resolve(nostrWeblnProvider.publicKey),
+  signEvent: (event) => Promise.resolve({...event, sig: nostrWeblnProvider.signEvent(event)})
+}
+
+const ln = new LightningAddress("hello@getalby.com", {
+  webln: nostrWeblnProvider
+});
+await ln.fetch();
+
+if (!ln.nostrPubkey) {
+  alert('No nostr pubkey available'); // seems the lightning address is no NIP05 address
+}
+
+const zapArgs = {
+  satoshi: 1000,
+  comment: "Awesome post",
+  relays: ["wss://relay.damus.io"],
+  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245" // optional, omit to zap profile directly
+}
+
+const response = await ln.zap(zapArgs, {nostr: nostrProvider}); // signs zap request event, generates invoice and pays it
+console.log("Preimage", response.preimage); // print the preimage
+nostrWeblnProvider.close();
 ```
 
 
