@@ -186,6 +186,18 @@ You can disable the proxy by explicitly setting the proxy to false when initiali
 const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
 ```
 
+## fetch
+This library relies on a global fetch object which will only work in newer browsers and versions of node. You can manually install a global fetch option or polyfill if needed.
+
+For example:
+```js
+import fetch from "cross-fetch"; // or "@inrupt/universal-fetch"
+globalThis.fetch = fetch;
+
+// or as a polyfill:
+import 'cross-fetch/polyfill';
+```
+
 ## 🛠 Development
 
 ```

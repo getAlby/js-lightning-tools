@@ -34,7 +34,6 @@
   },
   "dependencies": {
     "@webbtc/webln-types": "^1.0.10",
-    "cross-fetch": "^3.1.5",
     "crypto-js": "^4.1.1",
     "light-bolt11-decoder": "^3.0.0"
   },
