@@ -16,6 +16,9 @@ or
 yarn add alby-tools
 ```
 
+**This library relies on a global `fetch()` function which will work in [browsers](https://caniuse.com/?search=fetch) and node v18 or newer.** (In older versions you have to use a polyfill.)
+
+
 ## 🤙 Usage
 
 ### Lightning Address
