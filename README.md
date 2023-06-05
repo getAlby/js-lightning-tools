@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="100%" src="docs/Header.png">
+  <img width="100%" src="https://github.com/getAlby/alby-tools/raw/master/docs/Header.png">
 </p>
 
 # Lightning Web SDK
@@ -15,6 +15,8 @@ or
 ```
 yarn add alby-tools
 ```
+
+**This library relies on a global `fetch()` function which will work in [browsers](https://caniuse.com/?search=fetch) and node v18 or newer.** (In older versions you have to use a polyfill.)
 
 ## 📖 Alby developer guide
 Read the [Alby developer guide](https://guides.getalby.com/overall-guide/alby-for-developers/getting-started) to better understand how Alby packages and APIs can be used to power your app.
@@ -50,7 +52,7 @@ const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 // request an invoice for 1000 satoshis
 // this returns a new `Invoice` class that can also be used to validate the payment
-const invoice = await ln.requestInvoice({satoshi: 1000}); 
+const invoice = await ln.requestInvoice({satoshi: 1000});
 
 console.log(invoice.paymentRequest); // print the payment request
 console.log(invoice.paymentHash); // print the payment hash
@@ -79,7 +81,7 @@ if (paid) {
   console.log('paid');
 }
 
-// or use the convenenice method: 
+// or use the convenenice method:
 await invoice.isPaid();
 
 ```
@@ -224,8 +226,8 @@ You can disable the proxy by explicitly setting the proxy to false when initiali
 const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
 ```
 
-## fetch
-This library relies on a global fetch object which will only work in newer browsers and versions of node. You can manually install a global fetch option or polyfill if needed.
+## fetch() dependency
+This library relies on a global fetch object which will work in browsers and node v18.x or newer. In old version yoi can manually install a global fetch option or polyfill if needed.
 
 For example:
 ```js
