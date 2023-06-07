@@ -16,9 +16,6 @@ or
 yarn add alby-tools
 ```
 
-## 📖 Alby developer guide
-Read the [Alby developer guide](https://guides.getalby.com/overall-guide/alby-for-developers/getting-started) to better understand how Alby packages and APIs can be used to power your app.
-
 ## 🤙 Usage
 
 ### Lightning Address
@@ -118,7 +115,7 @@ const boost = {
 await ln.boost(boost);
 ```
 
-#### Zapping a LN address on Nostr (from the Browser with the Alby extension):
+#### Zapping a LN address on Nostr:
 
 Nostr is a simple, open protocol that enables truly censorship-resistant and global value-for-value publishing on the web. Nostr integrates deeply with Lightning. [more info](https://nostr.how/)
 
@@ -152,44 +149,9 @@ console.log(invoice.paymentRequest); // print the payment request
 await invoice.isPaid(); // check the payment status as descibed above
 ```
 
-#### Zapping a LN address on Nostr (Mobile/Backend/No Lightning/Nostr not installed):
+#### Zapping a LN address on Nostr using Nostr Wallet Connect:
 
-If you are not in a browser environment or no Nostr/Lightning extension installed you do not have [WebLN](webln.guide) nor [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) provided by the Alby extension. These must be provided and are made possible with Nostr Wallet Connect.
-
-Please note you will need some polyfills for NWC to work in NodeJS. Please see the [alby-js-sdk README](https://github.com/getAlby/alby-js-sdk).
-
-
-```js
-import { LightningAddress, NostrProvider } from "alby-tools";
-import { webln } from "alby-js-sdk";
-
-const nostrWeblnProvider = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }) // loadNWCUrl() depending on your app. See alby-js-sdk readme or create a NWC url for yourself at nwc.getalby.com.
-
-const nostrProvider: NostrProvider = { // implement required NIP-07 functions to sign zap request
-  getPublicKey: () => Promise.resolve(nostrWeblnProvider.publicKey),
-  signEvent: (event) => Promise.resolve({...event, sig: nostrWeblnProvider.signEvent(event)})
-}
-
-const ln = new LightningAddress("hello@getalby.com", {
-  webln: nostrWeblnProvider
-});
-await ln.fetch();
-
-if (!ln.nostrPubkey) {
-  alert('No nostr pubkey available'); // seems the lightning address is no NIP05 address
-}
-
-const zapArgs = {
-  satoshi: 1000,
-  comment: "Awesome post",
-  relays: ["wss://relay.damus.io"],
-  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245" // optional, omit to zap profile directly
-}
-
-const response = await ln.zap(zapArgs, {nostr: nostrProvider}); // signs zap request event, generates invoice and pays it
-console.log("Preimage", response.preimage); // print the preimage
-nostrWeblnProvider.close();
-```
+See [examples/zaps-nwc](examples/zaps-nwc.js)
 
 
 ### 💵 Fiat conversions
@@ -224,6 +186,10 @@ You can disable the proxy by explicitly setting the proxy to false when initiali
 const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
 ```
 
+## Full usage examples
+
+You can find examples in the [examples/](examples/) directory.
+
 ## fetch
 This library relies on a global fetch object which will only work in newer browsers and versions of node. You can manually install a global fetch option or polyfill if needed.
 
@@ -242,3 +208,17 @@ import 'cross-fetch/polyfill';
 yarn install
 yarn run build
 ```
+
+## Need help?
+
+We are happy to help, please contact us or create an issue.
+
+* [Twitter: @getAlby](https://twitter.com/getAlby)
+* [Telegram group](https://t.me/getAlby)
+* support at getalby.com
+* [bitcoin.design](https://bitcoin.design/) Discord community (find us on the #alby channel)
+* Read the [Alby developer guide](https://guides.getalby.com/overall-guide/alby-for-developers/getting-started) to better understand how Alby packages and APIs can be used to power your app.
+
+## License
+
+MIT
