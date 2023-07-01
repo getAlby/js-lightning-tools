@@ -123,35 +123,25 @@ Nostr is a simple, open protocol that enables truly censorship-resistant and glo
 
 alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md).
 
-Please note users need an extension that implements [NIP-07](https://github.com/nostr-protocol/nips/blob/master/07.md) (to sign the zap request) and [WebLN](webln.guide) (to pay the invoice) for seamless zapping.
-
 ```js
 import { LightningAddress } from "alby-tools";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
-if (!ln.nostrPubkey) {
-  alert('No nostr pubkey available'); // seems the lightning address is no NIP05 address
-}
-
-const zapArgs = {
+const response = await ln.zap({
   satoshi: 1000,
   comment: "Awesome post",
   relays: ["wss://relay.damus.io"],
-  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245" // optional, omit to zap profile directly
-}
-
-// in one go with WebLN (https://www.webln.guide) (easiest for web apps)
-const response = await ln.zap(zapArgs); // signs zap request event, generates invoice and pays it
+  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
+});
 console.log(response.preimage); // print the preimage
-
-// or manually (create an invoice and give it to the user to pay)
-const invoice = await ln.zapInvoice(zapArgs); // generates a zap invoice
-console.log(invoice.paymentRequest); // print the payment request
-await invoice.isPaid(); // check the payment status as descibed above
 ```
 
+For a full example see [examples/zaps](examples/zaps.js)
+
 #### Zapping a LN address on Nostr using Nostr Wallet Connect:
+
+Native zaps without a browser extension are possible by using a Nostr Wallet Connect WebLN provider.
 
 See [examples/zaps-nwc](examples/zaps-nwc.js)
 
