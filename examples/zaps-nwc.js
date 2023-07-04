@@ -1,25 +1,33 @@
 require('dotenv').config()
-import { LightningAddress, NostrProvider } from "alby-tools";
+import { LightningAddress } from "alby-tools";
 import { webln } from "alby-js-sdk";
 import 'websocket-polyfill';
 import * as crypto from "crypto";
+import { finishEvent, getPublicKey } from "nostr-tools";
 globalThis.crypto = crypto;
+
+// your private key is required to sign zap request events
+const nostrPrivateKey = process.env.NOSTR_PRIVATE_KEY;
+// NWC url will be used to pay the zap invoice.
+// It can be created in advanced at nwc.getalby.com,
+// or use webln.NostrWebLNProvider.withNewSecret() to generate a new one
+const nostrWalletConnectUrl = process.env.NWC_URL;
+
+if (!nostrPrivateKey || !nostrWalletConnectUrl) {
+  throw new Error("Please set .env variables");
+}
 
 (async () => {
 
-  const nostrWalletConnectUrl = process.env.NWC_URL;
-  if (!nostrWalletConnectUrl) {
-    throw new Error("Please add NWC_URL to .env. You can get one at nwc.getalby.com")
-  }
-  const nostrWeblnProvider = new webln.NostrWebLNProvider({ nostrWalletConnectUrl }) // loadNWCUrl() depending on your app. See alby-js-sdk readme
+  const nostrWeblnProvider = new webln.NostrWebLNProvider({ nostrWalletConnectUrl })
+  // or use nostrWeblnProvider.initNWC(); to get a new NWC url
   const nostrProvider = {
-    getPublicKey: () => Promise.resolve(nostrWeblnProvider.publicKey),
-    signEvent: (event) => Promise.resolve({...event, sig: nostrWeblnProvider.signEvent(event)})
+    getPublicKey: () => Promise.resolve(getPublicKey(nostrPrivateKey)),
+    signEvent: (event) => Promise.resolve(finishEvent(event, nostrPrivateKey)),
   }
 
   const ln = new LightningAddress("hello@getalby.com", {
     webln: nostrWeblnProvider,
-
   });
   await ln.fetch();
   
