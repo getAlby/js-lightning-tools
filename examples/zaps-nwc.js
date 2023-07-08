@@ -1,4 +1,3 @@
-require('dotenv').config()
 import { LightningAddress } from "alby-tools";
 import { webln } from "alby-js-sdk";
 import 'websocket-polyfill';
