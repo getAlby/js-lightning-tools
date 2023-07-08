@@ -4,7 +4,7 @@ import { Event, NostrProvider } from "./types";
 import {UnsignedEvent, finishEvent, generatePrivateKey, getEventHash, getPublicKey, signEvent} from 'nostr-tools'
 
 const dummyWebLN: WebLNProvider = {
-  enable: () => Promise.resolve({enabled: false, remember: true}),
+  enable: () => Promise.resolve(),
   getInfo: () => Promise.resolve({
     methods: [],
     node: {
@@ -132,6 +132,13 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
     });
 
     describe("fetch", () => {
+      it("retrieves lnurlp data for lightning address without keysend or nostr", async () => {
+        // TODO: consider mocking responses
+        const ln = new LightningAddress("hrf@btcpay.hrf.org", {proxy});
+        await ln.fetch();
+        expect(ln.lnurlpData?.max).toBe(612000000000);
+      }, SPEC_TIMEOUT)
+
       it("retrieves lnurlp data", async () => {
         // TODO: consider mocking responses
         const ln = new LightningAddress("hello@getalby.com", {proxy});
@@ -155,7 +162,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
     
       it("can fetch existing lightning address without nostr configuration", async () => {
         // TODO: consider mocking responses
-        const ln = new LightningAddress("test12345678@getalby.com", {proxy});
+        const ln = new LightningAddress("wintertree4@getalby.com", {proxy});
         await ln.fetch();
         expect(ln.nostrData).toBeUndefined();
       }, SPEC_TIMEOUT)

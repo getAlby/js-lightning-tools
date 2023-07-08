@@ -18,7 +18,6 @@ yarn add alby-tools
 
 **This library relies on a global `fetch()` function which will work in [browsers](https://caniuse.com/?search=fetch) and node v18 or newer.** (In older versions you have to use a polyfill.)
 
-
 ## 🤙 Usage
 
 ### Lightning Address
@@ -122,39 +121,29 @@ await ln.boost(boost);
 
 Nostr is a simple, open protocol that enables truly censorship-resistant and global value-for-value publishing on the web. Nostr integrates deeply with Lightning. [more info](https://nostr.how/)
 
-alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md)
-
+alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md).
 
 ```js
 import { LightningAddress } from "alby-tools";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
-if (!ln.nostrPubkey) {
-  alert('No nostr pubkey available'); // seems the lightning address is no NIP05 address
-}
-
-const zapArgs = {
+const response = await ln.zap({
   satoshi: 1000,
   comment: "Awesome post",
   relays: ["wss://relay.damus.io"],
   e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
-}
-
-// in one go with WebLN (https://www.webln.guide) (easiest for web apps)
-const response = await ln.zap(zapArgs); // generates a zap invoice
+});
 console.log(response.preimage); // print the preimage
-
-// or use the alby-js-sdk for apps where WebLN is not available
-ln.webln = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }); // loadNWCUrl() depending on your app. See alby-js-sdk readme
-const response = await ln.zap(zapArgs, { nostr: yourNostrProvider }); // generates a zap invoice. yourNostrProvider must implement `getPublicKey` and `signEvent` to sign the zap event.
-console.log(response.preimage); // print the preimage
-
-// or manually
-const invoice = await ln.zapInvoice(zapArgs); // generates a zap invoice
-console.log(invoice.paymentRequest); // print the payment request
-await invoice.isPaid(); // check the payment status as descibed above
 ```
+
+For a full example see [examples/zaps](examples/zaps.js)
+
+#### Zapping a LN address on Nostr using Nostr Wallet Connect:
+
+Native zaps without a browser extension are possible by using a Nostr Wallet Connect WebLN provider.
+
+See [examples/zaps-nwc](examples/zaps-nwc.js)
 
 
 ### 💵 Fiat conversions
@@ -207,3 +196,17 @@ import 'cross-fetch/polyfill';
 yarn install
 yarn run build
 ```
+
+## Need help?
+
+We are happy to help, please contact us or create an issue.
+
+* [Twitter: @getAlby](https://twitter.com/getAlby)
+* [Telegram group](https://t.me/getAlby)
+* support at getalby.com
+* [bitcoin.design](https://bitcoin.design/) Discord community (find us on the #alby channel)
+* Read the [Alby developer guide](https://guides.getalby.com/overall-guide/alby-for-developers/getting-started) to better understand how Alby packages and APIs can be used to power your app.
+
+## License
+
+MIT
