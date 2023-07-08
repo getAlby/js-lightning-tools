@@ -17,7 +17,7 @@ yarn add alby-tools
 ```
 or for use without any build tools:
 ```
-// alby-tools now available at window["alby-tools"]
+// alby-tools now available at window.albyTools
 <script src="https://cdn.jsdelivr.net/npm/alby-tools@3.0.0/dist/index.browser.js"></script>
 ```
 
