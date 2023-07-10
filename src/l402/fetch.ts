@@ -1,11 +1,14 @@
 import MemoryStorage from "../utils/Storage";
 import NoStorage from "../utils/Storage";
 import { WebLNProvider } from '@webbtc/webln-types';
+import { parseL402 } from "./parse";
 
 export * as Storage from "../utils/Storage";
 const memoryStorage = new MemoryStorage();
 
-export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
+const HEADER_KEY = "LSAT"; // we have to update this to L402 at some point
+
+export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
   if (!options) {
     options = {};
   }
@@ -22,23 +25,23 @@ export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>,
   if (!fetchArgs.headers) {
     fetchArgs.headers = {};
   }
-  const cachedLsatData = store.getItem(url);
-  if (cachedLsatData) {
-    const data = JSON.parse(cachedLsatData);
-    fetchArgs.headers["Authorization"] = `LSAT ${data.mac}:${data.preimage}`;
+  const cachedL402Data = store.getItem(url);
+  if (cachedL402Data) {
+    const data = JSON.parse(cachedL402Data);
+    fetchArgs.headers["Authorization"] = `${HEADER_KEY} ${data.mac}:${data.preimage}`;
     return await fetch(url, fetchArgs)
   }
 
-  fetchArgs.headers["Accept-Authenticate"] = "LSAT";
+  fetchArgs.headers["Accept-Authenticate"] = HEADER_KEY;
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get('www-authenticate');
   if (!header) {
     return initResp
   }
 
-  const parts = header.split(",");
-  const mac = parts[0].replace("LSAT macaroon=", "").trim();
-  const inv = parts[1].replace("invoice=", "").trim();
+  const details = parseL402(header);
+  const mac = details.macaroon;
+  const inv = details.invoice;
 
   await webln.enable();
   const invResp = await webln.sendPayment(inv);
@@ -48,8 +51,8 @@ export const fetchWithLsat = async (url: string, fetchArgs: Record<string, any>,
     'preimage': invResp.preimage
   }));
 
-  fetchArgs.headers["Authorization"] = `LSAT ${mac}:${invResp.preimage}`;
+  fetchArgs.headers["Authorization"] = `${HEADER_KEY} ${mac}:${invResp.preimage}`;
   return await fetch(url, fetchArgs);
 }
 
-export default fetchWithLsat;
+export default fetchWithL402;
