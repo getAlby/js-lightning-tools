@@ -150,6 +150,44 @@ Native zaps without a browser extension are possible by using a Nostr Wallet Con
 
 See [examples/zaps-nwc](examples/zaps-nwc.js)
 
+### L402
+
+L402 is a protocol standard based on the HTTP 402 Payment Required error code
+designed to support the use case of charging for services and
+authenticating users in distributed networks. 
+
+alby-tools includes a `fetchWithL402` function to consume L402 protected resources.
+
+#### fetchWithL402(url: string, fetchArgs, options)
+
++ url: the L402 protected URL
++ fetchArgs: arguments are passed to the underlaying `fetch()` function used to do the HTTP request
++ options: 
+  + webln: the webln object used to call `sendPayment()` defaults to globalThis.webln
+  + store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
+
+##### Examples
+
+```js
+import { fetchWithL402 } from "alby-tools";
+
+// this will fetch the resouce and pay the invoice with window.webln.
+// the tokens/preimage data will be stored in the browser's localStorage and used for any following request
+await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { store: window.localStorage }).then(res => res.json()).then(console.log)
+
+```
+
+```js
+import { fetchWithL402 } from "alby-tools";
+import { webln } from "alby-js-sdk";
+
+// use a NWC WebLN provide to do the payments
+const nwc = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() });
+
+// this will fetch the resouce and pay the invoice with a NWC webln object
+await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { webln: nwc }).then(res => res.json()).then(console.log)
+
+```
 
 ### 💵 Fiat conversions
 Helpers to convert sats values to fiat and fiat values to sats.
