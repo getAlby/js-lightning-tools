@@ -1,6 +1,6 @@
 {
   "name": "alby-tools",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
   "source": "src/index.ts",
@@ -43,8 +43,8 @@
     "@types/crypto-js": "^4.1.1",
     "@types/jest": "^29.4.0",
     "@types/node": "^18.11.0",
-    "browserify": "^17.0.0",
     "@webbtc/webln-types": "^1.0.11",
+    "browserify": "^17.0.0",
     "jest": "^29.5.0",
     "microbundle": "^0.15.1",
     "nostr-tools": "^1.10.0",
