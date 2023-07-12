@@ -154,7 +154,7 @@ See [examples/zaps-nwc](examples/zaps-nwc.js)
 
 L402 is a protocol standard based on the HTTP 402 Payment Required error code
 designed to support the use case of charging for services and
-authenticating users in distributed networks. 
+authenticating users in distributed networks.
 
 alby-tools includes a `fetchWithL402` function to consume L402 protected resources.
 
@@ -162,9 +162,10 @@ alby-tools includes a `fetchWithL402` function to consume L402 protected resourc
 
 + url: the L402 protected URL
 + fetchArgs: arguments are passed to the underlaying `fetch()` function used to do the HTTP request
-+ options: 
++ options:
   + webln: the webln object used to call `sendPayment()` defaults to globalThis.webln
   + store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
+  + header: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
 
 ##### Examples
 

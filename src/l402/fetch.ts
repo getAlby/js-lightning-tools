@@ -6,9 +6,10 @@ import { parseL402 } from "./parse";
 export * as Storage from "../utils/Storage";
 const memoryStorage = new MemoryStorage();
 
-const HEADER_KEY = "LSAT"; // we have to update this to L402 at some point
+const HEADER_KEY = "L402"; // we have to update this to L402 at some point
 
 export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
+  const header_key = options.header_key || HEADER_KEY;
   if (!options) {
     options = {};
   }
@@ -28,11 +29,11 @@ export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>,
   const cachedL402Data = store.getItem(url);
   if (cachedL402Data) {
     const data = JSON.parse(cachedL402Data);
-    fetchArgs.headers["Authorization"] = `${HEADER_KEY} ${data.mac}:${data.preimage}`;
+    fetchArgs.headers["Authorization"] = `${header_key} ${data.token}:${data.preimage}`;
     return await fetch(url, fetchArgs)
   }
 
-  fetchArgs.headers["Accept-Authenticate"] = HEADER_KEY;
+  fetchArgs.headers["Accept-Authenticate"] = header_key;
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get('www-authenticate');
   if (!header) {
@@ -40,18 +41,18 @@ export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>,
   }
 
   const details = parseL402(header);
-  const mac = details.macaroon;
+  const token = details.token || details.macaroon;
   const inv = details.invoice;
 
   await webln.enable();
   const invResp = await webln.sendPayment(inv);
 
   store.setItem(url, JSON.stringify({
-    'mac': mac,
+    'token': token,
     'preimage': invResp.preimage
   }));
 
-  fetchArgs.headers["Authorization"] = `${HEADER_KEY} ${mac}:${invResp.preimage}`;
+  fetchArgs.headers["Authorization"] = `${header_key} ${token}:${invResp.preimage}`;
   return await fetch(url, fetchArgs);
 }
 
