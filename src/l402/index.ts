@@ -1,8 +1,8 @@
-import MemoryStorage from "../utils/Storage";
+import MemoryStorage from "../utils/storage";
 import { WebLNProvider } from '@webbtc/webln-types';
 import { parseL402 } from "./parse";
 
-export * as storage from "../utils/Storage";
+export * as storage from "../utils/storage";
 const memoryStorage = new MemoryStorage();
 
 const HEADER_KEY = "L402"; // we have to update this to L402 at some point
