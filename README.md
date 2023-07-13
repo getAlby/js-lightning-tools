@@ -165,7 +165,7 @@ alby-tools includes a `fetchWithL402` function to consume L402 protected resourc
 + options:
   + webln: the webln object used to call `sendPayment()` defaults to globalThis.webln
   + store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
-  + header: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
+  + headerKey: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
 
 ##### Examples
 
@@ -175,7 +175,6 @@ import { fetchWithL402 } from "alby-tools";
 // this will fetch the resouce and pay the invoice with window.webln.
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
 await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { store: window.localStorage }).then(res => res.json()).then(console.log)
-
 ```
 
 ```js
@@ -187,8 +186,14 @@ const nwc = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() }
 
 // this will fetch the resouce and pay the invoice with a NWC webln object
 await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { webln: nwc }).then(res => res.json()).then(console.log)
-
 ```
+
+```js
+import { l402 } from "alby-tools";
+
+// do not store the tokens
+await l402.fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { store: new l402.storage.NoStorage() })
+``
 
 ### 💵 Fiat conversions
 Helpers to convert sats values to fiat and fiat values to sats.
