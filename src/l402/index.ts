@@ -1,18 +1,17 @@
-import MemoryStorage from "../utils/Storage";
-import NoStorage from "../utils/Storage";
+import MemoryStorage from "../utils/storage";
 import { WebLNProvider } from '@webbtc/webln-types';
 import { parseL402 } from "./parse";
 
-export * as Storage from "../utils/Storage";
+export * as storage from "../utils/storage";
 const memoryStorage = new MemoryStorage();
 
 const HEADER_KEY = "L402"; // we have to update this to L402 at some point
 
 export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
-  const header_key = options.header_key || HEADER_KEY;
   if (!options) {
     options = {};
   }
+  const headerKey = options.headerKey || HEADER_KEY;
   const webln: WebLNProvider = options.webln || globalThis.webln;
   if (!webln) {
     throw new Error("WebLN is missing");
@@ -29,11 +28,11 @@ export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>,
   const cachedL402Data = store.getItem(url);
   if (cachedL402Data) {
     const data = JSON.parse(cachedL402Data);
-    fetchArgs.headers["Authorization"] = `${header_key} ${data.token}:${data.preimage}`;
+    fetchArgs.headers["Authorization"] = `${headerKey} ${data.token}:${data.preimage}`;
     return await fetch(url, fetchArgs)
   }
 
-  fetchArgs.headers["Accept-Authenticate"] = header_key;
+  fetchArgs.headers["Accept-Authenticate"] = headerKey;
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get('www-authenticate');
   if (!header) {
@@ -52,7 +51,7 @@ export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>,
     'preimage': invResp.preimage
   }));
 
-  fetchArgs.headers["Authorization"] = `${header_key} ${token}:${invResp.preimage}`;
+  fetchArgs.headers["Authorization"] = `${headerKey} ${token}:${invResp.preimage}`;
   return await fetch(url, fetchArgs);
 }
 

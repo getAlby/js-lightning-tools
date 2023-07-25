@@ -1,8 +1,8 @@
-import fetchWithL402 from "./l402/fetch";
+import fetchWithL402 from "./l402";
 import { boost as sendBoostagram } from "./podcasting2/boostagrams";
 import LightningAddress from "./lightning-address";
 import Invoice from "./invoice";
-export * as l402 from "./l402/fetch";
+export * as l402 from "./l402";
 export * as boostagrams from "./podcasting2/boostagrams";
 export * as fiat from "./utils/fiat";
 export * as nostr from "./utils/nostr";
