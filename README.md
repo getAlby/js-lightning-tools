@@ -193,7 +193,7 @@ import { l402 } from "alby-tools";
 
 // do not store the tokens
 await l402.fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { store: new l402.storage.NoStorage() })
-``
+```
 
 ### 💵 Fiat conversions
 Helpers to convert sats values to fiat and fiat values to sats.
