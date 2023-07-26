@@ -1,6 +1,6 @@
 {
   "name": "@getalby/lightning",
-  "version": "1.0.0",
+  "version": "3.1.2",
   "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
   "source": "src/index.ts",
