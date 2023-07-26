@@ -1,5 +1,5 @@
 
-import { fetchWithL402 } from "alby-tools";
+import { fetchWithL402 } from "@getalby/lightning";
 import { webln } from "alby-js-sdk";
 import 'websocket-polyfill';
 import * as crypto from "crypto";

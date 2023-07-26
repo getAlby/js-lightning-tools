@@ -9,16 +9,16 @@ An npm package that provides useful and common tools and helpers to build lightn
 ## 🚀 Quick Start
 
 ```
-npm install alby-tools
+npm install @getalby/lightning
 ```
 or
 ```
-yarn add alby-tools
+yarn add @getalby/lightning
 ```
 or for use without any build tools:
 ```
-// alby-tools now available at window.albyTools
-<script src="https://cdn.jsdelivr.net/npm/alby-tools@3.0.0/dist/index.browser.js"></script>
+// @getalby/lightning now available at window.albyTools
+<script src="https://cdn.jsdelivr.net/npm/@getalby/lightning@3.0.0/dist/index.browser.js"></script>
 ```
 
 **This library relies on a global `fetch()` function which will work in [browsers](https://caniuse.com/?search=fetch) and node v18 or newer.** (In older versions you have to use a polyfill.)
@@ -30,7 +30,7 @@ or for use without any build tools:
 The `LightningAddress` class provides helpers to work with lightning addresses
 
 ```js
-import { LightningAddress } from "alby-tools";
+import { LightningAddress } from "@getalby/lightning";
 
 const ln = new LightningAddress("hello@getalby.com");
 
@@ -38,7 +38,7 @@ const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
 // get the LNURL-pay data:
-console.log(ln.lnurlpData); // returns a [LNURLPayResponse](https://github.com/getAlby/alby-tools/blob/master/src/types.ts#L1-L15)
+console.log(ln.lnurlpData); // returns a [LNURLPayResponse](https://github.com/getAlby/@getalby/lightning/blob/master/src/types.ts#L1-L15)
 // get the keysend data:
 console.log(ln.keysendData);
 
@@ -47,7 +47,7 @@ console.log(ln.keysendData);
 #### Get an invoice:
 
 ```js
-import { LightningAddress } from "alby-tools";
+import { LightningAddress } from "@getalby/lightning";
 
 const ln = new LightningAddress("hello@getalby.com");
 
@@ -63,7 +63,7 @@ console.log(invoice.paymentHash); // print the payment hash
 #### Verify a payment
 
 ```js
-import { LightningAddress } from "alby-tools";
+import { LightningAddress } from "@getalby/lightning";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
@@ -91,7 +91,7 @@ await invoice.isPaid();
 It is also possible to manually initialize the `Invoice`
 
 ```js
-const { Invoice } = require("alby-tools");
+const { Invoice } = require("@getalby/lightning");
 
 const invoice = new Invoice({paymentRequest: pr, preimage: preimage});
 await invoice.isPaid();
@@ -102,7 +102,7 @@ await invoice.isPaid();
 You can also attach additional metadata information like app name, version, name of the podcast which is boosted etc. to the keysend payment.
 
 ```js
-import { LightningAddress } from "alby-tools";
+import { LightningAddress } from "@getalby/lightning";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
@@ -126,10 +126,10 @@ await ln.boost(boost);
 
 Nostr is a simple, open protocol that enables truly censorship-resistant and global value-for-value publishing on the web. Nostr integrates deeply with Lightning. [more info](https://nostr.how/)
 
-alby-tools provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md).
+@getalby/lightning provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md).
 
 ```js
-import { LightningAddress } from "alby-tools";
+import { LightningAddress } from "@getalby/lightning";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
@@ -156,7 +156,7 @@ L402 is a protocol standard based on the HTTP 402 Payment Required error code
 designed to support the use case of charging for services and
 authenticating users in distributed networks.
 
-alby-tools includes a `fetchWithL402` function to consume L402 protected resources.
+@getalby/lightning includes a `fetchWithL402` function to consume L402 protected resources.
 
 #### fetchWithL402(url: string, fetchArgs, options)
 
@@ -170,7 +170,7 @@ alby-tools includes a `fetchWithL402` function to consume L402 protected resourc
 ##### Examples
 
 ```js
-import { fetchWithL402 } from "alby-tools";
+import { fetchWithL402 } from "@getalby/lightning";
 
 // this will fetch the resouce and pay the invoice with window.webln.
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
@@ -178,7 +178,7 @@ await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { sto
 ```
 
 ```js
-import { fetchWithL402 } from "alby-tools";
+import { fetchWithL402 } from "@getalby/lightning";
 import { webln } from "alby-js-sdk";
 
 // use a NWC WebLN provide to do the payments
@@ -189,7 +189,7 @@ await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { web
 ```
 
 ```js
-import { l402 } from "alby-tools";
+import { l402 } from "@getalby/lightning";
 
 // do not store the tokens
 await l402.fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { store: new l402.storage.NoStorage() })
@@ -216,7 +216,7 @@ await getFormattedFiatValue(stoshi: 2100, currency: 'usd', locale: 'en')
 ```
 
 ### 🤖 Lightning Address Proxy
-alby-tools uses a [proxy](https://github.com/getAlby/lightning-address-details-proxy) to simplify requests to lightning providers.
+@getalby/lightning uses a [proxy](https://github.com/getAlby/lightning-address-details-proxy) to simplify requests to lightning providers.
 
 - Many ln addresses don't support CORS, which means fetching the data directly in a browser environment will not always work.
 - Two requests are required to retrieve lnurlp and keysend data for a lightning address. The proxy will do these for you with a single request.
