@@ -38,7 +38,7 @@ const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
 // get the LNURL-pay data:
-console.log(ln.lnurlpData); // returns a [LNURLPayResponse](https://github.com/getAlby/lightning-tools/blob/master/src/types.ts#L1-L15)
+console.log(ln.lnurlpData); // returns a [LNURLPayResponse](https://github.com/getAlby/js-lightning-tools/blob/master/src/types.ts#L1-L15)
 // get the keysend data:
 console.log(ln.keysendData);
 

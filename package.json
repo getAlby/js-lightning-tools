@@ -8,8 +8,8 @@
   "module": "./dist/index.module.js",
   "unpkg": "./dist/index.umd.js",
   "types": "./dist/index.d.ts",
-  "repository": "https://github.com/getAlby/lightning-tools.git",
-  "bugs": "https://github.com/getAlby/lightning-tools/issues",
+  "repository": "https://github.com/getAlby/js-lightning-tools.git",
+  "bugs": "https://github.com/getAlby/js-lightning-tools/issues",
   "funding": {
     "type": "lightning",
     "url": "lightning:hello@getalby.com"
