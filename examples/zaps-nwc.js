@@ -1,4 +1,4 @@
-import { LightningAddress } from "alby-tools";
+import { LightningAddress } from "@getalby/lightning-tools";
 import { webln } from "alby-js-sdk";
 import 'websocket-polyfill';
 import * as crypto from "crypto";

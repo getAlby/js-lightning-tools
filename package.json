@@ -1,5 +1,5 @@
 {
-  "name": "alby-tools",
+  "name": "@getalby/lightning-tools",
   "version": "3.1.2",
   "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
@@ -8,8 +8,8 @@
   "module": "./dist/index.module.js",
   "unpkg": "./dist/index.umd.js",
   "types": "./dist/index.d.ts",
-  "repository": "https://github.com/getAlby/alby-tools.git",
-  "bugs": "https://github.com/getAlby/alby-tools/issues",
+  "repository": "https://github.com/getAlby/js-lightning-tools.git",
+  "bugs": "https://github.com/getAlby/js-lightning-tools/issues",
   "funding": {
     "type": "lightning",
     "url": "lightning:hello@getalby.com"

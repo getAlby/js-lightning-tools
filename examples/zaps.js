@@ -1,4 +1,4 @@
-import { LightningAddress } from "alby-tools";
+import { LightningAddress } from "@getalby/lightning-tools";
 
 (async () => {
   const ln = new LightningAddress("hello@getalby.com");
