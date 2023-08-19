@@ -11,11 +11,15 @@ An npm package that provides useful and common tools and helpers to build lightn
 ```
 npm install @getalby/lightning-tools
 ```
+
 or
+
 ```
 yarn add @getalby/lightning-tools
 ```
+
 or for use without any build tools:
+
 ```
 // lightning-tools now available at window.lightningTools
 <script src="https://cdn.jsdelivr.net/npm/@getalby/lightning-tools@latest/dist/index.browser.js"></script>
@@ -41,7 +45,6 @@ await ln.fetch();
 console.log(ln.lnurlpData); // returns a [LNURLPayResponse](https://github.com/getAlby/js-lightning-tools/blob/master/src/types.ts#L1-L15)
 // get the keysend data:
 console.log(ln.keysendData);
-
 ```
 
 #### Get an invoice:
@@ -54,7 +57,7 @@ const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 // request an invoice for 1000 satoshis
 // this returns a new `Invoice` class that can also be used to validate the payment
-const invoice = await ln.requestInvoice({satoshi: 1000});
+const invoice = await ln.requestInvoice({ satoshi: 1000 });
 
 console.log(invoice.paymentRequest); // print the payment request
 console.log(invoice.paymentHash); // print the payment hash
@@ -67,7 +70,7 @@ import { LightningAddress } from "@getalby/lightning-tools";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
-const invoice = await ln.requestInvoice({satoshi: 1000});
+const invoice = await ln.requestInvoice({ satoshi: 1000 });
 
 // if the LNURL providers supports LNURL-verify:
 const paid = await invoice.verifyPayment(); // returns true of false
@@ -80,12 +83,11 @@ await window.webln.enable();
 const response = await window.webln.sendPayment(invoice.paymentRequest);
 const paid = invoice.validatePreimage(response.preimage); // returns true or false
 if (paid) {
-  console.log('paid');
+  console.log("paid");
 }
 
 // or use the convenenice method:
 await invoice.isPaid();
-
 ```
 
 It is also possible to manually initialize the `Invoice`
@@ -93,7 +95,7 @@ It is also possible to manually initialize the `Invoice`
 ```js
 const { Invoice } = require("alby-tools");
 
-const invoice = new Invoice({paymentRequest: pr, preimage: preimage});
+const invoice = new Invoice({ paymentRequest: pr, preimage: preimage });
 await invoice.isPaid();
 ```
 
@@ -118,7 +120,7 @@ const boost = {
   ts: 2121,
   name: "Satoshi",
   sender_name: "Alby",
-}
+};
 await ln.boost(boost);
 ```
 
@@ -137,7 +139,7 @@ const response = await ln.zap({
   satoshi: 1000,
   comment: "Awesome post",
   relays: ["wss://relay.damus.io"],
-  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245"
+  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245",
 });
 console.log(response.preimage); // print the preimage
 ```
@@ -160,12 +162,12 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 
 #### fetchWithL402(url: string, fetchArgs, options)
 
-+ url: the L402 protected URL
-+ fetchArgs: arguments are passed to the underlaying `fetch()` function used to do the HTTP request
-+ options:
-  + webln: the webln object used to call `sendPayment()` defaults to globalThis.webln
-  + store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
-  + headerKey: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
+- url: the L402 protected URL
+- fetchArgs: arguments are passed to the underlaying `fetch()` function used to do the HTTP request
+- options:
+  - webln: the webln object used to call `sendPayment()` defaults to globalThis.webln
+  - store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
+  - headerKey: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
 
 ##### Examples
 
@@ -174,7 +176,13 @@ import { fetchWithL402 } from "@getalby/lightning-tools";
 
 // this will fetch the resouce and pay the invoice with window.webln.
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
-await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { store: window.localStorage }).then(res => res.json()).then(console.log)
+await fetchWithL402(
+  "https://lsat-weather-api.getalby.repl.co/kigali",
+  {},
+  { store: window.localStorage },
+)
+  .then((res) => res.json())
+  .then(console.log);
 ```
 
 ```js
@@ -182,29 +190,45 @@ import { fetchWithL402 } from "@getalby/lightning-tools";
 import { webln } from "alby-js-sdk";
 
 // use a NWC WebLN provide to do the payments
-const nwc = new webln.NostrWebLNProvider({ nostrWalletConnectUrl: loadNWCUrl() });
+const nwc = new webln.NostrWebLNProvider({
+  nostrWalletConnectUrl: loadNWCUrl(),
+});
 
 // this will fetch the resouce and pay the invoice with a NWC webln object
-await fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { webln: nwc }).then(res => res.json()).then(console.log)
+await fetchWithL402(
+  "https://lsat-weather-api.getalby.repl.co/kigali",
+  {},
+  { webln: nwc },
+)
+  .then((res) => res.json())
+  .then(console.log);
 ```
 
 ```js
 import { l402 } from "@getalby/lightning-tools";
 
 // do not store the tokens
-await l402.fetchWithL402('https://lsat-weather-api.getalby.repl.co/kigali', {}, { store: new l402.storage.NoStorage() })
+await l402.fetchWithL402(
+  "https://lsat-weather-api.getalby.repl.co/kigali",
+  {},
+  { store: new l402.storage.NoStorage() },
+);
 ```
 
 ### 💵 Fiat conversions
+
 Helpers to convert sats values to fiat and fiat values to sats.
 
 ##### getFiatValue(satoshi: number, currency: string): number
+
 Returns the fiat value for a specified currrency of a satoshi amount
 
 ##### getSatoshiValue(amount: number, currency: string): number
+
 Returns the satoshi value for a specified amount (in the smallest denomination) and currency
 
 ##### getFormattedFiatValue(satoshi: number, currency: string, locale: string): string
+
 Like `getFiatValue` but returns a formatted string for a given locale using JavaScript's `toLocaleString`
 
 #### Examples
@@ -216,6 +240,7 @@ await getFormattedFiatValue(stoshi: 2100, currency: 'usd', locale: 'en')
 ```
 
 ### 🤖 Lightning Address Proxy
+
 This library uses a [proxy](https://github.com/getAlby/lightning-address-details-proxy) to simplify requests to lightning providers.
 
 - Many ln addresses don't support CORS, which means fetching the data directly in a browser environment will not always work.
@@ -228,15 +253,17 @@ const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false
 ```
 
 ## fetch() dependency
+
 This library relies on a global fetch object which will work in browsers and node v18.x or newer. In old version yoi can manually install a global fetch option or polyfill if needed.
 
 For example:
+
 ```js
 import fetch from "cross-fetch"; // or "@inrupt/universal-fetch"
 globalThis.fetch = fetch;
 
 // or as a polyfill:
-import 'cross-fetch/polyfill';
+import "cross-fetch/polyfill";
 ```
 
 ## 🛠 Development
@@ -250,11 +277,11 @@ yarn run build
 
 We are happy to help, please contact us or create an issue.
 
-* [Twitter: @getAlby](https://twitter.com/getAlby)
-* [Telegram group](https://t.me/getAlby)
-* support at getalby.com
-* [bitcoin.design](https://bitcoin.design/) Discord community (find us on the #alby channel)
-* Read the [Alby developer guide](https://guides.getalby.com/overall-guide/alby-for-developers/getting-started) to better understand how Alby packages and APIs can be used to power your app.
+- [Twitter: @getAlby](https://twitter.com/getAlby)
+- [Telegram group](https://t.me/getAlby)
+- support at getalby.com
+- [bitcoin.design](https://bitcoin.design/) Discord community (find us on the #alby channel)
+- Read the [Alby developer guide](https://guides.getalby.com/overall-guide/alby-for-developers/getting-started) to better understand how Alby packages and APIs can be used to power your app.
 
 ## License
 

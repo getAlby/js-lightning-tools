@@ -1,10 +1,11 @@
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
-import { Event, NostrResponse, ZapArgs, ZapOptions } from '../types';
+import { Event, NostrResponse, ZapArgs, ZapOptions } from "../types";
 
-export async function generateZapEvent({
-  satoshi, comment, p, e, relays
-}: ZapArgs, options: ZapOptions = {}): Promise<Event> {
+export async function generateZapEvent(
+  { satoshi, comment, p, e, relays }: ZapArgs,
+  options: ZapOptions = {},
+): Promise<Event> {
   const nostr = options.nostr || globalThis.nostr;
   if (!nostr) {
     throw new Error("nostr option or window.nostr is not available");
@@ -12,13 +13,13 @@ export async function generateZapEvent({
 
   const nostrTags = [
     ["relays", ...relays],
-    ["amount", satoshi.toString()]
-  ]
+    ["amount", satoshi.toString()],
+  ];
   if (p) {
     nostrTags.push(["p", p]);
   }
   if (e) {
-    nostrTags.push(["e", e])
+    nostrTags.push(["e", e]);
   }
 
   const pubkey = await nostr.getPublicKey();
@@ -28,11 +29,11 @@ export async function generateZapEvent({
     created_at: Math.floor(Date.now() / 1000),
     kind: 9734,
     tags: nostrTags,
-    content: comment ?? ""
-  }
+    content: comment ?? "",
+  };
 
-  nostrEvent.id = getEventHash(nostrEvent)
-  return await nostr.signEvent(nostrEvent)
+  nostrEvent.id = getEventHash(nostrEvent);
+  return await nostr.signEvent(nostrEvent);
 }
 
 export function validateEvent(event: Event): boolean {
@@ -72,7 +73,10 @@ export function getEventHash(event: Event): string {
   return sha256(serializeEvent(event)).toString(Hex);
 }
 
-export function parseNostrResponse(nostrData: NostrResponse, username: string | undefined) {
+export function parseNostrResponse(
+  nostrData: NostrResponse,
+  username: string | undefined,
+) {
   let nostrPubkey: string | undefined;
   let nostrRelays: string[] | undefined;
   if (username && nostrData) {
