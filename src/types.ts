@@ -2,7 +2,7 @@ export type KeysendResponse = {
   customKey: string;
   customValue: string;
   destination: string;
-}
+};
 
 export type LnUrlPayResponse = {
   callback: string;
@@ -19,7 +19,7 @@ export type LnUrlPayResponse = {
   rawData: { [key: string]: string | number };
   allowsNostr: boolean;
   payerData?: LUD18ServicePayerData;
-}
+};
 
 export type LUD18ServicePayerData = Partial<{
   name: { mandatory: boolean };
@@ -27,10 +27,11 @@ export type LUD18ServicePayerData = Partial<{
   identifier: { mandatory: boolean };
   email: { mandatory: boolean };
   auth: {
-     mandatory: boolean;
-     k1: string;
+    mandatory: boolean;
+    k1: string;
   };
-}> & Record<string, unknown>;
+}> &
+  Record<string, unknown>;
 
 export type LUD18PayerData = Partial<{
   name?: string;
@@ -41,19 +42,19 @@ export type LUD18PayerData = Partial<{
     key: string;
     sig: string;
   };
-}> & Record<string, unknown>;
-
+}> &
+  Record<string, unknown>;
 
 export type NostrResponse = {
-  names: Record<string, string>
-  relays: Record<string, string[]>
-}
+  names: Record<string, string>;
+  relays: Record<string, string[]>;
+};
 
 export type InvoiceArgs = {
   pr: string;
   verify?: string;
   preimage?: string;
-}
+};
 
 export type Event = {
   id?: string;
@@ -71,22 +72,24 @@ export type ZapArgs = {
   relays: string[];
   p?: string;
   e?: string; // note you are zapping, optional
-}
+};
 
 export type NostrProvider = {
   getPublicKey(): Promise<string>;
-  signEvent(event: Event & {
-    pubkey: string;
-    id: string;
-}): Promise<Event>;
-}
+  signEvent(
+    event: Event & {
+      pubkey: string;
+      id: string;
+    },
+  ): Promise<Event>;
+};
 
 export type ZapOptions = {
   nostr?: NostrProvider;
-}
+};
 
 export type RequestInvoiceArgs = {
   satoshi: number;
   comment?: string;
   payerdata?: LUD18PayerData;
-}
+};

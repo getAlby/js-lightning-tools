@@ -15,15 +15,13 @@ export class MemoryStorage {
 }
 
 export class NoStorage {
-  constructor(initial?: any) {
-  }
+  constructor(initial?: any) {}
 
   getItem(key) {
     return null;
   }
 
-  setItem(key, value) {
-  }
+  setItem(key, value) {}
 }
 
 export default MemoryStorage;

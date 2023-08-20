@@ -1,5 +1,5 @@
 import MemoryStorage from "../utils/storage";
-import { WebLNProvider } from '@webbtc/webln-types';
+import { WebLNProvider } from "@webbtc/webln-types";
 import { parseL402 } from "./parse";
 
 export * as storage from "../utils/storage";
@@ -7,7 +7,11 @@ const memoryStorage = new MemoryStorage();
 
 const HEADER_KEY = "L402"; // we have to update this to L402 at some point
 
-export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>, options: Record<string, any>) => {
+export const fetchWithL402 = async (
+  url: string,
+  fetchArgs: Record<string, any>,
+  options: Record<string, any>,
+) => {
   if (!options) {
     options = {};
   }
@@ -20,23 +24,25 @@ export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>,
   if (!fetchArgs) {
     fetchArgs = {};
   }
-  fetchArgs.cache = 'no-store';
-  fetchArgs.mode = 'cors';
+  fetchArgs.cache = "no-store";
+  fetchArgs.mode = "cors";
   if (!fetchArgs.headers) {
     fetchArgs.headers = {};
   }
   const cachedL402Data = store.getItem(url);
   if (cachedL402Data) {
     const data = JSON.parse(cachedL402Data);
-    fetchArgs.headers["Authorization"] = `${headerKey} ${data.token}:${data.preimage}`;
-    return await fetch(url, fetchArgs)
+    fetchArgs.headers[
+      "Authorization"
+    ] = `${headerKey} ${data.token}:${data.preimage}`;
+    return await fetch(url, fetchArgs);
   }
 
   fetchArgs.headers["Accept-Authenticate"] = headerKey;
   const initResp = await fetch(url, fetchArgs);
-  const header = initResp.headers.get('www-authenticate');
+  const header = initResp.headers.get("www-authenticate");
   if (!header) {
-    return initResp
+    return initResp;
   }
 
   const details = parseL402(header);
@@ -46,13 +52,18 @@ export const fetchWithL402 = async (url: string, fetchArgs: Record<string, any>,
   await webln.enable();
   const invResp = await webln.sendPayment(inv);
 
-  store.setItem(url, JSON.stringify({
-    'token': token,
-    'preimage': invResp.preimage
-  }));
+  store.setItem(
+    url,
+    JSON.stringify({
+      token: token,
+      preimage: invResp.preimage,
+    }),
+  );
 
-  fetchArgs.headers["Authorization"] = `${headerKey} ${token}:${invResp.preimage}`;
+  fetchArgs.headers[
+    "Authorization"
+  ] = `${headerKey} ${token}:${invResp.preimage}`;
   return await fetch(url, fetchArgs);
-}
+};
 
 export default fetchWithL402;

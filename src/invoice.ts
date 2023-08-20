@@ -1,7 +1,7 @@
 import { getHashFromInvoice } from "./utils/invoice";
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
-import { InvoiceArgs } from './types';
+import { InvoiceArgs } from "./types";
 
 export default class Invoice {
   paymentRequest: string;
@@ -17,34 +17,33 @@ export default class Invoice {
   }
 
   async isPaid(): Promise<boolean> {
-    if (this.preimage)
-      return this.validatePreimage(this.preimage);
+    if (this.preimage) return this.validatePreimage(this.preimage);
     else if (this.verify) {
       return await this.verifyPayment();
     } else {
-      throw new Error('Could not verify payment');
+      throw new Error("Could not verify payment");
     }
   }
 
   validatePreimage(preimage: string): boolean {
-    if (!preimage || !this.paymentHash) return false
-  
+    if (!preimage || !this.paymentHash) return false;
+
     try {
-      const preimageHash = sha256(Hex.parse(preimage)).toString(Hex)
-      return this.paymentHash === preimageHash
+      const preimageHash = sha256(Hex.parse(preimage)).toString(Hex);
+      return this.paymentHash === preimageHash;
     } catch {
-      return false
+      return false;
     }
   }
 
   async verifyPayment(): Promise<boolean> {
-    if (!this.verify) throw new Error('LNURL verify not available');
+    if (!this.verify) throw new Error("LNURL verify not available");
     const result = await fetch(this.verify);
     const json = await result.json();
     if (json.preimage) {
       this.preimage = json.preimage;
     }
-  
+
     return json.settled;
   }
 }
