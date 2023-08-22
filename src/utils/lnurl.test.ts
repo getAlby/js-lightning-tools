@@ -17,11 +17,11 @@ describe("isUrl", () => {
   test("url must be a valid http URL", () => {
     expect(
       isUrl(
-        "lnurl1dp68gurn8ghj7em9w3skccne9e3k7mf0d3h82unvwqhksetvd3hj7cmpd3kxyctrdvlkzmt0w4h8g0f3xqcrqvpssx932j",
-      ),
+        "lnurl1dp68gurn8ghj7em9w3skccne9e3k7mf0d3h82unvwqhksetvd3hj7cmpd3kxyctrdvlkzmt0w4h8g0f3xqcrqvpssx932j"
+      )
     ).toBe(false);
     expect(
-      isUrl("https://getalby.com/lnurlp/hello/callback?amount=100000"),
+      isUrl("https://getalby.com/lnurlp/hello/callback?amount=100000")
     ).toBe(true);
   });
 });
