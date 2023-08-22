@@ -2,21 +2,21 @@ import { WebLNProvider } from "@webbtc/webln-types";
 
 type BoostOptions = {
   webln?: unknown;
-};
+}
 
 type BoostArguments = {
-  destination: string;
+  destination: string
   customKey?: string;
   customValue?: string;
   amount?: number;
   boost: Boost;
-};
+}
 
 type WeblnBoostParams = {
   destination: string;
   amount: number;
   customRecords: Record<string, string>;
-};
+}
 
 export type Boost = {
   action: string;
@@ -30,7 +30,7 @@ export type Boost = {
   ts: number;
   name: string;
   sender_name: string;
-};
+}
 
 export const boost = async (args: BoostArguments, options?: BoostOptions) => {
   let { boost, amount } = args;
@@ -46,8 +46,8 @@ export const boost = async (args: BoostArguments, options?: BoostOptions) => {
     destination: args.destination,
     amount: amount,
     customRecords: {
-      "7629169": JSON.stringify(boost),
-    },
+      '7629169': JSON.stringify(boost)
+    }
   };
   if (args.customKey && args.customValue) {
     weblnParams.customRecords[args.customKey] = args.customValue;
@@ -55,6 +55,6 @@ export const boost = async (args: BoostArguments, options?: BoostOptions) => {
   await webln.enable();
   const response = await webln.keysend(weblnParams);
   return response;
-};
+}
 
 export default boost;
