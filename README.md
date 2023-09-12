@@ -95,7 +95,7 @@ It is also possible to manually initialize the `Invoice`
 ```js
 const { Invoice } = require("alby-tools");
 
-const invoice = new Invoice({ paymentRequest: pr, preimage: preimage });
+const invoice = new Invoice({ pr: pr, preimage: preimage });
 await invoice.isPaid();
 ```
 
