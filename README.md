@@ -236,7 +236,7 @@ Like `getFiatValue` but returns a formatted string for a given locale using Java
 ```js
 await getFiatValue(satoshi: 2100, currency: 'eur');
 await getSatoshiValue(amount: 100, currency: 'eur'); // for 1 EUR
-await getFormattedFiatValue(stoshi: 2100, currency: 'usd', locale: 'en')
+await getFormattedFiatValue(satoshi: 2100, currency: 'usd', locale: 'en')
 ```
 
 ### 🤖 Lightning Address Proxy
