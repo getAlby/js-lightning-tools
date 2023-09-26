@@ -20,9 +20,7 @@ export const isValidAmount = ({
   min: number;
   max: number;
 }): boolean => {
-  const isValid = amount > 0 && amount >= min && amount <= max;
-  const isFixed = min === max;
-  return isValid && isFixed ? amount === min : isValid;
+  return amount > 0 && amount >= min && amount <= max;
 };
 
 const TAG_PAY_REQUEST = "payRequest";
