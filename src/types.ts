@@ -4,6 +4,17 @@ export type KeysendResponse = {
   destination: string;
 };
 
+export type LnUrlRawData = {
+  tag: string;
+  callback: string;
+  minSendable: number;
+  maxSendable: number;
+  metadata: string;
+  payerData?: LUD18ServicePayerData;
+  commentAllowed?: number;
+  allowsNostr?: boolean;
+};
+
 export type LnUrlPayResponse = {
   callback: string;
   fixed: boolean;
@@ -16,7 +27,7 @@ export type LnUrlPayResponse = {
   description: string;
   image: string;
   commentAllowed?: number;
-  rawData: { [key: string]: string | number };
+  rawData: LnUrlRawData;
   allowsNostr: boolean;
   payerData?: LUD18ServicePayerData;
 };

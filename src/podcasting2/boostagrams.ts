@@ -33,16 +33,15 @@ export type Boost = {
 };
 
 export const boost = async (args: BoostArguments, options?: BoostOptions) => {
-  let { boost, amount } = args;
+  const { boost } = args;
   if (!options) {
     options = {};
   }
   const webln: WebLNProvider = options.webln || globalThis.webln;
-  if (!amount) {
-    amount = Math.floor(boost.value_msat / 1000);
-  }
 
-  let weblnParams: WeblnBoostParams = {
+  const amount = args.amount || Math.floor(boost.value_msat / 1000);
+
+  const weblnParams: WeblnBoostParams = {
     destination: args.destination,
     amount: amount,
     customRecords: {

@@ -9,8 +9,12 @@ const HEADER_KEY = "L402"; // we have to update this to L402 at some point
 
 export const fetchWithL402 = async (
   url: string,
-  fetchArgs: Record<string, any>,
-  options: Record<string, any>,
+  fetchArgs: RequestInit,
+  options: {
+    headerKey?: string;
+    webln?: WebLNProvider;
+    store?: Storage;
+  },
 ) => {
   if (!options) {
     options = {};
@@ -20,7 +24,7 @@ export const fetchWithL402 = async (
   if (!webln) {
     throw new Error("WebLN is missing");
   }
-  let store = options.store || memoryStorage;
+  const store = options.store || memoryStorage;
   if (!fetchArgs) {
     fetchArgs = {};
   }

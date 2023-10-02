@@ -1,10 +1,14 @@
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
 
-import type { LUD18ServicePayerData, LnUrlPayResponse } from "../types";
+import type {
+  LUD18ServicePayerData,
+  LnUrlPayResponse,
+  LnUrlRawData,
+} from "../types";
 
 const URL_REGEX =
-  /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/;
+  /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[\w]*))?)/;
 
 export const isUrl = (url: string | null): url is string => {
   if (!url) return false;
@@ -26,9 +30,7 @@ export const isValidAmount = ({
 const TAG_PAY_REQUEST = "payRequest";
 
 // From: https://github.com/dolcalmi/lnurl-pay/blob/main/src/request-pay-service-params.ts
-export const parseLnUrlPayResponse = (
-  data: Record<string, any>,
-): LnUrlPayResponse => {
+export const parseLnUrlPayResponse = (data: LnUrlRawData): LnUrlPayResponse => {
   if (data.tag !== TAG_PAY_REQUEST)
     throw new Error("Invalid pay service params");
 
@@ -67,9 +69,9 @@ export const parseLnUrlPayResponse = (
         break;
     }
   }
-  let payerData = data.payerData as LUD18ServicePayerData | undefined;
+  const payerData = data.payerData as LUD18ServicePayerData | undefined;
 
-  let domain;
+  let domain: string | undefined;
   try {
     domain = new URL(callback).hostname;
   } catch {

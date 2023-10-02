@@ -1,14 +1,7 @@
 import { WebLNProvider } from "@webbtc/webln-types";
 import LightningAddress, { DEFAULT_PROXY } from "./lightning-address";
 import { Event, NostrProvider } from "./types";
-import {
-  UnsignedEvent,
-  finishEvent,
-  generatePrivateKey,
-  getEventHash,
-  getPublicKey,
-  signEvent,
-} from "nostr-tools";
+import { finishEvent, generatePrivateKey, getPublicKey } from "nostr-tools";
 
 const dummyWebLN: WebLNProvider = {
   enable: () => Promise.resolve(),

@@ -1,9 +1,10 @@
-import { parseKeysendResponse } from "./utils/keysend";
+import { Data as KeySendRawData, parseKeysendResponse } from "./utils/keysend";
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from "./utils/lnurl";
 import Invoice from "./invoice";
 import {
   InvoiceArgs,
   LnUrlPayResponse,
+  LnUrlRawData,
   NostrResponse,
   RequestInvoiceArgs,
   ZapArgs,
@@ -16,7 +17,7 @@ import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
 import { KeysendResponse } from "./types";
 
 const LN_ADDRESS_REGEX =
-  /^((?:[^<>()\[\]\\.,;:\s@"]+(?:\.[^<>()\[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  /^((?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 export const DEFAULT_PROXY = "https://lnaddressproxy.getalby.com";
 
@@ -81,11 +82,11 @@ export default class LightningAddress {
     const keysendResult = await fetch(this.keysendUrl());
     const nostrResult = await fetch(this.nostrUrl());
 
-    let lnurlData: Record<string, string> | undefined;
+    let lnurlData: LnUrlRawData | undefined;
     if (lnurlResult.ok) {
       lnurlData = await lnurlResult.json();
     }
-    let keysendData: Record<string, string> | undefined;
+    let keysendData: KeySendRawData | undefined;
     if (keysendResult.ok) {
       keysendData = await keysendResult.json();
     }
@@ -243,8 +244,8 @@ export default class LightningAddress {
   }
 
   private parseResponse(
-    lnurlpData: Record<string, string> | undefined,
-    keysendData: Record<string, string> | undefined,
+    lnurlpData: LnUrlRawData | undefined,
+    keysendData: KeySendRawData | undefined,
     nostrData: NostrResponse | undefined,
   ) {
     if (lnurlpData) {
