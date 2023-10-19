@@ -181,6 +181,10 @@ export default class LightningAddress {
       throw new Error("No keysendData available. Please call fetch() first.");
     }
     const { destination, customKey, customValue } = this.keysendData;
+    const webln = this.getWebLN()
+    if (!webln) {
+      throw new Error("WebLN not available");
+    }
     return booster(
       {
         destination,
@@ -189,9 +193,7 @@ export default class LightningAddress {
         amount,
         boost,
       },
-      {
-        webln: this.getWebLN(),
-      },
+      { webln },
     );
   }
 
@@ -239,7 +241,6 @@ export default class LightningAddress {
     const invoice = this.zapInvoice(args, options);
     const webln = this.getWebLN()
     if (!webln) {
-      // mainly for TS
       throw new Error("WebLN not available");
     }
     await webln.enable();
