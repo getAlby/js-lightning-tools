@@ -1,6 +1,6 @@
 {
   "name": "@getalby/lightning-tools",
-  "version": "4.0.2",
+  "version": "4.1.0",
   "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
   "source": "src/index.ts",
