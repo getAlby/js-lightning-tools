@@ -40,7 +40,7 @@ export default class LightningAddress {
 
   constructor(address: string, options?: LightningAddressOptions) {
     this.address = address;
-    this.options = { proxy: DEFAULT_PROXY, webln: globalThis.webln };
+    this.options = { proxy: DEFAULT_PROXY };
     this.options = Object.assign(this.options, options);
     this.parse();
     this.webln = this.options.webln;
@@ -52,6 +52,10 @@ export default class LightningAddress {
       this.username = result[1];
       this.domain = result[2];
     }
+  }
+
+  getWebLN() {
+    return this.webln || globalThis.webln
   }
 
   async fetch() {
@@ -177,6 +181,10 @@ export default class LightningAddress {
       throw new Error("No keysendData available. Please call fetch() first.");
     }
     const { destination, customKey, customValue } = this.keysendData;
+    const webln = this.getWebLN()
+    if (!webln) {
+      throw new Error("WebLN not available");
+    }
     return booster(
       {
         destination,
@@ -185,9 +193,7 @@ export default class LightningAddress {
         amount,
         boost,
       },
-      {
-        webln: this.webln,
-      },
+      { webln },
     );
   }
 
@@ -233,12 +239,12 @@ export default class LightningAddress {
     options: ZapOptions = {},
   ): Promise<SendPaymentResponse> {
     const invoice = this.zapInvoice(args, options);
-    if (!this.webln) {
-      // mainly for TS
+    const webln = this.getWebLN()
+    if (!webln) {
       throw new Error("WebLN not available");
     }
-    await this.webln.enable();
-    const response = this.webln.sendPayment((await invoice).paymentRequest);
+    await webln.enable();
+    const response = webln.sendPayment((await invoice).paymentRequest);
     return response;
   }
 
