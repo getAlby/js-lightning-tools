@@ -1,4 +1,4 @@
-import Invoice from "../invoice";
+import Invoice from "./invoice";
 
 const paymentRequestWithoutMemo =
   "lnbc10n1pj4xmazpp5ns890al37jpreen4rlpl6fsw2hlp9n9hm0ts4dvwvcxq8atf4v6qhp50kncf9zk35xg4lxewt4974ry6mudygsztsz8qn3ar8pn3mtpe50scqzzsxqyz5vqsp5k508kdmvfpuac6lvn9wumr9x4mcpnh2t6jyp5kkxcjhueq4xjxqq9qyyssq0m88mwgknhkqfsa9u8e9dp8v93xlm0lqggslzj8mpsnx3mdzm8z5k9ns7g299pfm9zwm4crs00a364cmpraxr54jw5cf2qx9vycucggqz2ggul";
