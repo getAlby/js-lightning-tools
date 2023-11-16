@@ -1,4 +1,4 @@
-import { getHashFromInvoice } from "./utils/invoice";
+import { decodeInvoice } from "./utils/invoice";
 import Hex from "crypto-js/enc-hex.js";
 import sha256 from "crypto-js/sha256.js";
 import { InvoiceArgs } from "./types";
@@ -8,10 +8,29 @@ export default class Invoice {
   paymentHash: string;
   preimage: string | null;
   verify: string | null;
+  satoshi: number;
+  expiry: number; // expiry in seconds (not a timestamp)
+  timestamp: number; // created date in seconds
+  createdDate: Date;
+  expiryDate: Date;
+  description: string | null;
 
   constructor(args: InvoiceArgs) {
     this.paymentRequest = args.pr;
-    this.paymentHash = getHashFromInvoice(this.paymentRequest) as string;
+    if (!this.paymentRequest) {
+      throw new Error("Invalid payment request");
+    }
+    const decodedInvoice = decodeInvoice(this.paymentRequest);
+    if (!decodedInvoice) {
+      throw new Error("Failed to decode payment request");
+    }
+    this.paymentHash = decodedInvoice.paymentHash;
+    this.satoshi = decodedInvoice.satoshi;
+    this.timestamp = decodedInvoice.timestamp;
+    this.expiry = decodedInvoice.expiry;
+    this.createdDate = new Date(this.timestamp * 1000);
+    this.expiryDate = new Date((this.timestamp + this.expiry) * 1000);
+    this.description = decodedInvoice.description ?? null;
     this.verify = args.verify ?? null;
     this.preimage = args.preimage ?? null;
   }
