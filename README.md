@@ -215,6 +215,20 @@ await l402.fetchWithL402(
 );
 ```
 
+### Basic invoice decoding
+
+You can initialize an `Invoice` to decode a payment request.
+
+```js
+const { Invoice } = require("alby-tools");
+
+const invoice = new Invoice({ pr });
+
+const { paymentHash, satoshi, description, createdDate, expiryDate } = invoice;
+```
+
+> If you need more details about the invoice, use a dedicated BOLT11 decoding library.
+
 ### 💵 Fiat conversions
 
 Helpers to convert sats values to fiat and fiat values to sats.
