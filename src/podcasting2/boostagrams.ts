@@ -39,6 +39,13 @@ export const boost = async (args: BoostArguments, options?: BoostOptions) => {
   }
   const webln: WebLNProvider = options.webln || globalThis.webln;
 
+  if (!webln) {
+    throw new Error("WebLN not available");
+  }
+  if (!webln.keysend) {
+    throw new Error("Keysend not available in current WebLN provider");
+  }
+
   const amount = args.amount || Math.floor(boost.value_msat / 1000);
 
   const weblnParams: WeblnBoostParams = {

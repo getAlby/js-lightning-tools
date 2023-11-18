@@ -3,6 +3,7 @@ import { webln } from "alby-js-sdk";
 import "websocket-polyfill";
 import * as crypto from "crypto";
 import { finishEvent, getPublicKey } from "nostr-tools";
+/*global globalThis*/
 globalThis.crypto = crypto;
 
 // your private key is required to sign zap request events
