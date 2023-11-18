@@ -2,14 +2,14 @@ import type { KeysendResponse } from "../types";
 
 const TAG_KEYSEND = "keysend";
 
-export type Data = {
+export type KeySendRawData = {
   tag: string;
   status: string;
   customData: { customKey: string; customValue: string }[];
   pubkey: string;
 };
 
-export const parseKeysendResponse = (data: Data): KeysendResponse => {
+export const parseKeysendResponse = (data: KeySendRawData): KeysendResponse => {
   if (data.tag !== TAG_KEYSEND) throw new Error("Invalid keysend params");
   if (data.status !== "OK") throw new Error("Keysend status not OK");
 

@@ -1,4 +1,4 @@
-import { Data as KeySendRawData, parseKeysendResponse } from "./utils/keysend";
+import { KeySendRawData, parseKeysendResponse } from "./utils/keysend";
 import { isUrl, isValidAmount, parseLnUrlPayResponse } from "./utils/lnurl";
 import Invoice from "./invoice";
 import {
@@ -56,7 +56,7 @@ export default class LightningAddress {
   }
 
   getWebLN() {
-    return this.webln || globalThis.webln
+    return this.webln || globalThis.webln;
   }
 
   async fetch() {
@@ -182,7 +182,7 @@ export default class LightningAddress {
       throw new Error("No keysendData available. Please call fetch() first.");
     }
     const { destination, customKey, customValue } = this.keysendData;
-    const webln = this.getWebLN()
+    const webln = this.getWebLN();
     if (!webln) {
       throw new Error("WebLN not available");
     }
@@ -240,7 +240,7 @@ export default class LightningAddress {
     options: ZapOptions = {},
   ): Promise<SendPaymentResponse> {
     const invoice = this.zapInvoice(args, options);
-    const webln = this.getWebLN()
+    const webln = this.getWebLN();
     if (!webln) {
       throw new Error("WebLN not available");
     }
