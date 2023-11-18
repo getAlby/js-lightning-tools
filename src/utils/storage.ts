@@ -1,27 +1,27 @@
 export class MemoryStorage {
   storage;
 
-  constructor(initial?: any) {
+  constructor(initial?: Record<string, unknown>) {
     this.storage = initial || {};
   }
 
-  getItem(key) {
+  getItem(key: string) {
     return this.storage[key];
   }
 
-  setItem(key, value) {
+  setItem(key: string, value: unknown) {
     this.storage[key] = value;
   }
 }
 
 export class NoStorage {
-  constructor(initial?: any) {}
+  constructor(initial?: unknown) {}
 
-  getItem(key) {
+  getItem(key: string) {
     return null;
   }
 
-  setItem(key, value) {}
+  setItem(key: string, value: unknown) {}
 }
 
 export default MemoryStorage;
