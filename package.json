@@ -48,7 +48,7 @@
     "light-bolt11-decoder": "^3.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.7.1",
+    "@commitlint/cli": "^18.4.2",
     "@commitlint/config-conventional": "^17.7.0",
     "@types/crypto-js": "^4.1.1",
     "@types/jest": "^29.4.0",
