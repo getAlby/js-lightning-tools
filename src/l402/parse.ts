@@ -1,6 +1,6 @@
-export const parseL402 = (string) => {
+export const parseL402 = (input: string): Record<string, string> => {
   // Remove the L402 and LSAT identifiers
-  string = string.replace("L402", "").replace("LSAT", "").trim();
+  const string = input.replace("L402", "").replace("LSAT", "").trim();
 
   // Initialize an object to store the key-value pairs
   const keyValuePairs = {};
