@@ -1,16 +1,20 @@
 export const parseL402 = (string) => {
-  string = string.replace("L402", "");
-  string = string.replace("LSAT", "");
-  // Split the string into key-value pairs
-  const pairs = string.split(",");
+  // Remove the L402 and LSAT identifiers
+  string = string.replace("L402", "").replace("LSAT", "").trim();
 
-  // Split each pair into key and value
-  const keyValuePairArray = pairs.map((pair) => {
-    const [key, valuePotentiallyQuoted] = pair.split("=").map((e) => e.trim());
-    const valueMatch = valuePotentiallyQuoted.match(/"?([^"]*)"?/);
-    const value = valueMatch[1];
-    return [key, value];
-  });
+  // Initialize an object to store the key-value pairs
+  const keyValuePairs = {};
 
-  return Object.fromEntries(keyValuePairArray);
+  // Regular expression to match key and (quoted or unquoted) value
+  const regex = /(\w+)=("([^"]*)"|'([^']*)'|([^,]*))/g;
+  let match;
+
+  // Use regex to find all key-value pairs
+  while ((match = regex.exec(string)) !== null) {
+    // Key is always match[1]
+    // Value is either match[3] (double-quoted), match[4] (single-quoted), or match[5] (unquoted)
+    keyValuePairs[match[1]] = match[3] || match[4] || match[5];
+  }
+
+  return keyValuePairs;
 };
