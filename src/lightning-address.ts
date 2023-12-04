@@ -133,7 +133,7 @@ export default class LightningAddress {
         throw new Error("Valid callback does not exist in lnurlpData");
       const callbackUrl = new URL(this.lnurlpData.callback);
       callbackUrl.search = new URLSearchParams(params).toString();
-      const invoiceResult = await fetch(callbackUrl);
+      const invoiceResult = await fetch(callbackUrl.toString());
       data = await invoiceResult.json();
     }
 
