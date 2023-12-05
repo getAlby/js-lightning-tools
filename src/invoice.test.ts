@@ -27,4 +27,15 @@ describe("Invoice", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithMemo });
     expect(decodedInvoice.description).toBe("Test memo");
   });
+
+  test("validate preimage", async () => {
+    const decodedInvoice = new Invoice({
+      pr: "lnbc120n1p3ecwp5pp5z8n0tzytydn57x6q0kqgfearewkx6kdh90svrkrc64azwy9jpnfqdq4f35kw6r5wdshgueqw35hqcqzpgxqyz5vqsp535pwwk083jvpnf87nl3mr4ext8q5f576s57cds72nvu7fpr037nq9qyyssqtq40wszjzs0vpaka2uckjf4xs2fu24f4vp9eev8r230m6epcp2kxdg8xztlw89p2kzkdpadujuflv6f8avgw3jhnvcxjkegdtydd95sp8hwns5",
+    });
+    expect(
+      await decodedInvoice.validatePreimage(
+        "dedbef581d83342848d99c02519053f01856add237f94437bc9bbec7bd6f6e55",
+      ),
+    ).toBe(true);
+  });
 });

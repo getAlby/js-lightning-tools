@@ -1,7 +1,7 @@
 import { decodeInvoice } from "./utils/invoice";
-import Hex from "crypto-js/enc-hex.js";
-import sha256 from "crypto-js/sha256.js";
 import { InvoiceArgs } from "./types";
+import { sha256 } from "./utils/sha256";
+import { fromHexString } from "./utils/hex";
 
 export default class Invoice {
   paymentRequest: string;
@@ -44,11 +44,11 @@ export default class Invoice {
     }
   }
 
-  validatePreimage(preimage: string): boolean {
+  async validatePreimage(preimage: string): Promise<boolean> {
     if (!preimage || !this.paymentHash) return false;
 
     try {
-      const preimageHash = sha256(Hex.parse(preimage)).toString(Hex);
+      const preimageHash = await sha256(fromHexString(preimage));
       return this.paymentHash === preimageHash;
     } catch {
       return false;

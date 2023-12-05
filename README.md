@@ -20,9 +20,20 @@ yarn add @getalby/lightning-tools
 
 or for use without any build tools:
 
-```
-// lightning-tools now available at window.lightningTools
-<script src="https://cdn.jsdelivr.net/npm/@getalby/lightning-tools@latest/dist/index.browser.js"></script>
+```html
+<script type="module">
+  import { LightningAddress } from "https://cdn.skypack.dev/@getalby/lightning-tools@5.0.0";
+  // or import { LightningAddress } from "https://cdn.jsdelivr.net/npm/@getalby/lightning-tools@5.0.0/dist/index.modern.js";
+
+  // use LightningAddress normally...
+  (async () => {
+    const ln = new LightningAddress("hello@getalby.com");
+    // fetch the LNURL data
+    await ln.fetch();
+    // get the LNURL-pay data:
+    console.log(ln.lnurlpData);
+  })();
+</script>
 ```
 
 **This library relies on a global `fetch()` function which will work in [browsers](https://caniuse.com/?search=fetch) and node v18 or newer.** (In older versions you have to use a polyfill.)
@@ -179,7 +190,7 @@ import { fetchWithL402 } from "@getalby/lightning-tools";
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: window.localStorage },
+  { store: window.localStorage }
 )
   .then((res) => res.json())
   .then(console.log);
@@ -198,7 +209,7 @@ const nwc = new webln.NostrWebLNProvider({
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { webln: nwc },
+  { webln: nwc }
 )
   .then((res) => res.json())
   .then(console.log);
@@ -211,7 +222,7 @@ import { l402 } from "@getalby/lightning-tools";
 await l402.fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: new l402.storage.NoStorage() },
+  { store: new l402.storage.NoStorage() }
 );
 ```
 
