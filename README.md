@@ -22,8 +22,7 @@ or for use without any build tools:
 
 ```html
 <script type="module">
-  import { LightningAddress } from "https://cdn.skypack.dev/@getalby/lightning-tools@5.0.0";
-  // or import { LightningAddress } from "https://cdn.jsdelivr.net/npm/@getalby/lightning-tools@5.0.0/dist/index.modern.js";
+  import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0"; // jsdelivr.net, skypack.dev also work
 
   // use LightningAddress normally...
   (async () => {
