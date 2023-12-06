@@ -1,3 +1,5 @@
+import * as crypto from "crypto"; // or 'node:crypto'
+global.crypto = crypto;
 import { LightningAddress } from "@getalby/lightning-tools";
 
 const ln = new LightningAddress("hello@getalby.com");

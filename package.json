@@ -38,7 +38,7 @@
     "format:fix": "prettier --loglevel silent --write '**/*.(md|json)' 'src/**/*.(js|ts)' 'examples/**/*.js'",
     "test": "jest",
     "clean": "rm -rf dist",
-    "build": "microbundle --no-sourcemap --external crypto",
+    "build": "microbundle --no-sourcemap",
     "dev": "microbundle watch",
     "prepare": "husky install"
   },

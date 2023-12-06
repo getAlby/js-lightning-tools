@@ -272,13 +272,25 @@ This library uses a [proxy](https://github.com/getAlby/lightning-address-details
 
 You can disable the proxy by explicitly setting the proxy to false when initializing a lightning address:
 
+```js
+const lightningAddress = new LightningAddress("hello@getalby.com", {
+  proxy: false,
+});
 ```
-const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
+
+## crypto dependency
+
+If you get an `crypto is not defined` in NodeJS error you have to import it first:
+
+```js
+import * as crypto from 'crypto'; // or 'node:crypto'
+globalThis.crypto = crypto as any;
+//or: global.crypto = require('crypto');
 ```
 
 ## fetch() dependency
 
-This library relies on a global fetch object which will work in browsers and node v18.x or newer. In old version yoi can manually install a global fetch option or polyfill if needed.
+This library relies on a global fetch object which will work in browsers and node v18.x or newer. In old version you can manually install a global fetch option or polyfill if needed.
 
 For example:
 
