@@ -1,6 +1,5 @@
-import Hex from "crypto-js/enc-hex.js";
-import sha256 from "crypto-js/sha256.js";
 import { Event, NostrResponse, ZapArgs, ZapOptions } from "../types";
+import { sha256 } from "./sha256";
 
 export async function generateZapEvent(
   { satoshi, comment, p, e, relays }: ZapArgs,
@@ -32,7 +31,7 @@ export async function generateZapEvent(
     content: comment ?? "",
   };
 
-  nostrEvent.id = getEventHash(nostrEvent);
+  nostrEvent.id = await getEventHash(nostrEvent);
   return await nostr.signEvent(nostrEvent);
 }
 
@@ -69,8 +68,8 @@ export function serializeEvent(evt: Event): string {
   ]);
 }
 
-export function getEventHash(event: Event): string {
-  return sha256(serializeEvent(event)).toString(Hex);
+export function getEventHash(event: Event): Promise<string> {
+  return sha256(serializeEvent(event));
 }
 
 export function parseNostrResponse(

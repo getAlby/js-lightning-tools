@@ -27,7 +27,7 @@ describe("isUrl", () => {
 });
 
 describe("parseLnUrlPayResponse", () => {
-  test("min/max must be in millisats", () => {
+  test("min/max must be in millisats", async () => {
     const response = {
       status: "OK",
       tag: "payRequest",
@@ -42,7 +42,7 @@ describe("parseLnUrlPayResponse", () => {
         "79f00d3f5a19ec806189fcab03c1be4ff81d18ee4f653c88fac41fe03570f432",
       allowsNostr: true,
     };
-    const parsed = parseLnUrlPayResponse(response);
+    const parsed = await parseLnUrlPayResponse(response);
     expect(parsed.min).toBe(1000);
     expect(parsed.max).toBe(11000000000);
   });

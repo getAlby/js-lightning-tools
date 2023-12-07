@@ -20,9 +20,19 @@ yarn add @getalby/lightning-tools
 
 or for use without any build tools:
 
-```
-// lightning-tools now available at window.lightningTools
-<script src="https://cdn.jsdelivr.net/npm/@getalby/lightning-tools@latest/dist/index.browser.js"></script>
+```html
+<script type="module">
+  import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0"; // jsdelivr.net, skypack.dev also work
+
+  // use LightningAddress normally...
+  (async () => {
+    const ln = new LightningAddress("hello@getalby.com");
+    // fetch the LNURL data
+    await ln.fetch();
+    // get the LNURL-pay data:
+    console.log(ln.lnurlpData);
+  })();
+</script>
 ```
 
 **This library relies on a global `fetch()` function which will work in [browsers](https://caniuse.com/?search=fetch) and node v18 or newer.** (In older versions you have to use a polyfill.)
@@ -179,7 +189,7 @@ import { fetchWithL402 } from "@getalby/lightning-tools";
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: window.localStorage },
+  { store: window.localStorage }
 )
   .then((res) => res.json())
   .then(console.log);
@@ -198,7 +208,7 @@ const nwc = new webln.NostrWebLNProvider({
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { webln: nwc },
+  { webln: nwc }
 )
   .then((res) => res.json())
   .then(console.log);
@@ -211,7 +221,7 @@ import { l402 } from "@getalby/lightning-tools";
 await l402.fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: new l402.storage.NoStorage() },
+  { store: new l402.storage.NoStorage() }
 );
 ```
 
@@ -262,13 +272,25 @@ This library uses a [proxy](https://github.com/getAlby/lightning-address-details
 
 You can disable the proxy by explicitly setting the proxy to false when initializing a lightning address:
 
+```js
+const lightningAddress = new LightningAddress("hello@getalby.com", {
+  proxy: false,
+});
 ```
-const lightningAddress = new LightningAddress("hello@getalby.com", {proxy: false});
+
+## crypto dependency
+
+If you get an `crypto is not defined` in NodeJS error you have to import it first:
+
+```js
+import * as crypto from 'crypto'; // or 'node:crypto'
+globalThis.crypto = crypto as any;
+//or: global.crypto = require('crypto');
 ```
 
 ## fetch() dependency
 
-This library relies on a global fetch object which will work in browsers and node v18.x or newer. In old version yoi can manually install a global fetch option or polyfill if needed.
+This library relies on a global fetch object which will work in browsers and node v18.x or newer. In old version you can manually install a global fetch option or polyfill if needed.
 
 For example:
 

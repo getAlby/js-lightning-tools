@@ -1,6 +1,6 @@
 {
   "name": "@getalby/lightning-tools",
-  "version": "4.2.1",
+  "version": "5.0.0",
   "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
   "source": "src/index.ts",
@@ -36,21 +36,16 @@
     "tsc:compile": "tsc --noEmit",
     "format": "prettier --check '**/*.(md|json)' 'src/**/*.(js|ts)' 'examples/**/*.js'",
     "format:fix": "prettier --loglevel silent --write '**/*.(md|json)' 'src/**/*.(js|ts)' 'examples/**/*.js'",
-    "build:browser": "cp src/window.js dist && browserify dist/window.js > dist/index.browser.js",
     "test": "jest",
     "clean": "rm -rf dist",
-    "build": "microbundle && yarn build:browser",
+    "build": "microbundle --no-sourcemap",
     "dev": "microbundle watch",
     "prepare": "husky install"
   },
-  "dependencies": {
-    "crypto-js": "^4.1.1",
-    "light-bolt11-decoder": "^3.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-conventional": "^17.7.0",
-    "@types/crypto-js": "^4.1.1",
     "@types/jest": "^29.4.0",
     "@types/node": "^20.8.2",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
@@ -62,6 +57,7 @@
     "husky": "^8.0.3",
     "jest": "^29.5.0",
     "jest-fetch-mock": "^3.0.3",
+    "light-bolt11-decoder": "^3.0.0",
     "lint-staged": "^14.0.0",
     "microbundle": "^0.15.1",
     "nostr-tools": "^1.17.0",

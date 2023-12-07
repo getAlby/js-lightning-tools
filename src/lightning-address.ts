@@ -75,7 +75,7 @@ export default class LightningAddress {
     );
     const json = await result.json();
 
-    this.parseResponse(json.lnurlp, json.keysend, json.nostr);
+    await this.parseResponse(json.lnurlp, json.keysend, json.nostr);
   }
 
   async fetchWithoutProxy() {
@@ -99,7 +99,7 @@ export default class LightningAddress {
       nostrData = await nostrResult.json();
     }
 
-    this.parseResponse(lnurlData, keysendData, nostrData);
+    await this.parseResponse(lnurlData, keysendData, nostrData);
   }
 
   lnurlpUrl() {
@@ -249,13 +249,13 @@ export default class LightningAddress {
     return response;
   }
 
-  private parseResponse(
+  private async parseResponse(
     lnurlpData: LnUrlRawData | undefined,
     keysendData: KeySendRawData | undefined,
     nostrData: NostrResponse | undefined,
   ) {
     if (lnurlpData) {
-      this.lnurlpData = parseLnUrlPayResponse(lnurlpData);
+      this.lnurlpData = await parseLnUrlPayResponse(lnurlpData);
     }
     if (keysendData) {
       this.keysendData = parseKeysendResponse(keysendData);

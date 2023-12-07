@@ -1,11 +1,9 @@
-import Hex from "crypto-js/enc-hex.js";
-import sha256 from "crypto-js/sha256.js";
-
 import type {
   LUD18ServicePayerData,
   LnUrlPayResponse,
   LnUrlRawData,
 } from "../types";
+import { sha256 } from "./sha256";
 
 const URL_REGEX =
   /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[\w]*))?)/;
@@ -30,7 +28,9 @@ export const isValidAmount = ({
 const TAG_PAY_REQUEST = "payRequest";
 
 // From: https://github.com/dolcalmi/lnurl-pay/blob/main/src/request-pay-service-params.ts
-export const parseLnUrlPayResponse = (data: LnUrlRawData): LnUrlPayResponse => {
+export const parseLnUrlPayResponse = async (
+  data: LnUrlRawData,
+): Promise<LnUrlPayResponse> => {
   if (data.tag !== TAG_PAY_REQUEST)
     throw new Error("Invalid pay service params");
 
@@ -45,10 +45,10 @@ export const parseLnUrlPayResponse = (data: LnUrlRawData): LnUrlPayResponse => {
   let metadataHash: string;
   try {
     metadata = JSON.parse(data.metadata + "");
-    metadataHash = sha256(data.metadata + "").toString(Hex);
+    metadataHash = await sha256(data.metadata + "");
   } catch {
     metadata = [];
-    metadataHash = sha256("[]").toString(Hex);
+    metadataHash = await sha256("[]");
   }
 
   let image = "";
