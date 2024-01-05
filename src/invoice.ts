@@ -9,10 +9,10 @@ export default class Invoice {
   preimage: string | null;
   verify: string | null;
   satoshi: number;
-  expiry: number; // expiry in seconds (not a timestamp)
+  expiry: number | undefined; // expiry in seconds (not a timestamp)
   timestamp: number; // created date in seconds
   createdDate: Date;
-  expiryDate: Date;
+  expiryDate: Date | undefined;
   description: string | null;
 
   constructor(args: InvoiceArgs) {
@@ -29,7 +29,9 @@ export default class Invoice {
     this.timestamp = decodedInvoice.timestamp;
     this.expiry = decodedInvoice.expiry;
     this.createdDate = new Date(this.timestamp * 1000);
-    this.expiryDate = new Date((this.timestamp + this.expiry) * 1000);
+    this.expiryDate = this.expiry
+      ? new Date((this.timestamp + this.expiry) * 1000)
+      : undefined;
     this.description = decodedInvoice.description ?? null;
     this.verify = args.verify ?? null;
     this.preimage = args.preimage ?? null;
