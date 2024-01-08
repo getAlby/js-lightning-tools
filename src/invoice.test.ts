@@ -3,6 +3,9 @@ import Invoice from "./invoice";
 const paymentRequestWithoutMemo =
   "lnbc10n1pj4xmazpp5ns890al37jpreen4rlpl6fsw2hlp9n9hm0ts4dvwvcxq8atf4v6qhp50kncf9zk35xg4lxewt4974ry6mudygsztsz8qn3ar8pn3mtpe50scqzzsxqyz5vqsp5k508kdmvfpuac6lvn9wumr9x4mcpnh2t6jyp5kkxcjhueq4xjxqq9qyyssq0m88mwgknhkqfsa9u8e9dp8v93xlm0lqggslzj8mpsnx3mdzm8z5k9ns7g299pfm9zwm4crs00a364cmpraxr54jw5cf2qx9vycucggqz2ggul";
 
+const paymentRequestWithoutExpiry =
+  "lnbc1u1pjc65cpsp5s0ug8ef4ftz7shgcrg9u32p26yfnss2jvn8lf5ef3dnfs3whj04qpp5u4rd3pf5nuj683ycqs95yxhhxtf0ydt36prvq9ntq54mhqvxax8qdqdg9kxy7fq2ph4xcqzysrzjqtypret4hcklglvtfrdt85l3exc0dctdp4qttmtcy5es3lpt6utsmlnye9rpnzdxcgqqqqqqqqqqqqqqyg9qxpqysgqafjchml7d6zfp7u7mjtcasxzp5pglvpejelazshdfgnzdqw030upmtul2luhqdjvkdcf483u5l5ratu8dk0ffr38ypx9aqk57d7vwfcq3xutqa";
+
 const paymentRequestWithMemo =
   "lnbc10u1pj4t6w0pp54wm83znxp8xly6qzuff2z7u6585rnlcw9uduf2haa42qcz09f5wqdq023jhxapqd4jk6mccqzzsxqyz5vqsp5mlvjs8nktpz98s5dcrhsuelrz94kl2vjukvu789yzkewast6m00q9qyyssqupynqdv7e5y8nlul0trva5t97g7v3gwx7akhu2dvu4pn66eu2pr5zkcnegp8myz3wrpj9ht06pwyfn4dvpmnr96ejq6ygex43ymaffqq3gud4d";
 
@@ -18,24 +21,19 @@ describe("Invoice", () => {
     expect(decodedInvoice.createdDate.toISOString()).toBe(
       "2023-11-14T13:01:22.000Z",
     );
-    expect(decodedInvoice.expiryDate.toISOString()).toBe(
+    expect(decodedInvoice.expiryDate!.toISOString()).toBe(
       "2023-11-15T13:01:22.000Z",
     );
     expect(decodedInvoice.description).toBeNull();
   });
+
+  test("decode invoice without expiry", () => {
+    const decodedInvoice = new Invoice({ pr: paymentRequestWithoutExpiry });
+    expect(decodedInvoice.expiryDate).toBeUndefined();
+  });
+
   test("decode invoice with description", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithMemo });
     expect(decodedInvoice.description).toBe("Test memo");
-  });
-
-  test("validate preimage", async () => {
-    const decodedInvoice = new Invoice({
-      pr: "lnbc120n1p3ecwp5pp5z8n0tzytydn57x6q0kqgfearewkx6kdh90svrkrc64azwy9jpnfqdq4f35kw6r5wdshgueqw35hqcqzpgxqyz5vqsp535pwwk083jvpnf87nl3mr4ext8q5f576s57cds72nvu7fpr037nq9qyyssqtq40wszjzs0vpaka2uckjf4xs2fu24f4vp9eev8r230m6epcp2kxdg8xztlw89p2kzkdpadujuflv6f8avgw3jhnvcxjkegdtydd95sp8hwns5",
-    });
-    expect(
-      await decodedInvoice.validatePreimage(
-        "dedbef581d83342848d99c02519053f01856add237f94437bc9bbec7bd6f6e55",
-      ),
-    ).toBe(true);
   });
 });

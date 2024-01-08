@@ -4,7 +4,7 @@ type DecodedInvoice = {
   paymentHash: string;
   satoshi: number;
   timestamp: number;
-  expiry: number;
+  expiry: number | undefined;
   description: string | undefined;
 };
 
@@ -32,8 +32,6 @@ export const decodeInvoice = (
 
     const satoshi = parseInt(amountTag.value) / 1000; // millisats
 
-    const expiryTag = decoded.sections.find((value) => value.name === "expiry");
-
     const timestampTag = decoded.sections.find(
       (value) => value.name === "timestamp",
     );
@@ -42,10 +40,12 @@ export const decodeInvoice = (
 
     const timestamp = timestampTag.value;
 
-    if (expiryTag?.name !== "expiry" || expiryTag.value === undefined)
-      return null;
+    let expiry: number | undefined;
+    const expiryTag = decoded.sections.find((value) => value.name === "expiry");
 
-    const expiry = expiryTag.value;
+    if (expiryTag?.name === "expiry") {
+      expiry = expiryTag.value;
+    }
 
     const descriptionTag = decoded.sections.find(
       (value) => value.name === "description",
