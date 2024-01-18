@@ -23,6 +23,6 @@ import { LightningAddress } from "@getalby/lightning-tools";
     // or manually (create an invoice and give it to the user to pay)
     const invoice = await ln.zapInvoice(zapArgs); // generates a zap invoice
     console.log(invoice.paymentRequest); // print the payment request
-    await invoice.isPaid(); // check the payment status as descibed above
+    await invoice.isPaid(); // check the payment status as described above
   }
 })();
