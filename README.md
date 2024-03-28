@@ -173,7 +173,7 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 #### fetchWithL402(url: string, fetchArgs, options)
 
 - url: the L402 protected URL
-- fetchArgs: arguments are passed to the underlaying `fetch()` function used to do the HTTP request
+- fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
   - webln: the webln object used to call `sendPayment()` defaults to globalThis.webln
   - store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
@@ -184,7 +184,7 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 ```js
 import { fetchWithL402 } from "@getalby/lightning-tools";
 
-// this will fetch the resouce and pay the invoice with window.webln.
+// this will fetch the resource and pay the invoice with window.webln.
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
@@ -204,7 +204,7 @@ const nwc = new webln.NostrWebLNProvider({
   nostrWalletConnectUrl: loadNWCUrl(),
 });
 
-// this will fetch the resouce and pay the invoice with a NWC webln object
+// this will fetch the resource and pay the invoice with a NWC webln object
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
@@ -245,7 +245,7 @@ Helpers to convert sats values to fiat and fiat values to sats.
 
 ##### getFiatValue(satoshi: number, currency: string): number
 
-Returns the fiat value for a specified currrency of a satoshi amount
+Returns the fiat value for a specified currency of a satoshi amount
 
 ##### getSatoshiValue(amount: number, currency: string): number
 
