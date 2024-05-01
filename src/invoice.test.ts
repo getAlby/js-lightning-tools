@@ -9,6 +9,9 @@ const paymentRequestWithoutExpiry =
 const paymentRequestWithMemo =
   "lnbc10u1pj4t6w0pp54wm83znxp8xly6qzuff2z7u6585rnlcw9uduf2haa42qcz09f5wqdq023jhxapqd4jk6mccqzzsxqyz5vqsp5mlvjs8nktpz98s5dcrhsuelrz94kl2vjukvu789yzkewast6m00q9qyyssqupynqdv7e5y8nlul0trva5t97g7v3gwx7akhu2dvu4pn66eu2pr5zkcnegp8myz3wrpj9ht06pwyfn4dvpmnr96ejq6ygex43ymaffqq3gud4d";
 
+const signetPaymentRequest =
+  "lntbs758310n1pnryklfpp59hmrqxpmanfm4sh4afnqs80yas294hvscr2lv0scp4hza7gpyf5sdyzgd5xzmnwv4kzqvpwxqcnqvpsxqcrqgr5dusryvpjxsknqdedxvc9gv338g6nyw35xyhrzd3ntgszscfnxdjrgvryvsukzd3n893njvf5x5mnvctzx9nrsv3hv9jrgvty9ycqzzsxqrrsssp5pq5nl5xw9hf4k7xl8d635kd60kgdm0jnwe3tvu7dp8zrfedcyzes9qyyssq8qcl3h6ptahwtc8k7q9qrz8v3r0fhp779wuhykxkmn0x6qegl4x4jga2ykcwf5vu89slhzka0w4n7a9n26qcxgzhg4mdymky8smdvvqpw9t93a";
+
 describe("Invoice", () => {
   test("decode invoice without description", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithoutMemo });
@@ -35,5 +38,10 @@ describe("Invoice", () => {
   test("decode invoice with description", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithMemo });
     expect(decodedInvoice.description).toBe("Test memo");
+  });
+
+  test("decode signet invoice", () => {
+    const decodedInvoice = new Invoice({ pr: signetPaymentRequest });
+    expect(decodedInvoice.satoshi).toBe(75831);
   });
 });
