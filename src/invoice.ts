@@ -58,13 +58,34 @@ export default class Invoice {
   }
 
   async verifyPayment(): Promise<boolean> {
+    const maxAttempts = 3; // Number of retry attempts
+    const retryDelay = 1000; // Delay between attempts in milliseconds
+
     if (!this.verify) throw new Error("LNURL verify not available");
-    const result = await fetch(this.verify);
-    const json = await result.json();
-    if (json.preimage) {
-      this.preimage = json.preimage;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const result = await fetch(this.verify);
+
+        if (result.ok) {
+          const json = await result.json();
+          if (json.preimage) {
+            this.preimage = json.preimage;
+          }
+          return json.settled;
+        } else {
+          console.error(`Network response was not ok: ${result.statusText}`);
+        }
+      } catch (error) {
+        console.error("Network response was not ok:  ", error);
+      }
+
+      if (attempt < maxAttempts) {
+        console.info(`Retrying... (${maxAttempts - attempt} attempts left)`);
+        await new Promise((res) => setTimeout(res, retryDelay)); // wait before retrying
+      }
     }
 
-    return json.settled;
+    return false;
   }
 }
