@@ -46,5 +46,60 @@ describe("parseLnUrlPayResponse", () => {
     expect(parsed.min).toBe(1000);
     expect(parsed.max).toBe(11000000000);
   });
+  test("fixed amount", async () => {
+    const response = {
+      status: "OK",
+      tag: "payRequest",
+      callback: "https://getalby.com/lnurlp/hello/callback",
+      metadata:
+        '[["text/identifier","hello@getalby.com"],["text/plain","Sats for Alby"]]',
+      minSendable: 1000,
+      maxSendable: 1000,
+    };
+    const parsed = await parseLnUrlPayResponse(response);
+    expect(parsed.fixed).toBe(true);
+  });
+  test("exception on invalid callback URL", async () => {
+    const response = {
+      status: "OK",
+      tag: "payRequest",
+      callback: "//getalby.com/lnurlp/hello/callback",
+      metadata:
+        '[["text/identifier","hello@getalby.com"],["text/plain","Sats for Alby"]]',
+      minSendable: 1000,
+      maxSendable: 11000000000,
+    };
+    expect(parseLnUrlPayResponse(response)).rejects.toThrow(
+      "Callback must be a valid url",
+    );
+  });
+  test("identifier must be set", async () => {
+    const response = {
+      status: "OK",
+      tag: "payRequest",
+      callback: "https://getalby.com/lnurlp/hello/callback",
+      metadata:
+        '[["text/identifier","hello@getalby.com"],["text/plain","Sats for Alby"]]',
+      minSendable: 1000,
+      maxSendable: 11000000000,
+    };
+    const parsed = await parseLnUrlPayResponse(response);
+    expect(parsed.identifier).toBe("hello@getalby.com");
+    expect(parsed.email).toBe("");
+  });
+  test("email must be set", async () => {
+    const response = {
+      status: "OK",
+      tag: "payRequest",
+      callback: "https://getalby.com/lnurlp/hello/callback",
+      metadata:
+        '[["text/email","hello@getalby.com"],["text/plain","Sats for Alby"]]',
+      minSendable: 1000,
+      maxSendable: 11000000000,
+    };
+    const parsed = await parseLnUrlPayResponse(response);
+    expect(parsed.identifier).toBe("");
+    expect(parsed.email).toBe("hello@getalby.com");
+  });
   // TODO: add more tests
 });
