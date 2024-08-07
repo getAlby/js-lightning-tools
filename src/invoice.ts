@@ -67,4 +67,12 @@ export default class Invoice {
 
     return json.settled;
   }
+
+  hasExpired() {
+    const { expiryDate } = this;
+    if (expiryDate) {
+      return expiryDate.getTime() < Date.now();
+    }
+    return false;
+  }
 }
