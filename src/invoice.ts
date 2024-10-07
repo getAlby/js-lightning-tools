@@ -69,7 +69,7 @@ export default class Invoice {
 
       return json.settled;
     } catch (error) {
-      console.error("A network error occurred");
+      console.error("failed to check LNURL-verify", error);
       return false;
     }
   }
