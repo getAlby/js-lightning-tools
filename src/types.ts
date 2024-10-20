@@ -24,6 +24,7 @@ export type LnUrlPayResponse = {
   metadata: Array<Array<string>>;
   metadataHash: string;
   identifier: string;
+  email: string;
   description: string;
   image: string;
   commentAllowed?: number;

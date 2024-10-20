@@ -72,4 +72,12 @@ export default class Invoice {
       return false
     }
   }
+
+  hasExpired() {
+    const { expiryDate } = this;
+    if (expiryDate) {
+      return expiryDate.getTime() < Date.now();
+    }
+    return false;
+  }
 }

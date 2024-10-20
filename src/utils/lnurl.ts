@@ -51,6 +51,7 @@ export const parseLnUrlPayResponse = async (
     metadataHash = await sha256("[]");
   }
 
+  let email = "";
   let image = "";
   let description = "";
   let identifier = "";
@@ -62,6 +63,9 @@ export const parseLnUrlPayResponse = async (
         break;
       case "text/identifier":
         identifier = v;
+        break;
+      case "text/email":
+        email = v;
         break;
       case "image/png;base64":
       case "image/jpeg;base64":
@@ -87,6 +91,7 @@ export const parseLnUrlPayResponse = async (
     metadata,
     metadataHash,
     identifier,
+    email,
     description,
     image,
     payerData,
