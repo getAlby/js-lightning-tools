@@ -1,4 +1,5 @@
 import Invoice from "./invoice";
+import fetchMock from "jest-fetch-mock";
 
 const paymentRequestWithoutMemo =
   "lnbc10n1pj4xmazpp5ns890al37jpreen4rlpl6fsw2hlp9n9hm0ts4dvwvcxq8atf4v6qhp50kncf9zk35xg4lxewt4974ry6mudygsztsz8qn3ar8pn3mtpe50scqzzsxqyz5vqsp5k508kdmvfpuac6lvn9wumr9x4mcpnh2t6jyp5kkxcjhueq4xjxqq9qyyssq0m88mwgknhkqfsa9u8e9dp8v93xlm0lqggslzj8mpsnx3mdzm8z5k9ns7g299pfm9zwm4crs00a364cmpraxr54jw5cf2qx9vycucggqz2ggul";
@@ -47,9 +48,57 @@ describe("Invoice", () => {
     expect(decodedInvoice.satoshi).toBe(75831);
   });
 
-  test("did not expired", () => {
+  test("did not expire", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithoutMemo });
     decodedInvoice.expiryDate = new Date(Date.now() + 1000);
     expect(decodedInvoice.hasExpired()).toBe(false);
+  });
+
+  test("verify catches exception", async () => {
+    const invoice = new Invoice({ pr: paymentRequestWithoutMemo });
+    invoice.verify = "https://example.com/verify";
+
+    fetchMock.mockIf(/.*/, (_) => {
+      throw new Error("Something went wrong");
+    });
+
+    const result = await invoice.verifyPayment();
+    expect(result).toBe(false);
+  });
+
+  test("verify settled payment", async () => {
+    const invoice = new Invoice({ pr: paymentRequestWithoutMemo });
+    invoice.verify = "https://example.com/verify";
+    const preimage = "dummy preimage";
+
+    fetchMock.mockIf(/.*/, (_) => {
+      return Promise.resolve(
+        JSON.stringify({
+          settled: true,
+          preimage,
+        }),
+      );
+    });
+
+    const result = await invoice.verifyPayment();
+    expect(result).toBe(true);
+    expect(invoice.preimage).toBe(preimage);
+  });
+
+  test("verify on unsettled payment", async () => {
+    const invoice = new Invoice({ pr: paymentRequestWithoutMemo });
+    invoice.verify = "https://example.com/verify";
+
+    fetchMock.mockIf(/.*/, (_) => {
+      return Promise.resolve(
+        JSON.stringify({
+          settled: false,
+        }),
+      );
+    });
+
+    const result = await invoice.verifyPayment();
+    expect(result).toBe(false);
+    expect(invoice.preimage).toBe(null);
   });
 });

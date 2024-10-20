@@ -59,13 +59,18 @@ export default class Invoice {
 
   async verifyPayment(): Promise<boolean> {
     if (!this.verify) throw new Error("LNURL verify not available");
-    const result = await fetch(this.verify);
-    const json = await result.json();
-    if (json.preimage) {
-      this.preimage = json.preimage;
-    }
+    try {
+      const result = await fetch(this.verify);
+      const json = await result.json();
+      if (json.preimage) {
+        this.preimage = json.preimage;
+      }
 
-    return json.settled;
+      return json.settled;
+    } catch (error) {
+      console.error("failed to check LNURL-verify", error)
+      return false
+    }
   }
 
   hasExpired() {
