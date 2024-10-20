@@ -28,11 +28,13 @@ describe("Invoice", () => {
       "2023-11-15T13:01:22.000Z",
     );
     expect(decodedInvoice.description).toBeNull();
+    expect(decodedInvoice.hasExpired()).toBe(true);
   });
 
   test("decode invoice without expiry", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithoutExpiry });
     expect(decodedInvoice.expiryDate).toBeUndefined();
+    expect(decodedInvoice.hasExpired()).toBe(false);
   });
 
   test("decode invoice with description", () => {
@@ -43,5 +45,11 @@ describe("Invoice", () => {
   test("decode signet invoice", () => {
     const decodedInvoice = new Invoice({ pr: signetPaymentRequest });
     expect(decodedInvoice.satoshi).toBe(75831);
+  });
+
+  test("did not expired", () => {
+    const decodedInvoice = new Invoice({ pr: paymentRequestWithoutMemo });
+    decodedInvoice.expiryDate = new Date(Date.now() + 1000);
+    expect(decodedInvoice.hasExpired()).toBe(false);
   });
 });
