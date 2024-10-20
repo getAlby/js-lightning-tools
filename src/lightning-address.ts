@@ -75,31 +75,45 @@ export default class LightningAddress {
     );
     const json = await result.json();
 
-    await this.parseResponse(json.lnurlp, json.keysend, json.nostr);
+    await this.parseLnUrlPayResponse(json.lnurlp);
+    this.parseKeysendResponse(json.keysend);
+    this.parseNostrResponse(json.nostr);
   }
 
   async fetchWithoutProxy() {
     if (!this.domain || !this.username) {
       return;
     }
+
+    await Promise.all([
+      this.fetchLnurlData(),
+      this.fetchKeysendData(),
+      this.fetchNostrData(),
+    ]);
+  }
+
+  async fetchLnurlData() {
     const lnurlResult = await fetch(this.lnurlpUrl());
-    const keysendResult = await fetch(this.keysendUrl());
-    const nostrResult = await fetch(this.nostrUrl());
-
-    let lnurlData: LnUrlRawData | undefined;
     if (lnurlResult.ok) {
-      lnurlData = await lnurlResult.json();
+      const lnurlData = await lnurlResult.json();
+      await this.parseLnUrlPayResponse(lnurlData);
     }
-    let keysendData: KeySendRawData | undefined;
-    if (keysendResult.ok) {
-      keysendData = await keysendResult.json();
-    }
-    let nostrData: NostrResponse | undefined;
-    if (nostrResult.ok) {
-      nostrData = await nostrResult.json();
-    }
+  }
 
-    await this.parseResponse(lnurlData, keysendData, nostrData);
+  async fetchKeysendData() {
+    const keysendResult = await fetch(this.keysendUrl());
+    if (keysendResult.ok) {
+      const keysendData = await keysendResult.json();
+      this.parseKeysendResponse(keysendData);
+    }
+  }
+
+  async fetchNostrData() {
+    const nostrResult = await fetch(this.nostrUrl());
+    if (nostrResult.ok) {
+      const nostrData = await nostrResult.json();
+      this.parseNostrResponse(nostrData);
+    }
   }
 
   lnurlpUrl() {
@@ -249,17 +263,19 @@ export default class LightningAddress {
     return response;
   }
 
-  private async parseResponse(
-    lnurlpData: LnUrlRawData | undefined,
-    keysendData: KeySendRawData | undefined,
-    nostrData: NostrResponse | undefined,
-  ) {
+  private async parseLnUrlPayResponse(lnurlpData: LnUrlRawData | undefined) {
     if (lnurlpData) {
       this.lnurlpData = await parseLnUrlPayResponse(lnurlpData);
     }
+  }
+
+  private parseKeysendResponse(keysendData: KeySendRawData | undefined) {
     if (keysendData) {
       this.keysendData = parseKeysendResponse(keysendData);
     }
+  }
+
+  private parseNostrResponse(nostrData: NostrResponse | undefined) {
     if (nostrData) {
       [this.nostrData, this.nostrPubkey, this.nostrRelays] = parseNostrResponse(
         nostrData,
