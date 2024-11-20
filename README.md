@@ -216,6 +216,7 @@ await fetchWithL402(
 
 ```js
 import { l402 } from "@getalby/lightning-tools";
+import { fiat } from "@getalby/lightning-tools"
 
 // do not store the tokens
 await l402.fetchWithL402(
@@ -258,9 +259,9 @@ Like `getFiatValue` but returns a formatted string for a given locale using Java
 #### Examples
 
 ```js
-await getFiatValue(satoshi: 2100, currency: 'eur');
-await getSatoshiValue(amount: 100, currency: 'eur'); // for 1 EUR
-await getFormattedFiatValue(satoshi: 2100, currency: 'usd', locale: 'en')
+await fiat.getFiatValue({satoshi: 2100, currency: 'eur'});
+await fiat.getSatoshiValue({amount: 100, currency: 'eur'}); // for 1 EUR
+await fiat.getFormattedFiatValue({satoshi: 2100, currency: 'usd', locale: 'en'})
 ```
 
 ### 🤖 Lightning Address Proxy
