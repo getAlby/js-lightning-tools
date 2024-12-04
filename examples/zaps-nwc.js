@@ -2,7 +2,8 @@ import { LightningAddress } from "@getalby/lightning-tools";
 import { webln } from "alby-js-sdk";
 import "websocket-polyfill";
 import * as crypto from "crypto";
-import { finishEvent, getPublicKey } from "nostr-tools";
+import { finalizeEvent, getPublicKey } from "nostr-tools";
+import { hexToBytes } from "@noble/hashes/utils";
 /*global globalThis*/
 globalThis.crypto = crypto;
 
@@ -23,8 +24,10 @@ if (!nostrPrivateKey || !nostrWalletConnectUrl) {
   });
   // or use nostrWeblnProvider.initNWC(); to get a new NWC url
   const nostrProvider = {
-    getPublicKey: () => Promise.resolve(getPublicKey(nostrPrivateKey)),
-    signEvent: (event) => Promise.resolve(finishEvent(event, nostrPrivateKey)),
+    getPublicKey: () =>
+      Promise.resolve(getPublicKey(hexToBytes(nostrPrivateKey))),
+    signEvent: (event) =>
+      Promise.resolve(finalizeEvent(event, hexToBytes(nostrPrivateKey))),
   };
 
   const ln = new LightningAddress("hello@getalby.com", {
@@ -44,6 +47,6 @@ if (!nostrPrivateKey || !nostrWalletConnectUrl) {
   };
 
   const response = await ln.zap(zapArgs, { nostr: nostrProvider }); // generates a zap invoice
-  console.log("Preimage", response.preimage); // print the preimage
+  console.info("Preimage", response.preimage); // print the preimage
   nostrWeblnProvider.close();
 })();

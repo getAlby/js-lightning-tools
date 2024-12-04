@@ -1,7 +1,7 @@
 import { WebLNProvider } from "@webbtc/webln-types";
 import LightningAddress, { DEFAULT_PROXY } from "./lightning-address";
 import { Event, NostrProvider } from "./types";
-import { finishEvent, generatePrivateKey, getPublicKey } from "nostr-tools";
+import { finalizeEvent, generateSecretKey, getPublicKey } from "nostr-tools";
 import fetchMock from "jest-fetch-mock";
 
 const dummyWebLN: WebLNProvider = {
@@ -41,13 +41,13 @@ const dummyWebLN: WebLNProvider = {
   verifyMessage: () => Promise.resolve(),
 };
 
-const nostrPrivateKey = generatePrivateKey();
+const nostrPrivateKey = generateSecretKey();
 const nostrPublicKey = getPublicKey(nostrPrivateKey);
 
 const nostrProvider: NostrProvider = {
   getPublicKey: () => Promise.resolve(nostrPublicKey),
   signEvent: (event: Event) => {
-    return Promise.resolve(finishEvent(event, nostrPrivateKey));
+    return Promise.resolve(finalizeEvent(event, nostrPrivateKey));
   },
 };
 
