@@ -3,7 +3,8 @@ import type {
   LnUrlPayResponse,
   LnUrlRawData,
 } from "../types";
-import { sha256 } from "./sha256";
+import { sha256 } from "@noble/hashes/sha256";
+import { bytesToHex } from "@noble/hashes/utils";
 
 const URL_REGEX =
   /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[\w]*))?)/;
@@ -45,10 +46,10 @@ export const parseLnUrlPayResponse = async (
   let metadataHash: string;
   try {
     metadata = JSON.parse(data.metadata + "");
-    metadataHash = await sha256(data.metadata + "");
+    metadataHash = bytesToHex(sha256(data.metadata + ""));
   } catch {
     metadata = [];
-    metadataHash = await sha256("[]");
+    metadataHash = bytesToHex(sha256("[]"));
   }
 
   let email = "";
