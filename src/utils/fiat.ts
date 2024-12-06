@@ -51,3 +51,49 @@ export const getFormattedFiatValue = async ({
     currency,
   });
 };
+
+// Batch processing for efficient api usage
+export const getBatchFiatValue = async ({
+  satoshiArray,
+  currency
+}: {
+  satoshiArray: number[] | string[];
+  currency: string;
+}) => {
+  const rate = await getFiatBtcRate(currency);
+  return satoshiArray.map((sat) => Number(sat) * rate);
+};
+
+export const getBatchSatoshiValue = async ({
+  amountArray,
+  currency,
+}: {
+  amountArray: number[] | string[];
+  currency: string;
+}) => {
+  const rate = await getFiatBtcRate(currency);
+  return amountArray.map((am) => Math.floor(Number(am) / rate));
+};
+
+export const getBatchFormattedFiatValue = async ({
+  satoshiArray,
+  currency,
+  locale,
+}: {
+  satoshiArray: number[] | string[];
+  currency: string;
+  locale: string;
+}) => {
+  if (!locale) {
+    locale = "en";
+  }
+  const fiatValues = await getBatchFiatValue({ satoshiArray, currency });
+  return fiatValues.map((fv) =>
+      fv.toLocaleString(locale, {
+        style: "currency",
+        currency,
+      }),
+  );
+};
+
+
