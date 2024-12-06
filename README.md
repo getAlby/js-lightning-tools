@@ -197,7 +197,7 @@ await fetchWithL402(
 
 ```js
 import { fetchWithL402 } from "@getalby/lightning-tools";
-import { webln } from "alby-js-sdk";
+import { webln } from "@getalby/sdk";
 
 // use a NWC WebLN provide to do the payments
 const nwc = new webln.NostrWebLNProvider({
@@ -216,7 +216,7 @@ await fetchWithL402(
 
 ```js
 import { l402 } from "@getalby/lightning-tools";
-import { fiat } from "@getalby/lightning-tools"
+import { fiat } from "@getalby/lightning-tools";
 
 // do not store the tokens
 await l402.fetchWithL402(
@@ -259,9 +259,13 @@ Like `getFiatValue` but returns a formatted string for a given locale using Java
 #### Examples
 
 ```js
-await fiat.getFiatValue({satoshi: 2100, currency: 'eur'});
-await fiat.getSatoshiValue({amount: 100, currency: 'eur'}); // for 1 EUR
-await fiat.getFormattedFiatValue({satoshi: 2100, currency: 'usd', locale: 'en'})
+await fiat.getFiatValue({ satoshi: 2100, currency: "eur" });
+await fiat.getSatoshiValue({ amount: 100, currency: "eur" }); // for 1 EUR
+await fiat.getFormattedFiatValue({
+  satoshi: 2100,
+  currency: "usd",
+  locale: "en",
+});
 ```
 
 ### 🤖 Lightning Address Proxy

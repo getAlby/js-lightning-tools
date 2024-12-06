@@ -1,6 +1,7 @@
 import { decodeInvoice } from "./utils/invoice";
 import { InvoiceArgs } from "./types";
-import { sha256 } from "./utils/sha256";
+import { sha256 } from "@noble/hashes/sha256";
+import { bytesToHex } from "@noble/hashes/utils";
 import { fromHexString } from "./utils/hex";
 
 export default class Invoice {
@@ -46,11 +47,11 @@ export default class Invoice {
     }
   }
 
-  async validatePreimage(preimage: string): Promise<boolean> {
+  validatePreimage(preimage: string): boolean {
     if (!preimage || !this.paymentHash) return false;
 
     try {
-      const preimageHash = await sha256(fromHexString(preimage));
+      const preimageHash = bytesToHex(sha256(fromHexString(preimage)));
       return this.paymentHash === preimageHash;
     } catch {
       return false;
@@ -68,8 +69,8 @@ export default class Invoice {
 
       return json.settled;
     } catch (error) {
-      console.error("failed to check LNURL-verify", error)
-      return false
+      console.error("failed to check LNURL-verify", error);
+      return false;
     }
   }
 

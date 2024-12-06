@@ -1,5 +1,6 @@
 import { Event, NostrResponse, ZapArgs, ZapOptions } from "../types";
-import { sha256 } from "./sha256";
+import { sha256 } from "@noble/hashes/sha256";
+import { bytesToHex } from "@noble/hashes/utils";
 
 export async function generateZapEvent(
   { satoshi, comment, p, e, relays }: ZapArgs,
@@ -31,7 +32,7 @@ export async function generateZapEvent(
     content: comment ?? "",
   };
 
-  nostrEvent.id = await getEventHash(nostrEvent);
+  nostrEvent.id = getEventHash(nostrEvent);
   return await nostr.signEvent(nostrEvent);
 }
 
@@ -68,8 +69,8 @@ export function serializeEvent(evt: Event): string {
   ]);
 }
 
-export function getEventHash(event: Event): Promise<string> {
-  return sha256(serializeEvent(event));
+export function getEventHash(event: Event): string {
+  return bytesToHex(sha256(serializeEvent(event)));
 }
 
 export function parseNostrResponse(

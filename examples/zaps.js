@@ -18,11 +18,11 @@ import { LightningAddress } from "@getalby/lightning-tools";
   if (window.webln) {
     // zap in one go with WebLN (https://www.webln.guide) (easiest for web apps)
     const response = await ln.zap(zapArgs); // signs zap request event, generates invoice and pays it
-    console.log(response.preimage); // print the preimage
+    console.info(response.preimage); // print the preimage
   } else {
     // or manually (create an invoice and give it to the user to pay)
     const invoice = await ln.zapInvoice(zapArgs); // generates a zap invoice
-    console.log(invoice.paymentRequest); // print the payment request
+    console.info(invoice.paymentRequest); // print the payment request
     await invoice.isPaid(); // check the payment status as described above
   }
 })();

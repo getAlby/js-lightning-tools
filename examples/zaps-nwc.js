@@ -1,11 +1,8 @@
 import { LightningAddress } from "@getalby/lightning-tools";
-import { webln } from "alby-js-sdk";
+import { webln } from "@getalby/sdk";
 import "websocket-polyfill";
-import * as crypto from "crypto";
 import { finalizeEvent, getPublicKey } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
-/*global globalThis*/
-globalThis.crypto = crypto;
 
 // your private key is required to sign zap request events
 const nostrPrivateKey = process.env.NOSTR_PRIVATE_KEY;
