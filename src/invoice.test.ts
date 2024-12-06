@@ -101,4 +101,20 @@ describe("Invoice", () => {
     expect(result).toBe(false);
     expect(invoice.preimage).toBe(null);
   });
+
+  test("validate preimage", async () => {
+    const invoice = new Invoice({
+      pr: "lntbs1u1pn495zkdqqnp4qvm5zrv3xj48gy00qxa4njj9kkwc948ul053pxe7v5phulpkkjmvzpp507kr6wlmy9mp0zclumet2w4edxlwpc9sz044v5890569kzycwxjqsp5pusvsaaczett7tmlhulaqa5gnqk74xzxyfmdxrhfjjs82587dm5s9qyysgqcqpcxqyz5vqrzjqv4wssly6lgh0u236qs6eqzykp3ka3etrn3lln09cpr53ke9z74s8apyqqqqqqqpj5qqqqqqqqqqqqqq2qrzjq03slkn33pafzmh42j9y6q4sdlsy42s63h57ysf5eel3888hn46hnapyqqqqqqqq5sqqqqlgqqqq86qqjqrk3pm9hs43rvr7ljfa7vx74s6xxwnzcg6ju8sue69sxlftd9ksuk0k0g0uz3ju9dwmhva2hu4rpl8hezllfy944y5trl5kzk7e4n2pcpjqs23j",
+    });
+
+    const validResult = await invoice.validatePreimage(
+      "a7b9eab23a1d8442733f78bdfd408349d3dc29f75afb5b037f44ec7ee3835615",
+    );
+    expect(validResult).toBe(true);
+
+    const invalidResult = await invoice.validatePreimage(
+      "b7b9eab23a1d8442733f78bdfd408349d3dc29f75afb5b037f44ec7ee3835615",
+    );
+    expect(invalidResult).toBe(false);
+  });
 });
