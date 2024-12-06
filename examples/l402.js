@@ -1,5 +1,5 @@
 import { fetchWithL402 } from "@getalby/lightning-tools";
-import { webln } from "alby-js-sdk";
+import { webln } from "@getalby/sdk";
 import "websocket-polyfill";
 
 const url = "https://lsat-weather-api.getalby.repl.co/kigali";
