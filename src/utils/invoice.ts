@@ -25,12 +25,13 @@ export const decodeInvoice = (
 
     const paymentHash = hashTag.value;
 
+    let satoshi = 0;
+
     const amountTag = decoded.sections.find((value) => value.name === "amount");
 
-    if (amountTag?.name !== "amount" || amountTag.value === undefined)
-      return null;
-
-    const satoshi = parseInt(amountTag.value) / 1000; // millisats
+    if (amountTag?.name === "amount" && amountTag.value) {
+      satoshi = parseInt(amountTag.value) / 1000; // millisats
+    }
 
     const timestampTag = decoded.sections.find(
       (value) => value.name === "timestamp",

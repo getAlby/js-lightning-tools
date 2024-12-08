@@ -13,6 +13,9 @@ const paymentRequestWithMemo =
 const signetPaymentRequest =
   "lntbs758310n1pnryklfpp59hmrqxpmanfm4sh4afnqs80yas294hvscr2lv0scp4hza7gpyf5sdyzgd5xzmnwv4kzqvpwxqcnqvpsxqcrqgr5dusryvpjxsknqdedxvc9gv338g6nyw35xyhrzd3ntgszscfnxdjrgvryvsukzd3n893njvf5x5mnvctzx9nrsv3hv9jrgvty9ycqzzsxqrrsssp5pq5nl5xw9hf4k7xl8d635kd60kgdm0jnwe3tvu7dp8zrfedcyzes9qyyssq8qcl3h6ptahwtc8k7q9qrz8v3r0fhp779wuhykxkmn0x6qegl4x4jga2ykcwf5vu89slhzka0w4n7a9n26qcxgzhg4mdymky8smdvvqpw9t93a";
 
+const zeroAmountPaymentRequest =
+  "lnbc1pn42dukpp5wzqdjf8cv7pxa3rpa5vur8804ud0ckt24jctkq6qlr7w25kuc2fsdp82pshjgr5dusyymrfde4jq4mpd3kx2apq24ek2uscqzpuxqr8pqsp5nkrvgqj37ztv2luy6sfg0fgsr4p4rrqw3s3z5g63f8fsxh86u0hq9p4gqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpqysgqu68rgn4k22zlgzuylamdv6zaczf4rwwrrzlhvw672m8cphctk8shsamruj5ymh04jssy6x09fx99ahrsm7z4w840psu2u3nhtfjw50qpf8qku8";
+
 describe("Invoice", () => {
   test("decode invoice without description", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithoutMemo });
@@ -41,6 +44,11 @@ describe("Invoice", () => {
   test("decode invoice with description", () => {
     const decodedInvoice = new Invoice({ pr: paymentRequestWithMemo });
     expect(decodedInvoice.description).toBe("Test memo");
+  });
+
+  test("decode invoice with zero amount", () => {
+    const decodedInvoice = new Invoice({ pr: zeroAmountPaymentRequest });
+    expect(decodedInvoice.satoshi).toBe(0);
   });
 
   test("decode signet invoice", () => {
