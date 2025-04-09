@@ -1,6 +1,8 @@
 import { fiat } from "../..";
 
-// TODO: move to Lightning Tools
+/**
+ * An amount in a fiat currency represented in satoshis
+ */
 export class FiatAmount {
   satoshi: Promise<number>;
   constructor(amount: number, currency: string) {

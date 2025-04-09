@@ -7,6 +7,9 @@ export const SATS: (amount: number) => Amount = (amount) => ({
   satoshi: amount,
 });
 
+/**
+ * Resolve a satoshi amount, possibly from a promise (e.g. from fiat conversion)
+ */
 export async function resolveAmount(
   amount: Amount,
 ): Promise<{ satoshi: number; millisat: number }> {
