@@ -13,12 +13,6 @@ export const SATS: (amount: number) => Amount = (amount) => ({
 export async function resolveAmount(
   amount: Amount,
 ): Promise<{ satoshi: number; millisat: number }> {
-  if (typeof amount === "number") {
-    return {
-      satoshi: amount,
-      millisat: amount * 1000,
-    };
-  }
   const satoshi = await Promise.resolve(amount.satoshi);
 
   return {
