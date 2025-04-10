@@ -6,5 +6,6 @@ export * as l402 from "./l402";
 export * as boostagrams from "./podcasting2/boostagrams";
 export * as fiat from "./utils/fiat";
 export * as nostr from "./utils/nostr";
+export * from "./utils/Amount";
 export { fetchWithL402, sendBoostagram, LightningAddress, Invoice };
 export * from "./types";
