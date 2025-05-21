@@ -1,8 +1,10 @@
-import { KeySendRawData, parseKeysendResponse } from "./utils/keysend";
-import { isUrl, isValidAmount, parseLnUrlPayResponse } from "./utils/lnurl";
+import { SendPaymentResponse, WebLNProvider } from "@webbtc/webln-types";
 import Invoice from "./invoice";
+import type { Boost } from "./podcasting2/boostagrams";
+import { boost as booster } from "./podcasting2/boostagrams";
 import {
   InvoiceArgs,
+  KeysendResponse,
   LnUrlPayResponse,
   LnUrlRawData,
   NostrResponse,
@@ -10,11 +12,9 @@ import {
   ZapArgs,
   ZapOptions,
 } from "./types";
+import { KeySendRawData, parseKeysendResponse } from "./utils/keysend";
+import { isUrl, isValidAmount, parseLnUrlPayResponse } from "./utils/lnurl";
 import { generateZapEvent, parseNostrResponse } from "./utils/nostr";
-import type { Boost } from "./podcasting2/boostagrams";
-import { boost as booster } from "./podcasting2/boostagrams";
-import { WebLNProvider, SendPaymentResponse } from "@webbtc/webln-types";
-import { KeysendResponse } from "./types";
 
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -156,6 +156,14 @@ export default class LightningAddress {
 
     const invoiceArgs: InvoiceArgs = { pr: paymentRequest };
     if (data && data.verify) invoiceArgs.verify = data.verify.toString();
+    if (data && data.successAction && typeof data.successAction === "object") {
+      const { tag, message, description, url } = data.successAction;
+      if (tag === "message") {
+        invoiceArgs.successAction = { tag, message };
+      } else if (tag === "url") {
+        invoiceArgs.successAction = { tag, description, url };
+      }
+    }
 
     return new Invoice(invoiceArgs);
   }

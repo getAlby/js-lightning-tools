@@ -15,6 +15,17 @@ export default class Invoice {
   createdDate: Date;
   expiryDate: Date | undefined;
   description: string | null;
+  successAction:
+    | {
+        tag: "message";
+        message: string;
+      }
+    | {
+        tag: "url";
+        description: string;
+        url: string;
+      }
+    | null;
 
   constructor(args: InvoiceArgs) {
     this.paymentRequest = args.pr;
@@ -36,6 +47,7 @@ export default class Invoice {
     this.description = decodedInvoice.description ?? null;
     this.verify = args.verify ?? null;
     this.preimage = args.preimage ?? null;
+    this.successAction = args.successAction ?? null;
   }
 
   async isPaid(): Promise<boolean> {
