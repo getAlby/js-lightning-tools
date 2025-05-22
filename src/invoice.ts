@@ -1,5 +1,5 @@
 import { decodeInvoice } from "./utils/invoice";
-import { InvoiceArgs } from "./types";
+import { InvoiceArgs, SuccessAction } from "./types";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
 import { fromHexString } from "./utils/hex";
@@ -15,6 +15,7 @@ export default class Invoice {
   createdDate: Date;
   expiryDate: Date | undefined;
   description: string | null;
+  successAction: SuccessAction | null;
 
   constructor(args: InvoiceArgs) {
     this.paymentRequest = args.pr;
@@ -36,6 +37,7 @@ export default class Invoice {
     this.description = decodedInvoice.description ?? null;
     this.verify = args.verify ?? null;
     this.preimage = args.preimage ?? null;
+    this.successAction = args.successAction ?? null;
   }
 
   async isPaid(): Promise<boolean> {

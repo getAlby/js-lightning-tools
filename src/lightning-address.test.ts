@@ -304,11 +304,12 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
         );
       });
 
-      it("generates an invoice ", async () => {
+      it("generates an invoice", async () => {
         const ln = new LightningAddress("hello@getalby.com", { proxy });
         await ln.fetch();
         const invoice = await ln.requestInvoice({ satoshi: 1 });
         expect(invoice.paymentRequest).toContain("lnbc");
+        expect(invoice.successAction?.tag).toContain("message");
       });
     });
 
