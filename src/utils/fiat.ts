@@ -4,6 +4,13 @@ export const getFiatBtcRate = async (currency: string): Promise<number> => {
   const url =
     "https://getalby.com/api/rates/" + currency.toLowerCase() + ".json";
   const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch rate: ${response.status} ${response.statusText}`,
+    );
+  }
+
   const data = await response.json();
 
   return data.rate_float / numSatsInBtc;
