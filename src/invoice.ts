@@ -1,5 +1,5 @@
 import { decodeInvoice } from "./utils/invoice";
-import { InvoiceArgs } from "./types";
+import { InvoiceArgs, SuccessAction } from "./types";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
 import { fromHexString } from "./utils/hex";
@@ -15,17 +15,7 @@ export default class Invoice {
   createdDate: Date;
   expiryDate: Date | undefined;
   description: string | null;
-  successAction:
-    | {
-        tag: "message";
-        message: string;
-      }
-    | {
-        tag: "url";
-        description: string;
-        url: string;
-      }
-    | null;
+  successAction: SuccessAction | null;
 
   constructor(args: InvoiceArgs) {
     this.paymentRequest = args.pr;
