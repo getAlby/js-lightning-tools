@@ -40,7 +40,7 @@
     "clean": "rm -rf dist",
     "build": "microbundle --no-sourcemap",
     "dev": "microbundle watch",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {},
   "devDependencies": {
