@@ -61,17 +61,24 @@ export default class Invoice {
   }
 
   async verifyPayment(): Promise<boolean> {
-    if (!this.verify) throw new Error("LNURL verify not available");
     try {
-      const result = await fetch(this.verify);
-      const json = await result.json();
+      if (!this.verify) {
+        throw new Error("LNURL verify not available");
+      }
+      const response = await fetch(this.verify);
+      if (!response.ok) {
+        throw new Error(
+          `Verification request failed: ${response.status} ${response.statusText}`,
+        );
+      }
+      const json = await response.json();
       if (json.preimage) {
         this.preimage = json.preimage;
       }
 
       return json.settled;
     } catch (error) {
-      console.error("failed to check LNURL-verify", error);
+      console.error("Failed to check LNURL-verify", error);
       return false;
     }
   }
