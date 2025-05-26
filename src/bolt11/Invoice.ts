@@ -1,10 +1,9 @@
-import { decodeInvoice } from "./utils/invoice";
 import { InvoiceArgs, SuccessAction } from "./types";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
-import { fromHexString } from "./utils/hex";
+import { decodeInvoice, fromHexString } from "./utils";
 
-export default class Invoice {
+export class Invoice {
   paymentRequest: string;
   paymentHash: string;
   preimage: string | null;

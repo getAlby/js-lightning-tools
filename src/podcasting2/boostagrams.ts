@@ -1,38 +1,10 @@
 import { WebLNProvider } from "@webbtc/webln-types";
+import { BoostArguments, BoostOptions, WeblnBoostParams } from "./types";
 
-type BoostOptions = {
-  webln?: unknown;
-};
-
-type BoostArguments = {
-  destination: string;
-  customKey?: string;
-  customValue?: string;
-  amount?: number;
-  boost: Boost;
-};
-
-type WeblnBoostParams = {
-  destination: string;
-  amount: number;
-  customRecords: Record<string, string>;
-};
-
-export type Boost = {
-  action: string;
-  value_msat: number;
-  value_msat_total: number;
-  app_name: string;
-  app_version: string;
-  feedId: string;
-  podcast: string;
-  episode: string;
-  ts: number;
-  name: string;
-  sender_name: string;
-};
-
-export const boost = async (args: BoostArguments, options?: BoostOptions) => {
+export const sendBoostagram = async (
+  args: BoostArguments,
+  options?: BoostOptions,
+) => {
   const { boost } = args;
   if (!options) {
     options = {};
@@ -62,5 +34,3 @@ export const boost = async (args: BoostArguments, options?: BoostOptions) => {
   const response = await webln.keysend(weblnParams);
   return response;
 };
-
-export default boost;

@@ -1,9 +1,7 @@
 import { SendPaymentResponse, WebLNProvider } from "@webbtc/webln-types";
-import Invoice from "./invoice";
-import type { Boost } from "./podcasting2/boostagrams";
-import { boost as booster } from "./podcasting2/boostagrams";
+import { Invoice, InvoiceArgs } from "../bolt11";
+import { Boost, sendBoostagram } from "../podcasting2";
 import {
-  InvoiceArgs,
   KeysendResponse,
   LnUrlPayResponse,
   LnUrlRawData,
@@ -11,10 +9,16 @@ import {
   RequestInvoiceArgs,
   ZapArgs,
   ZapOptions,
+  KeySendRawData,
 } from "./types";
-import { KeySendRawData, parseKeysendResponse } from "./utils/keysend";
-import { isUrl, isValidAmount, parseLnUrlPayResponse } from "./utils/lnurl";
-import { generateZapEvent, parseNostrResponse } from "./utils/nostr";
+import {
+  generateZapEvent,
+  parseKeysendResponse,
+  parseNostrResponse,
+  isUrl,
+  isValidAmount,
+  parseLnUrlPayResponse,
+} from "./utils";
 
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -26,7 +30,7 @@ type LightningAddressOptions = {
   webln?: WebLNProvider;
 };
 
-export default class LightningAddress {
+export class LightningAddress {
   address: string;
   options: LightningAddressOptions;
   username: string | undefined;
@@ -208,7 +212,7 @@ export default class LightningAddress {
     if (!webln) {
       throw new Error("WebLN not available");
     }
-    return booster(
+    return sendBoostagram(
       {
         destination,
         customKey,
