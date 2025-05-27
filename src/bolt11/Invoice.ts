@@ -1,10 +1,9 @@
-import { decodeInvoice } from "./utils/invoice";
 import { InvoiceArgs, SuccessAction } from "./types";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
-import { fromHexString } from "./utils/hex";
+import { decodeInvoice, fromHexString } from "./utils";
 
-export default class Invoice {
+export class Invoice {
   paymentRequest: string;
   paymentHash: string;
   preimage: string | null;
@@ -61,17 +60,24 @@ export default class Invoice {
   }
 
   async verifyPayment(): Promise<boolean> {
-    if (!this.verify) throw new Error("LNURL verify not available");
     try {
-      const result = await fetch(this.verify);
-      const json = await result.json();
+      if (!this.verify) {
+        throw new Error("LNURL verify not available");
+      }
+      const response = await fetch(this.verify);
+      if (!response.ok) {
+        throw new Error(
+          `Verification request failed: ${response.status} ${response.statusText}`,
+        );
+      }
+      const json = await response.json();
       if (json.preimage) {
         this.preimage = json.preimage;
       }
 
       return json.settled;
     } catch (error) {
-      console.error("failed to check LNURL-verify", error);
+      console.error("Failed to check LNURL-verify", error);
       return false;
     }
   }

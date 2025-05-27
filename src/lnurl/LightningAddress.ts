@@ -1,9 +1,7 @@
 import { SendPaymentResponse, WebLNProvider } from "@webbtc/webln-types";
-import Invoice from "./invoice";
-import type { Boost } from "./podcasting2/boostagrams";
-import { boost as booster } from "./podcasting2/boostagrams";
+import { Invoice, InvoiceArgs } from "../bolt11";
+import { Boost, sendBoostagram } from "../podcasting2";
 import {
-  InvoiceArgs,
   KeysendResponse,
   LnUrlPayResponse,
   LnUrlRawData,
@@ -11,10 +9,16 @@ import {
   RequestInvoiceArgs,
   ZapArgs,
   ZapOptions,
+  KeySendRawData,
 } from "./types";
-import { KeySendRawData, parseKeysendResponse } from "./utils/keysend";
-import { isUrl, isValidAmount, parseLnUrlPayResponse } from "./utils/lnurl";
-import { generateZapEvent, parseNostrResponse } from "./utils/nostr";
+import {
+  generateZapEvent,
+  parseKeysendResponse,
+  parseNostrResponse,
+  isUrl,
+  isValidAmount,
+  parseLnUrlPayResponse,
+} from "./utils";
 
 const LN_ADDRESS_REGEX =
   /^((?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@((?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(?:(?:[a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -26,7 +30,7 @@ type LightningAddressOptions = {
   webln?: WebLNProvider;
 };
 
-export default class LightningAddress {
+export class LightningAddress {
   address: string;
   options: LightningAddressOptions;
   username: string | undefined;
@@ -68,12 +72,18 @@ export default class LightningAddress {
   }
 
   async fetchWithProxy() {
-    const result = await fetch(
+    const response = await fetch(
       `${this.options.proxy}/lightning-address-details?${new URLSearchParams({
         ln: this.address,
       }).toString()}`,
     );
-    const json = await result.json();
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch lnurl info: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const json = await response.json();
 
     await this.parseLnUrlPayResponse(json.lnurlp);
     this.parseKeysendResponse(json.keysend);
@@ -131,13 +141,18 @@ export default class LightningAddress {
   async generateInvoice(params: Record<string, string>): Promise<Invoice> {
     let data;
     if (this.options.proxy) {
-      const invoiceResult = await fetch(
+      const invoiceResponse = await fetch(
         `${this.options.proxy}/generate-invoice?${new URLSearchParams({
           ln: this.address,
           ...params,
         }).toString()}`,
       );
-      const json = await invoiceResult.json();
+      if (!invoiceResponse.ok) {
+        throw new Error(
+          `Failed to generate invoice: ${invoiceResponse.status} ${invoiceResponse.statusText}`,
+        );
+      }
+      const json = await invoiceResponse.json();
       data = json.invoice;
     } else {
       if (!this.lnurlpData) {
@@ -147,8 +162,13 @@ export default class LightningAddress {
         throw new Error("Valid callback does not exist in lnurlpData");
       const callbackUrl = new URL(this.lnurlpData.callback);
       callbackUrl.search = new URLSearchParams(params).toString();
-      const invoiceResult = await fetch(callbackUrl.toString());
-      data = await invoiceResult.json();
+      const invoiceResponse = await fetch(callbackUrl.toString());
+      if (!invoiceResponse.ok) {
+        throw new Error(
+          `Failed to generate invoice: ${invoiceResponse.status} ${invoiceResponse.statusText}`,
+        );
+      }
+      data = await invoiceResponse.json();
     }
 
     const paymentRequest = data && data.pr && data.pr.toString();
@@ -208,7 +228,7 @@ export default class LightningAddress {
     if (!webln) {
       throw new Error("WebLN not available");
     }
-    return booster(
+    return sendBoostagram(
       {
         destination,
         customKey,

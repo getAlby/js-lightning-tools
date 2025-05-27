@@ -1,3 +1,29 @@
+export class MemoryStorage {
+  storage;
+
+  constructor(initial?: Record<string, unknown>) {
+    this.storage = initial || {};
+  }
+
+  getItem(key: string) {
+    return this.storage[key];
+  }
+
+  setItem(key: string, value: unknown) {
+    this.storage[key] = value;
+  }
+}
+
+export class NoStorage {
+  constructor(initial?: unknown) {}
+
+  getItem(key: string) {
+    return null;
+  }
+
+  setItem(key: string, value: unknown) {}
+}
+
 export const parseL402 = (input: string): Record<string, string> => {
   // Remove the L402 and LSAT identifiers
   const string = input.replace("L402", "").replace("LSAT", "").trim();
