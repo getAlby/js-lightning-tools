@@ -1,4 +1,4 @@
-import Invoice from "./invoice";
+import { Invoice } from "./Invoice";
 import fetchMock from "jest-fetch-mock";
 
 const paymentRequestWithoutMemo =

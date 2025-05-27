@@ -1,9 +1,3 @@
-export type KeysendResponse = {
-  customKey: string;
-  customValue: string;
-  destination: string;
-};
-
 export type LnUrlRawData = {
   tag: string;
   callback: string;
@@ -62,24 +56,6 @@ export type NostrResponse = {
   relays: Record<string, string[]>;
 };
 
-export type InvoiceArgs = {
-  pr: string;
-  verify?: string;
-  preimage?: string;
-  successAction?: SuccessAction;
-};
-
-export type SuccessAction =
-  | {
-      tag: "message";
-      message: string;
-    }
-  | {
-      tag: "url";
-      description: string;
-      url: string;
-    }; // LUD-09
-
 export type Event = {
   id?: string;
   kind: number;
@@ -116,4 +92,17 @@ export type RequestInvoiceArgs = {
   satoshi: number;
   comment?: string;
   payerdata?: LUD18PayerData;
+};
+
+export type KeysendResponse = {
+  customKey: string;
+  customValue: string;
+  destination: string;
+};
+
+export type KeySendRawData = {
+  tag: string;
+  status: string;
+  customData?: { customKey?: string; customValue?: string }[];
+  pubkey: string;
 };
