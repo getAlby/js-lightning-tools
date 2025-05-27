@@ -72,12 +72,18 @@ export class LightningAddress {
   }
 
   async fetchWithProxy() {
-    const result = await fetch(
+    const response = await fetch(
       `${this.options.proxy}/lightning-address-details?${new URLSearchParams({
         ln: this.address,
       }).toString()}`,
     );
-    const json = await result.json();
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch lnurl info: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const json = await response.json();
 
     await this.parseLnUrlPayResponse(json.lnurlp);
     this.parseKeysendResponse(json.keysend);
@@ -135,13 +141,18 @@ export class LightningAddress {
   async generateInvoice(params: Record<string, string>): Promise<Invoice> {
     let data;
     if (this.options.proxy) {
-      const invoiceResult = await fetch(
+      const invoiceResponse = await fetch(
         `${this.options.proxy}/generate-invoice?${new URLSearchParams({
           ln: this.address,
           ...params,
         }).toString()}`,
       );
-      const json = await invoiceResult.json();
+      if (!invoiceResponse.ok) {
+        throw new Error(
+          `Failed to generate invoice: ${invoiceResponse.status} ${invoiceResponse.statusText}`,
+        );
+      }
+      const json = await invoiceResponse.json();
       data = json.invoice;
     } else {
       if (!this.lnurlpData) {
@@ -151,8 +162,13 @@ export class LightningAddress {
         throw new Error("Valid callback does not exist in lnurlpData");
       const callbackUrl = new URL(this.lnurlpData.callback);
       callbackUrl.search = new URLSearchParams(params).toString();
-      const invoiceResult = await fetch(callbackUrl.toString());
-      data = await invoiceResult.json();
+      const invoiceResponse = await fetch(callbackUrl.toString());
+      if (!invoiceResponse.ok) {
+        throw new Error(
+          `Failed to generate invoice: ${invoiceResponse.status} ${invoiceResponse.statusText}`,
+        );
+      }
+      data = await invoiceResponse.json();
     }
 
     const paymentRequest = data && data.pr && data.pr.toString();
