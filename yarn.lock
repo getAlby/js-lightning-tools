@@ -4947,9 +4947,9 @@ normalize-url@^6.0.1:
   integrity sha512-DlL+XwOy3NxAQ8xuC0okPgK46iuVNAK01YN7RueYBqqFeGsBjV9XmCAzAdgt+667bCl5kPh9EqKKDwnaPG1I7A==
 
 nostr-tools@^2.13.0:
-  version "2.13.0"
-  resolved "https://registry.yarnpkg.com/nostr-tools/-/nostr-tools-2.13.0.tgz#8761c9b370c5c668d0ebe2eff77874ef8b493606"
-  integrity sha512-A1arGsvpULqVK0NmZQqK1imwaCiPm8gcG/lo+cTax2NbNqBEYsuplbqAFdVqcGHEopmkByYbTwF76x25+oEbew==
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/nostr-tools/-/nostr-tools-2.14.2.tgz#f322f692b8a23c8fddcda1bafa0e62377d76e9ca"
+  integrity sha512-YOIOn5EdJ2Kq5sQW5Zh4wOcqzR6kUyrCDHG4+mVD2szzthsyOTpiWX0yrwaRZGlHJG6q83vkhg95qc2W201XTQ==
   dependencies:
     "@noble/ciphers" "^0.5.1"
     "@noble/curves" "1.2.0"
@@ -4957,7 +4957,6 @@ nostr-tools@^2.13.0:
     "@scure/base" "1.1.1"
     "@scure/bip32" "1.3.1"
     "@scure/bip39" "1.2.1"
-  optionalDependencies:
     nostr-wasm "0.1.0"
 
 nostr-wasm@0.1.0:
