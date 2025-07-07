@@ -189,7 +189,7 @@ import { fetchWithL402 } from "@getalby/lightning-tools";
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: window.localStorage }
+  { store: window.localStorage },
 )
   .then((res) => res.json())
   .then(console.log);
@@ -208,7 +208,7 @@ const nwc = new webln.NostrWebLNProvider({
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { webln: nwc }
+  { webln: nwc },
 )
   .then((res) => res.json())
   .then(console.log);
@@ -222,7 +222,7 @@ import { fiat } from "@getalby/lightning-tools";
 await l402.fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: new l402.storage.NoStorage() }
+  { store: new l402.storage.NoStorage() },
 );
 ```
 
