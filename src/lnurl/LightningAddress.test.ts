@@ -300,7 +300,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
           ln.requestInvoice({
             satoshi: 1,
           }),
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           "No lnurlpData available. Please call fetch() first.",
         );
       });
@@ -334,7 +334,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
             name: "Satoshi",
             sender_name: "Alby",
           }),
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           "No keysendData available. Please call fetch() first.",
         );
       });
@@ -380,7 +380,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
               nostr: nostrProvider,
             },
           ),
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           "No lnurlpData available. Please call fetch() first.",
         );
       });
