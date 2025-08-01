@@ -1,4 +1,4 @@
-import { MemoryStorage, parseL402 } from "./utils";
+import { KVStorage, MemoryStorage, parseL402 } from "./utils";
 import { WebLNProvider } from "@webbtc/webln-types";
 
 const memoryStorage = new MemoryStorage();
@@ -11,7 +11,7 @@ export const fetchWithL402 = async (
   options: {
     headerKey?: string;
     webln?: WebLNProvider;
-    store?: Storage;
+    store?: KVStorage;
   },
 ) => {
   if (!options) {
