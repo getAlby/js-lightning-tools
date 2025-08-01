@@ -1,5 +1,5 @@
 import { LightningAddress } from "@getalby/lightning-tools";
-import { webln } from "@getalby/sdk";
+import { NostrWebLNProvider } from "@getalby/sdk";
 import "websocket-polyfill";
 import { finalizeEvent, getPublicKey } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
@@ -16,7 +16,7 @@ if (!nostrPrivateKey || !nostrWalletConnectUrl) {
 }
 
 (async () => {
-  const nostrWeblnProvider = new webln.NostrWebLNProvider({
+  const nostrWeblnProvider = new NostrWebLNProvider({
     nostrWalletConnectUrl,
   });
   // or use nostrWeblnProvider.initNWC(); to get a new NWC url
