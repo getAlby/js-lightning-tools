@@ -44,7 +44,8 @@ or for use without any build tools:
 The `LightningAddress` class provides helpers to work with lightning addresses
 
 ```js
-import { LightningAddress } from "@getalby/lightning-tools";
+// import { LightningAddress } from "@getalby/lightning-tools"; (or)
+import { LightningAddress } from "@getalby/lightning-tools/lnurl";
 
 const ln = new LightningAddress("hello@getalby.com");
 
@@ -60,7 +61,8 @@ console.log(ln.keysendData);
 #### Get an invoice:
 
 ```js
-import { LightningAddress } from "@getalby/lightning-tools";
+// import { LightningAddress } from "@getalby/lightning-tools"; (or)
+import { LightningAddress } from "@getalby/lightning-tools/lnurl";
 
 const ln = new LightningAddress("hello@getalby.com");
 
@@ -76,7 +78,8 @@ console.log(invoice.paymentHash); // print the payment hash
 #### Verify a payment
 
 ```js
-import { LightningAddress } from "@getalby/lightning-tools";
+// import { LightningAddress } from "@getalby/lightning-tools"; (or)
+import { LightningAddress } from "@getalby/lightning-tools/lnurl";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
@@ -96,14 +99,15 @@ if (paid) {
   console.log("paid");
 }
 
-// or use the convenenice method:
+// or use the convenient method:
 await invoice.isPaid();
 ```
 
 It is also possible to manually initialize the `Invoice`
 
 ```js
-const { Invoice } = require("alby-tools");
+// import { Invoice } from "@getalby/lightning-tools"; (or)
+import { Invoice } from "@getalby/lightning-tools/bolt11";
 
 const invoice = new Invoice({ pr: pr, preimage: preimage });
 await invoice.isPaid();
@@ -114,7 +118,8 @@ await invoice.isPaid();
 You can also attach additional metadata information like app name, version, name of the podcast which is boosted etc. to the keysend payment.
 
 ```js
-import { LightningAddress } from "@getalby/lightning-tools";
+// import { LightningAddress } from "@getalby/lightning-tools"; (or)
+import { LightningAddress } from "@getalby/lightning-tools/lnurl";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
@@ -141,7 +146,8 @@ Nostr is a simple, open protocol that enables truly censorship-resistant and glo
 This librarys provides helpers to create [zaps](https://github.com/nostr-protocol/nips/blob/master/57.md).
 
 ```js
-import { LightningAddress } from "@getalby/lightning-tools";
+// import { LightningAddress } from "@getalby/lightning-tools"; (or)
+import { LightningAddress } from "@getalby/lightning-tools/lnurl";
 const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
@@ -182,7 +188,8 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 ##### Examples
 
 ```js
-import { fetchWithL402 } from "@getalby/lightning-tools";
+// import { fetchWithL402 } from "@getalby/lightning-tools"; (or)
+import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 
 // this will fetch the resource and pay the invoice with window.webln.
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
@@ -196,11 +203,12 @@ await fetchWithL402(
 ```
 
 ```js
-import { fetchWithL402 } from "@getalby/lightning-tools";
-import { webln } from "@getalby/sdk";
+// import { fetchWithL402 } from "@getalby/lightning-tools"; (or)
+import { fetchWithL402 } from "@getalby/lightning-tools/l402";
+import { NostrWebLNProvider } from "@getalby/sdk";
 
 // use a NWC WebLN provide to do the payments
-const nwc = new webln.NostrWebLNProvider({
+const nwc = new NostrWebLNProvider({
   nostrWalletConnectUrl: loadNWCUrl(),
 });
 
@@ -215,14 +223,14 @@ await fetchWithL402(
 ```
 
 ```js
-import { l402 } from "@getalby/lightning-tools";
-import { fiat } from "@getalby/lightning-tools";
+// import { fetchWithL402, NoStorage } from "@getalby/lightning-tools"; (or)
+import { fetchWithL402, NoStorage } from "@getalby/lightning-tools/l402";
 
 // do not store the tokens
-await l402.fetchWithL402(
+await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: new l402.storage.NoStorage() },
+  { store: new NoStorage() },
 );
 ```
 
@@ -231,10 +239,10 @@ await l402.fetchWithL402(
 You can initialize an `Invoice` to decode a payment request.
 
 ```js
-const { Invoice } = require("alby-tools");
+// import { Invoice } from "@getalby/lightning-tools"; (or)
+import { Invoice } from "@getalby/lightning-tools/bolt11";
 
 const invoice = new Invoice({ pr });
-
 const { paymentHash, satoshi, description, createdDate, expiryDate } = invoice;
 ```
 

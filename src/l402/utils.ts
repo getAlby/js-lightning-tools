@@ -1,4 +1,9 @@
-export class MemoryStorage {
+export interface KVStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+export class MemoryStorage implements KVStorage {
   storage;
 
   constructor(initial?: Record<string, unknown>) {
@@ -14,7 +19,7 @@ export class MemoryStorage {
   }
 }
 
-export class NoStorage {
+export class NoStorage implements KVStorage {
   constructor(initial?: unknown) {}
 
   getItem(key: string) {

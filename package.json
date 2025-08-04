@@ -3,11 +3,6 @@
   "version": "5.2.1",
   "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
-  "source": "src/index.ts",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.module.js",
-  "unpkg": "./dist/index.umd.js",
-  "types": "./dist/index.d.ts",
   "repository": "https://github.com/getAlby/js-lightning-tools.git",
   "bugs": "https://github.com/getAlby/js-lightning-tools/issues",
   "funding": {
@@ -15,17 +10,48 @@
     "url": "lightning:hello@getalby.com"
   },
   "files": [
-    "dist/**/*"
+    "dist"
   ],
   "keywords": [
     "lightning",
     "bitcoin",
     "alby"
   ],
+  "sideEffects": false,
+  "module": "./dist/esm/index.js",
+  "main": "./dist/cjs/index.cjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
-    "require": "./dist/index.cjs",
-    "types": "./dist/index.d.ts",
-    "default": "./dist/index.modern.js"
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./bolt11": {
+      "import": "./dist/esm/bolt11.js",
+      "require": "./dist/cjs/bolt11.cjs",
+      "types": "./dist/types/bolt11.d.ts"
+    },
+    "./fiat": {
+      "import": "./dist/esm/fiat.js",
+      "require": "./dist/cjs/fiat.cjs",
+      "types": "./dist/types/fiat.d.ts"
+    },
+    "./l402": {
+      "import": "./dist/esm/l402.js",
+      "require": "./dist/cjs/l402.cjs",
+      "types": "./dist/types/l402.d.ts"
+    },
+    "./lnurl": {
+      "import": "./dist/esm/lnurl.js",
+      "require": "./dist/cjs/lnurl.cjs",
+      "types": "./dist/types/lnurl.d.ts"
+    },
+    "./podcasting": {
+      "import": "./dist/esm/podcasting2.js",
+      "require": "./dist/cjs/podcasting2.cjs",
+      "types": "./dist/types/podcasting2.d.ts"
+    }
   },
   "scripts": {
     "prebuild": "yarn run clean",
@@ -38,7 +64,7 @@
     "format:fix": "prettier --loglevel silent --write '**/*.(md|json)' 'src/**/*.(js|ts)' 'examples/**/*.js'",
     "test": "jest",
     "clean": "rm -rf dist",
-    "build": "microbundle --no-sourcemap",
+    "build": "rollup -c",
     "dev": "microbundle watch",
     "prepare": "husky"
   },
@@ -46,6 +72,10 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.10",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -58,11 +88,13 @@
     "jest-fetch-mock": "^3.0.3",
     "light-bolt11-decoder": "^3.2.0",
     "lint-staged": "^16.1.2",
-    "microbundle": "^0.15.1",
     "nostr-tools": "^2.15.0",
     "prettier": "^3.6.2",
+    "rollup": "^4.46.2",
+    "rollup-plugin-dts": "^6.2.1",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
     "typescript": "^5.8.3"
   },
   "engines": {

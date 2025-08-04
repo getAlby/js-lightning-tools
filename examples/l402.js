@@ -1,5 +1,5 @@
 import { fetchWithL402 } from "@getalby/lightning-tools";
-import { webln } from "@getalby/sdk";
+import { NostrWebLNProvider } from "@getalby/sdk";
 import "websocket-polyfill";
 
 const url = "https://lsat-weather-api.getalby.repl.co/kigali";
@@ -10,7 +10,7 @@ if (!nostrWalletConnectUrl) {
   throw new Error("Please set a NWC_URL env variable");
 }
 
-const nostrWeblnProvider = new webln.NostrWebLNProvider({
+const nostrWeblnProvider = new NostrWebLNProvider({
   nostrWalletConnectUrl,
 });
 nostrWeblnProvider.on("sendPayment", (response) => {
