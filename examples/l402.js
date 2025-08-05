@@ -1,4 +1,4 @@
-import { fetchWithL402 } from "@getalby/lightning-tools";
+import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 import { NostrWebLNProvider } from "@getalby/sdk";
 import "websocket-polyfill";
 
