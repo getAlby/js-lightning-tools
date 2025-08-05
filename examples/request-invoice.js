@@ -1,4 +1,4 @@
-import { LightningAddress } from "@getalby/lightning-tools";
+import { LightningAddress } from "@getalby/lightning-tools/lnurl";
 
 const ln = new LightningAddress("hello@getalby.com");
 
