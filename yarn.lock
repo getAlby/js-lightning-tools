@@ -3587,9 +3587,9 @@ normalize-path@^3.0.0:
   integrity sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==
 
 nostr-tools@^2.16.1:
-  version "2.16.1"
-  resolved "https://registry.yarnpkg.com/nostr-tools/-/nostr-tools-2.16.1.tgz#e088976eda502a39e64d92289c131a59ca8bcf5d"
-  integrity sha512-1JQR7X8twAP6LFCHGUhr3/vs9CeOUXgB9Q6f2bU4xqh8+StqbkMsbdVdoA+/gmytnhbCpu33t6SYFz7ZOL1KyA==
+  version "2.16.2"
+  resolved "https://registry.yarnpkg.com/nostr-tools/-/nostr-tools-2.16.2.tgz#eca1e0ed24428afcdd74708c6fd7f42ed8194101"
+  integrity sha512-ZxH9EbSt5ypURZj2TGNJxZd0Omb5ag5KZSu8IyJMCdLyg2KKz+2GA0sP/cSawCQEkyviIN4eRT4G2gB/t9lMRw==
   dependencies:
     "@noble/ciphers" "^0.5.1"
     "@noble/curves" "1.2.0"
