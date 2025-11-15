@@ -4,6 +4,7 @@ import {
   getFiatValue,
   getSatoshiValue,
   getFormattedFiatValue,
+  getFiatCurrencies,
 } from "./fiat";
 
 const mockedRateResponse = {
@@ -21,11 +22,45 @@ const mockedRateResponse = {
   },
 };
 
+const mockedCurrenciesResponse = {
+  usd: {
+    iso_code: "USD",
+    name: "US Dollar",
+  },
+  eur: {
+    iso_code: "EUR",
+    name: "Euro",
+  },
+  gbp: {
+    iso_code: "GBP",
+    name: "British Pound",
+  },
+};
+
 const satsInBtc = 100_000_000;
 const rate = mockedRateResponse.rate_float;
 
 beforeEach(() => {
   fetchMock.resetMocks();
+});
+
+describe("getFiatCurrencies", () => {
+  it("returns list of available currencies", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify(mockedCurrenciesResponse));
+    const result = await getFiatCurrencies();
+    expect(result).toEqual(["USD", "EUR", "GBP"]);
+  });
+
+  it("throws on non-ok response", async () => {
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ status: 500, error: "Internal Server Error" }),
+      { status: 500 },
+    );
+
+    await expect(getFiatCurrencies()).rejects.toThrow(
+      "Failed to fetch currencies: 500 Internal Server Error",
+    );
+  });
 });
 
 describe("getFiatBtcRate", () => {

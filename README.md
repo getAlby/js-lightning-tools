@@ -22,16 +22,16 @@ or for use without any build tools:
 
 ```html
 <script type="module">
-  import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0"; // jsdelivr.net, skypack.dev also work
+	import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0"; // jsdelivr.net, skypack.dev also work
 
-  // use LightningAddress normally...
-  (async () => {
-    const ln = new LightningAddress("hello@getalby.com");
-    // fetch the LNURL data
-    await ln.fetch();
-    // get the LNURL-pay data:
-    console.log(ln.lnurlpData);
-  })();
+	// use LightningAddress normally...
+	(async () => {
+		const ln = new LightningAddress("hello@getalby.com");
+		// fetch the LNURL data
+		await ln.fetch();
+		// get the LNURL-pay data:
+		console.log(ln.lnurlpData);
+	})();
 </script>
 ```
 
@@ -85,7 +85,7 @@ const invoice = await ln.requestInvoice({ satoshi: 1000 });
 // if the LNURL providers supports LNURL-verify:
 const paid = await invoice.verifyPayment(); // returns true of false
 if (paid) {
-  console.log(invoice.preimage);
+	console.log(invoice.preimage);
 }
 
 // if you have the preimage for example in a WebLN context
@@ -93,7 +93,7 @@ await window.webln.enable();
 const response = await window.webln.sendPayment(invoice.paymentRequest);
 const paid = invoice.validatePreimage(response.preimage); // returns true or false
 if (paid) {
-  console.log("paid");
+	console.log("paid");
 }
 
 // or use the convenient method:
@@ -119,17 +119,17 @@ const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
 const boost = {
-  action: "boost",
-  value_msat: 21000,
-  value_msat_total: 21000,
-  app_name: "Podcastr",
-  app_version: "v2.1",
-  feedId: "21",
-  podcast: "random podcast",
-  episode: "1",
-  ts: 2121,
-  name: "Satoshi",
-  sender_name: "Alby",
+	action: "boost",
+	value_msat: 21000,
+	value_msat_total: 21000,
+	app_name: "Podcastr",
+	app_version: "v2.1",
+	feedId: "21",
+	podcast: "random podcast",
+	episode: "1",
+	ts: 2121,
+	name: "Satoshi",
+	sender_name: "Alby",
 };
 await ln.boost(boost);
 ```
@@ -146,10 +146,10 @@ const ln = new LightningAddress("hello@getalby.com");
 await ln.fetch();
 
 const response = await ln.zap({
-  satoshi: 1000,
-  comment: "Awesome post",
-  relays: ["wss://relay.damus.io"],
-  e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245",
+	satoshi: 1000,
+	comment: "Awesome post",
+	relays: ["wss://relay.damus.io"],
+	e: "44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245",
 });
 console.log(response.preimage); // print the preimage
 ```
@@ -187,12 +187,12 @@ import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 // this will fetch the resource and pay the invoice with window.webln.
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
 await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
-  {},
-  { store: window.localStorage },
+	"https://lsat-weather-api.getalby.repl.co/kigali",
+	{},
+	{ store: window.localStorage },
 )
-  .then((res) => res.json())
-  .then(console.log);
+	.then((res) => res.json())
+	.then(console.log);
 ```
 
 ```js
@@ -201,17 +201,17 @@ import { NostrWebLNProvider } from "@getalby/sdk";
 
 // use a NWC WebLN provide to do the payments
 const nwc = new NostrWebLNProvider({
-  nostrWalletConnectUrl: loadNWCUrl(),
+	nostrWalletConnectUrl: loadNWCUrl(),
 });
 
 // this will fetch the resource and pay the invoice with a NWC webln object
 await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
-  {},
-  { webln: nwc },
+	"https://lsat-weather-api.getalby.repl.co/kigali",
+	{},
+	{ webln: nwc },
 )
-  .then((res) => res.json())
-  .then(console.log);
+	.then((res) => res.json())
+	.then(console.log);
 ```
 
 ```js
@@ -219,9 +219,9 @@ import { fetchWithL402, NoStorage } from "@getalby/lightning-tools/l402";
 
 // do not store the tokens
 await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
-  {},
-  { store: new NoStorage() },
+	"https://lsat-weather-api.getalby.repl.co/kigali",
+	{},
+	{ store: new NoStorage() },
 );
 ```
 
@@ -242,6 +242,10 @@ const { paymentHash, satoshi, description, createdDate, expiryDate } = invoice;
 
 Helpers to convert sats values to fiat and fiat values to sats.
 
+##### getFiatCurrencies(): Promise<string[]>
+
+Returns the list of available fiat currency codes
+
 ##### getFiatValue(satoshi: number, currency: string): number
 
 Returns the fiat value for a specified currency of a satoshi amount
@@ -257,12 +261,13 @@ Like `getFiatValue` but returns a formatted string for a given locale using Java
 #### Examples
 
 ```js
+await fiat.getFiatCurrencies();
 await fiat.getFiatValue({ satoshi: 2100, currency: "eur" });
 await fiat.getSatoshiValue({ amount: 100, currency: "eur" }); // for 1 EUR
 await fiat.getFormattedFiatValue({
-  satoshi: 2100,
-  currency: "usd",
-  locale: "en",
+	satoshi: 2100,
+	currency: "usd",
+	locale: "en",
 });
 ```
 
@@ -277,7 +282,7 @@ You can disable the proxy by explicitly setting the proxy to false when initiali
 
 ```js
 const lightningAddress = new LightningAddress("hello@getalby.com", {
-  proxy: false,
+	proxy: false,
 });
 ```
 
