@@ -242,6 +242,10 @@ const { paymentHash, satoshi, description, createdDate, expiryDate } = invoice;
 
 Helpers to convert sats values to fiat and fiat values to sats.
 
+##### getFiatCurrencies(): Promise<{ code: string, name: string, priority: number }[]>
+
+Returns the list of available fiat currencies sorted by priority
+
 ##### getFiatValue(satoshi: number, currency: string): number
 
 Returns the fiat value for a specified currency of a satoshi amount
@@ -257,6 +261,7 @@ Like `getFiatValue` but returns a formatted string for a given locale using Java
 #### Examples
 
 ```js
+await fiat.getFiatCurrencies();
 await fiat.getFiatValue({ satoshi: 2100, currency: "eur" });
 await fiat.getSatoshiValue({ amount: 100, currency: "eur" }); // for 1 EUR
 await fiat.getFormattedFiatValue({

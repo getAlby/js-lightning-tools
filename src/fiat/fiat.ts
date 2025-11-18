@@ -1,5 +1,36 @@
 const numSatsInBtc = 100_000_000;
 
+export interface FiatCurrency {
+  code: string;
+  name: string;
+  priority: number;
+}
+
+export const getFiatCurrencies = async (): Promise<FiatCurrency[]> => {
+  const url = "https://getalby.com/api/rates";
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch currencies: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  const data = await response.json();
+  const mappedCurrencies: FiatCurrency[] = Object.entries(data)
+    .filter(([code]) => code.toUpperCase() !== "BTC")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map(([code, details]: any) => ({
+      code: code.toUpperCase(),
+      name: details.name,
+      priority: details.priority,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => a.priority - b.priority) as FiatCurrency[];
+
+  return mappedCurrencies;
+};
+
 export const getFiatBtcRate = async (currency: string): Promise<number> => {
   const url =
     "https://getalby.com/api/rates/" + currency.toLowerCase() + ".json";
