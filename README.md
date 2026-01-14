@@ -6,11 +6,11 @@
 
 An npm package that provides useful and common tools and helpers to build lightning web applications.
 
-## For Developers using Agents / LLMs / Vibe Coding
+## 🤖 🚀 ⚡ For Developers using Agents / LLMs / Vibe Coding
 
 Skip the rest of this README and use the [Alby Bitcoin Payments Agent Skill](https://github.com/getAlby/alby-agent-skill) instead. It will handle the rest!
 
-## 🚀 Quick Start
+## Manual Installation
 
 ```
 npm install @getalby/lightning-tools
