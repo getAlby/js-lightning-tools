@@ -4,6 +4,8 @@ import {
   getFiatValue,
   getSatoshiValue,
   getFormattedFiatValue,
+  FiatCurrency,
+  getFiatCurrencies,
 } from "./fiat";
 
 const mockedRateResponse = {
@@ -21,11 +23,67 @@ const mockedRateResponse = {
   },
 };
 
+const mockRawApiResponse = {
+  usd: {
+    iso_code: "USD",
+    name: "United States Dollar",
+    priority: 1,
+    symbol: "$",
+  },
+  eur: {
+    iso_code: "EUR",
+    name: "Euro",
+    priority: 2,
+    symbol: "€",
+  },
+  gbp: {
+    iso_code: "GBP",
+    name: "British Pound",
+    priority: 3,
+    symbol: "£",
+  },
+  // We add BTC here to test that the filter removes it
+  btc: {
+    iso_code: "BTC",
+    name: "Bitcoin",
+    priority: 100,
+    symbol: "₿",
+  },
+};
+
+const expectedOutput: FiatCurrency[] = [
+  { code: "USD", name: "United States Dollar", priority: 1, symbol: "$" },
+  { code: "EUR", name: "Euro", priority: 2, symbol: "€" },
+  { code: "GBP", name: "British Pound", priority: 3, symbol: "£" },
+];
+
 const satsInBtc = 100_000_000;
 const rate = mockedRateResponse.rate_float;
 
 beforeEach(() => {
   fetchMock.resetMocks();
+});
+
+describe("getFiatCurrencies", () => {
+  it("returns a sorted, filtered list of currency objects", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify(mockRawApiResponse));
+    const result = await getFiatCurrencies();
+    expect(result).toEqual(expectedOutput);
+
+    // Verify BTC was filtered out
+    expect(result.find((c) => c.code === "BTC")).toBeUndefined();
+  });
+
+  it("throws on non-ok response", async () => {
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ status: 500, error: "Internal Server Error" }),
+      { status: 500, statusText: "Internal Server Error" },
+    );
+
+    await expect(getFiatCurrencies()).rejects.toThrow(
+      "Failed to fetch currencies: 500 Internal Server Error",
+    );
+  });
 });
 
 describe("getFiatBtcRate", () => {
