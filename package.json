@@ -1,6 +1,6 @@
 {
   "name": "@getalby/lightning-tools",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "Collection of helpful building blocks and tools to develop Bitcoin Lightning web apps",
   "type": "module",
   "repository": "https://github.com/getAlby/js-lightning-tools.git",
