@@ -242,7 +242,7 @@ const { paymentHash, satoshi, description, createdDate, expiryDate } = invoice;
 
 Helpers to convert sats values to fiat and fiat values to sats.
 
-##### getFiatCurrencies(): Promise<{ code: string, name: string, priority: number }[]>
+##### getFiatCurrencies(): Promise<FiatCurrency[]>
 
 Returns the list of available fiat currencies sorted by priority
 

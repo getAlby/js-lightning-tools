@@ -52,9 +52,9 @@ const mockRawApiResponse = {
 };
 
 const expectedOutput: FiatCurrency[] = [
-  { code: "USD", name: "United States Dollar", priority: 1 },
-  { code: "EUR", name: "Euro", priority: 2 },
-  { code: "GBP", name: "British Pound", priority: 3 },
+  { code: "USD", name: "United States Dollar", priority: 1, symbol: "$" },
+  { code: "EUR", name: "Euro", priority: 2, symbol: "€" },
+  { code: "GBP", name: "British Pound", priority: 3, symbol: "£" },
 ];
 
 const satsInBtc = 100_000_000;

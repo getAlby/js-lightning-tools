@@ -3,6 +3,7 @@ const numSatsInBtc = 100_000_000;
 export interface FiatCurrency {
   code: string;
   name: string;
+  symbol: string;
   priority: number;
 }
 
@@ -24,6 +25,7 @@ export const getFiatCurrencies = async (): Promise<FiatCurrency[]> => {
       code: code.toUpperCase(),
       name: details.name,
       priority: details.priority,
+      symbol: details.symbol,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
     .sort((a, b) => a.priority - b.priority) as FiatCurrency[];
