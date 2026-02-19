@@ -2,7 +2,7 @@ import { KVStorage, MemoryStorage, parseL402 } from "./utils";
 
 const memoryStorage = new MemoryStorage();
 
-const HEADER_KEY = "L402"; // we have to update this to L402 at some point
+const HEADER_KEY = "L402";
 
 interface Wallet {
   sendPayment(paymentRequest: string): Promise<{ preimage: string }>;
