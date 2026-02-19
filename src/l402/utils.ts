@@ -49,3 +49,9 @@ export const parseL402 = (input: string): Record<string, string> => {
 
   return keyValuePairs;
 };
+
+export const makeAuthenticateHeader = (args: { macaroon: string, invoice: string, key?: string }) => {
+  const key = args.key || "L402";
+
+  return `${key} macaroon="${args.macaroon}", invoice="${args.invoice}"`;
+}

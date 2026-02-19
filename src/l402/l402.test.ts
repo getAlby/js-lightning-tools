@@ -1,6 +1,6 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithL402 } from "./l402";
-import { MemoryStorage, NoStorage, parseL402 } from "./utils";
+import { MemoryStorage, NoStorage, parseL402, makeAuthenticateHeader } from "./utils";
 
 const MACAROON =
   "AgEEbHNhdAJCAAAClGOZrh7C569Yc7UMk8merfnMdIviyXr1qscW7VgpChNl21LkZ8Jex5QiPp+E1VaabeJDuWmlrh/j583axFpNAAIXc2VydmljZXM9cmFuZG9tbnVtYmVyOjAAAiZyYW5kb21udW1iZXJfY2FwYWJpbGl0aZVzPWFkZCxzdWJ0cmFjdAAABiAvFpzXGyc+8d/I9nMKKvAYP8w7kUlhuxS0eFN2sqmqHQ==";
@@ -12,10 +12,6 @@ const PREIMAGE =
   "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
 
 const L402_URL = "https://example.com/protected";
-
-function makeWwwAuthHeader(key: string = "L402") {
-  return `${key} macaroon="${MACAROON}", invoice="${INVOICE}"`;
-}
 
 function makeWallet(preimage: string = PREIMAGE) {
   return {
@@ -100,7 +96,7 @@ describe("fetchWithL402", () => {
     // First fetch: 402 with www-authenticate header
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader() },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
     });
 
     // Second fetch: success after payment
@@ -130,7 +126,7 @@ describe("fetchWithL402", () => {
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader() },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
@@ -177,7 +173,7 @@ describe("fetchWithL402", () => {
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader("LSAT") },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE, key: "LSAT" }) },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
@@ -198,7 +194,7 @@ describe("fetchWithL402", () => {
     // First request flow
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader() },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ first: true }), {
       status: 200,
@@ -209,7 +205,7 @@ describe("fetchWithL402", () => {
     // Second request flow — should NOT use cache since NoStorage always returns null
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader() },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ second: true }), {
       status: 200,
@@ -232,7 +228,7 @@ describe("fetchWithL402", () => {
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader() },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
     });
 
     await expect(
@@ -247,7 +243,7 @@ describe("fetchWithL402", () => {
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader() },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
@@ -286,7 +282,7 @@ describe("fetchWithL402", () => {
     // First request: full L402 handshake
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeWwwAuthHeader() },
+      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ first: true }), {
       status: 200,
