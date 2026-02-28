@@ -1,16 +1,19 @@
 import { KVStorage, MemoryStorage, parseL402 } from "./utils";
-import { WebLNProvider } from "@webbtc/webln-types";
 
 const memoryStorage = new MemoryStorage();
 
-const HEADER_KEY = "L402"; // we have to update this to L402 at some point
+const HEADER_KEY = "L402";
+
+interface Wallet {
+  sendPayment(paymentRequest: string): Promise<{ preimage: string }>;
+}
 
 export const fetchWithL402 = async (
   url: string,
   fetchArgs: RequestInit,
   options: {
     headerKey?: string;
-    webln?: WebLNProvider;
+    wallet?: Wallet;
     store?: KVStorage;
   },
 ) => {
@@ -18,9 +21,9 @@ export const fetchWithL402 = async (
     options = {};
   }
   const headerKey = options.headerKey || HEADER_KEY;
-  const webln: WebLNProvider = options.webln || globalThis.webln;
-  if (!webln) {
-    throw new Error("WebLN is missing");
+  const wallet: Wallet | undefined = options.wallet;
+  if (!wallet) {
+    throw new Error("wallet is missing");
   }
   const store = options.store || memoryStorage;
   if (!fetchArgs) {
@@ -50,8 +53,7 @@ export const fetchWithL402 = async (
   const token = details.token || details.macaroon;
   const inv = details.invoice;
 
-  await webln.enable();
-  const invResp = await webln.sendPayment(inv);
+  const invResp = await wallet.sendPayment(inv);
 
   store.setItem(
     url,

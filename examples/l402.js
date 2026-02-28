@@ -10,16 +10,16 @@ if (!nostrWalletConnectUrl) {
   throw new Error("Please set a NWC_URL env variable");
 }
 
-const nostrWeblnProvider = new NostrWebLNProvider({
+const nwc = new NostrWebLNProvider({
   nostrWalletConnectUrl,
 });
-nostrWeblnProvider.on("sendPayment", (response) => {
+nwc.on("sendPayment", (response) => {
   console.info(`payment response:`, response);
 });
 
-fetchWithL402(url, {}, { webln: nostrWeblnProvider })
+fetchWithL402(url, {}, { wallet: nwc })
   .then((response) => response.json())
   .then((data) => {
     console.info(data);
-    nostrWeblnProvider.close();
+    nwc.close();
   });

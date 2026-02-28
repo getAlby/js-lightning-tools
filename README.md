@@ -181,7 +181,7 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 - url: the L402 protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - webln: the webln object used to call `sendPayment()` defaults to globalThis.webln
+  - wallet: any object that implements `sendPayment(paymentRequest)` and returns `{ preimage }`. Used to pay the L402 invoice.
   - store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
   - headerKey: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
 
@@ -190,12 +190,12 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 ```js
 import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 
-// this will fetch the resource and pay the invoice with window.webln.
+// pass a wallet that implements sendPayment()
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { store: window.localStorage },
+  { wallet: myWallet, store: window.localStorage },
 )
   .then((res) => res.json())
   .then(console.log);
@@ -205,16 +205,16 @@ await fetchWithL402(
 import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 import { NostrWebLNProvider } from "@getalby/sdk";
 
-// use a NWC WebLN provide to do the payments
+// use a NWC provider as the wallet to do the payments
 const nwc = new NostrWebLNProvider({
   nostrWalletConnectUrl: loadNWCUrl(),
 });
 
-// this will fetch the resource and pay the invoice with a NWC webln object
+// this will fetch the resource and pay the invoice using the NWC wallet
 await fetchWithL402(
   "https://lsat-weather-api.getalby.repl.co/kigali",
   {},
-  { webln: nwc },
+  { wallet: nwc },
 )
   .then((res) => res.json())
   .then(console.log);
