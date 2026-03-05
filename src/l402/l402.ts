@@ -5,7 +5,8 @@ const memoryStorage = new MemoryStorage();
 const HEADER_KEY = "L402";
 
 interface Wallet {
-  sendPayment(paymentRequest: string): Promise<{ preimage: string }>;
+  sendPayment?(paymentRequest: string): Promise<{ preimage: string }>;
+  payInvoice?(paymentRequest: string): Promise<{ preimage: string }>;
 }
 
 export const fetchWithL402 = async (
@@ -24,6 +25,9 @@ export const fetchWithL402 = async (
   const wallet: Wallet | undefined = options.wallet;
   if (!wallet) {
     throw new Error("wallet is missing");
+  }
+  if (!wallet.sendPayment && !wallet.payInvoice) {
+    throw new Error("wallet must have a sendPayment or payInvoice function");
   }
   const store = options.store || memoryStorage;
   if (!fetchArgs) {
@@ -53,7 +57,8 @@ export const fetchWithL402 = async (
   const token = details.token || details.macaroon;
   const inv = details.invoice;
 
-  const invResp = await wallet.sendPayment(inv);
+  const payFn = wallet.sendPayment?.bind(wallet) ?? wallet.payInvoice!.bind(wallet);
+  const invResp = await payFn(inv);
 
   store.setItem(
     url,
