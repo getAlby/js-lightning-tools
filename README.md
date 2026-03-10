@@ -231,6 +231,68 @@ await fetchWithL402(
 );
 ```
 
+### X402
+
+Similar to L402 X402 is an open protocol for machine-to-machine payments built on the HTTP 402 Payment Required status code.
+It enables APIs and resources to request payments inline, without prior registration or authentication. 
+
+This library includes a `fetchWithX402` function to consume X402-protected resources that support the lightning network. 
+(Note: X402 works also with other coins and network. This library supports X402 resources that accept Bitcoin on the lightning network)
+
+#### fetchWithX402(url: string, fetchArgs, options)
+
+- url: the X402 protected URL
+- fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
+- options:
+  - wallet: any object that implements `payInvoice(paymentRequest)` or `sendPayment(paymentRequest)` and returns `{ preimage }`. Used to pay the X402 invoice.
+  - store: a key/value store object to persist the payment proof for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
+
+##### Examples
+
+```js
+import { fetchWithX402 } from "@getalby/lightning-tools/x402";
+
+// pass a wallet that implements payInvoice()
+// the payment proof will be stored in memory and reused for subsequent requests
+await fetchWithX402(
+  "https://x402.albylabs.com/demo/quote",
+  {},
+  { wallet: myWallet, store: window.localStorage },
+)
+  .then((res) => res.json())
+  .then(console.log);
+```
+
+```js
+import { fetchWithX402 } from "@getalby/lightning-tools/x402";
+import { NostrWebLNProvider } from "@getalby/sdk";
+
+// use a NWC provider as the wallet to do the payments
+const nwc = new NostrWebLNProvider({
+  nostrWalletConnectUrl: loadNWCUrl(),
+});
+
+// this will fetch the resource and pay the invoice using the NWC wallet
+await fetchWithX402(
+  "https://x402.albylabs.com/demo/quote",
+  {},
+  { wallet: nwc },
+)
+  .then((res) => res.json())
+  .then(console.log);
+```
+
+```js
+import { fetchWithX402, NoStorage } from "@getalby/lightning-tools/x402";
+
+// do not store the payment proof (pays on every request)
+await fetchWithX402(
+  "https://x402.albylabs.com/demo/quote",
+  {},
+  { wallet: myWallet, store: new NoStorage() },
+);
+```
+
 ### Basic invoice decoding
 
 You can initialize an `Invoice` to decode a payment request.

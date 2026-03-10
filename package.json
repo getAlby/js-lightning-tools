@@ -44,6 +44,11 @@
       "require": "./dist/cjs/l402.cjs",
       "types": "./dist/types/l402.d.ts"
     },
+    "./x402": {
+      "import": "./dist/esm/x402.js",
+      "require": "./dist/cjs/x402.cjs",
+      "types": "./dist/types/x402.d.ts"
+    },
     "./lnurl": {
       "import": "./dist/esm/lnurl.js",
       "require": "./dist/cjs/lnurl.cjs",
