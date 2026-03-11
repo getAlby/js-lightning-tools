@@ -70,12 +70,7 @@ export const fetchWithX402 = async (
       preimage: string;
       requirements: X402Requirements;
     } | null = null;
-    try {
-      cached = JSON.parse(cachedRaw);
-    } catch (_) {
-      // corrupt cache entry — fall through to fresh request
-      store.setItem(url, null as unknown as string);
-    }
+    cached = JSON.parse(cachedRaw);
     if (
       cached?.scheme &&
       cached?.network &&

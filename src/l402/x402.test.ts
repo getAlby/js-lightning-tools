@@ -229,23 +229,6 @@ describe("fetchWithX402", () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
-  test("falls through on corrupt cache entry", async () => {
-    const wallet = makeWallet();
-    const store = new MemoryStorage();
-
-    store.setItem(X402_URL, "not valid json{{");
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
-    });
-    fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
-
-    await fetchWithX402(X402_URL, {}, { wallet, store });
-
-    expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
-  });
-
   test("falls through on incomplete cache entry (missing preimage)", async () => {
     const wallet = makeWallet();
     const store = new MemoryStorage();
