@@ -1,13 +1,13 @@
-import { KVStorage, MemoryStorage } from "./utils";
+import { KVStorage, NoStorage } from "./utils";
 
-const memoryStorage = new MemoryStorage();
+const noStorage = new NoStorage();
 
 interface Wallet {
   sendPayment?(paymentRequest: string): Promise<{ preimage: string }>;
   payInvoice?(paymentRequest: string): Promise<{ preimage: string }>;
 }
 
-interface X402Requirements {
+export interface X402Requirements {
   scheme: string;
   network: string;
   extra: {
@@ -17,7 +17,7 @@ interface X402Requirements {
   [key: string]: unknown;
 }
 
-const buildPaymentSignature = (
+export const buildPaymentSignature = (
   scheme: string,
   network: string,
   preimage: string,
@@ -52,7 +52,7 @@ export const fetchWithX402 = async (
   if (!wallet.sendPayment && !wallet.payInvoice) {
     throw new Error("wallet must have a sendPayment or payInvoice function");
   }
-  const store = options.store || memoryStorage;
+  const store = options.store || noStorage;
   if (!fetchArgs) {
     fetchArgs = {};
   }

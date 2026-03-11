@@ -1,6 +1,6 @@
-import { KVStorage, MemoryStorage, parseL402 } from "./utils";
+import { KVStorage, NoStorage, parseL402 } from "./utils";
 
-const memoryStorage = new MemoryStorage();
+const noStorage = new NoStorage();
 
 const HEADER_KEY = "L402";
 
@@ -25,7 +25,7 @@ export const fetchWithL402 = async (
   if (!wallet) {
     throw new Error("wallet is missing");
   }
-  const store = options.store || memoryStorage;
+  const store = options.store || noStorage;
   if (!fetchArgs) {
     fetchArgs = {};
   }
