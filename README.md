@@ -183,7 +183,6 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 - options:
   - wallet: any object that implements `sendPayment(paymentRequest)` and returns `{ preimage }`. Used to pay the L402 invoice.
   - store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
-  - headerKey: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
 
 ##### Examples
 
@@ -218,17 +217,6 @@ await fetchWithL402(
 )
   .then((res) => res.json())
   .then(console.log);
-```
-
-```js
-import { fetchWithL402, NoStorage } from "@getalby/lightning-tools/l402";
-
-// do not store the tokens
-await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
-  {},
-  { store: new NoStorage() },
-);
 ```
 
 ### X402
@@ -282,15 +270,37 @@ await fetchWithX402(
   .then(console.log);
 ```
 
-```js
-import { fetchWithX402, NoStorage } from "@getalby/lightning-tools/x402";
+### fetch402
 
-// do not store the payment proof (pays on every request)
-await fetchWithX402(
-  "https://x402.albylabs.com/demo/quote",
+`fetch402` is a single function that transparently handles both L402 and X402 protected resources. Use it when you don't know or don't care which protocol the server uses — it will detect the protocol from the response headers and pay accordingly.
+
+#### fetch402(url: string, fetchArgs, options)
+
+- url: the protected URL
+- fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
+- options:
+  - wallet: any object that implements `sendPayment(paymentRequest)` or `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402 and X402 invoices.
+  - store: a key/value store object to persist the payment proof for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
+
+##### Examples
+
+
+```js
+import { fetch402 } from "@getalby/lightning-tools/l402";
+import { NostrWebLNProvider } from "@getalby/sdk";
+
+const nwc = new NostrWebLNProvider({
+  nostrWalletConnectUrl: "nostr+walletconnect://...",
+});
+
+// use a NWC wallet — works for both L402 and X402
+await fetch402(
+  "https://example.com/protected-resource",
   {},
-  { wallet: myWallet, store: new NoStorage() },
-);
+  { wallet: nwc, store: window.localStorage  },
+)
+  .then((res) => res.json())
+  .then(console.log);
 ```
 
 ### Basic invoice decoding
