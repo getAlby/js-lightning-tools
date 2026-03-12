@@ -13,6 +13,7 @@ if (!nostrWalletConnectUrl) {
 const nwc = new NostrWebLNProvider({
   nostrWalletConnectUrl,
 });
+await nwc.enable();
 nwc.on("sendPayment", (response) => {
   console.info(`payment response:`, response);
 });
