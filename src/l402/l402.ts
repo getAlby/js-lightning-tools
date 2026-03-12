@@ -6,7 +6,7 @@ const HEADER_KEY = "L402";
 
 interface Wallet {
   sendPayment?(paymentRequest: string): Promise<{ preimage: string }>;
-  payInvoice?(paymentRequest: string): Promise<{ preimage: string }>;
+  payInvoice?(args: { invoice: string }): Promise<{ preimage: string }>;
 }
 
 export const fetchWithL402 = async (
@@ -55,10 +55,11 @@ export const fetchWithL402 = async (
 
   const details = parseL402(header);
   const token = details.token || details.macaroon;
-  const inv = details.invoice;
+  const invoice = details.invoice;
 
-  const payFn = wallet.sendPayment?.bind(wallet) ?? wallet.payInvoice!.bind(wallet);
-  const invResp = await payFn(inv);
+  const invResp = wallet.sendPayment
+    ? await wallet.sendPayment(invoice)
+    : await wallet.payInvoice!({ invoice });
 
   store.setItem(
     url,
