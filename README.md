@@ -280,7 +280,7 @@ await fetchWithX402(
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
   - wallet: any object that implements `sendPayment(paymentRequest)` or `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402 and X402 invoices.
-  - store: a key/value store object to persist the payment proof for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
+  - store: a key/value store object to persist the payment proof for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default no storage is used - pass `window.localStorage` or a similar store to enable caching.
 
 ##### Examples
 
