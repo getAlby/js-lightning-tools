@@ -26,9 +26,8 @@ export const fetch402 = async (
   }
   fetchArgs.cache = "no-store";
   fetchArgs.mode = "cors";
-  if (!fetchArgs.headers) {
-    fetchArgs.headers = {};
-  }
+  const headers = new Headers(fetchArgs.headers ?? undefined);
+  fetchArgs.headers = headers;
 
   // Check cache — detect protocol from stored data structure
   const cachedRaw = store.getItem(url);
@@ -36,8 +35,10 @@ export const fetch402 = async (
     const cached = JSON.parse(cachedRaw);
     if (cached?.token && cached?.preimage) {
       // L402 cached
-      fetchArgs.headers["Authorization"] =
-        `${HEADER_KEY} ${cached.token}:${cached.preimage}`;
+      headers.set(
+        "Authorization",
+        `${HEADER_KEY} ${cached.token}:${cached.preimage}`,
+      );
       return await fetch(url, fetchArgs);
     }
     if (
@@ -47,18 +48,21 @@ export const fetch402 = async (
       cached?.requirements
     ) {
       // X402 cached
-      fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
-        cached.scheme,
-        cached.network,
-        cached.preimage,
-        cached.requirements,
+      headers.set(
+        "payment-signature",
+        buildX402PaymentSignature(
+          cached.scheme,
+          cached.network,
+          cached.preimage,
+          cached.requirements,
+        ),
       );
       return await fetch(url, fetchArgs);
     }
   }
 
   // Initial request — advertise L402 support
-  fetchArgs.headers["Accept-Authenticate"] = HEADER_KEY;
+  headers.set("Accept-Authenticate", HEADER_KEY);
   const initResp = await fetch(url, fetchArgs);
 
   const l402Header = initResp.headers.get("www-authenticate");
@@ -71,8 +75,7 @@ export const fetch402 = async (
 
     store.setItem(url, JSON.stringify({ token, preimage: invResp.preimage }));
 
-    fetchArgs.headers["Authorization"] =
-      `${HEADER_KEY} ${token}:${invResp.preimage}`;
+    headers.set("Authorization", `${HEADER_KEY} ${token}:${invResp.preimage}`);
 
     return await fetch(url, fetchArgs);
   }
@@ -119,11 +122,14 @@ export const fetch402 = async (
       }),
     );
 
-    fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
-      requirements.scheme,
-      requirements.network,
-      invResp.preimage,
-      requirements,
+    headers.set(
+      "payment-signature",
+      buildX402PaymentSignature(
+        requirements.scheme,
+        requirements.network,
+        invResp.preimage,
+        requirements,
+      ),
     );
     return await fetch(url, fetchArgs);
   }

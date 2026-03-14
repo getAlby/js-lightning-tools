@@ -23,9 +23,8 @@ export const fetchWithX402 = async (
   }
   fetchArgs.cache = "no-store";
   fetchArgs.mode = "cors";
-  if (!fetchArgs.headers) {
-    fetchArgs.headers = {};
-  }
+  const headers = new Headers(fetchArgs.headers ?? undefined);
+  fetchArgs.headers = headers;
 
   const cachedRaw = store.getItem(url);
   if (cachedRaw) {
@@ -42,11 +41,14 @@ export const fetchWithX402 = async (
       cached?.preimage &&
       cached?.requirements
     ) {
-      fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
-        cached.scheme,
-        cached.network,
-        cached.preimage,
-        cached.requirements,
+      headers.set(
+        "payment-signature",
+        buildX402PaymentSignature(
+          cached.scheme,
+          cached.network,
+          cached.preimage,
+          cached.requirements,
+        ),
       );
       return await fetch(url, fetchArgs);
     }
@@ -98,11 +100,14 @@ export const fetchWithX402 = async (
     }),
   );
 
-  fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
-    requirements.scheme,
-    requirements.network,
-    invResp.preimage,
-    requirements,
+  headers.set(
+    "payment-signature",
+    buildX402PaymentSignature(
+      requirements.scheme,
+      requirements.network,
+      invResp.preimage,
+      requirements,
+    ),
   );
   return await fetch(url, fetchArgs);
 };

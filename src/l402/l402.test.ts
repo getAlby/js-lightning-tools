@@ -109,8 +109,10 @@ describe("fetchWithL402", () => {
 
     // Verify the second request includes the Authorization header
     const secondCallInit = fetchMock.mock.calls[1][1] as RequestInit;
-    const secondHeaders = secondCallInit.headers as Record<string, string>;
-    expect(secondHeaders["Authorization"]).toBe(`L402 ${MACAROON}:${PREIMAGE}`);
+    const secondHeaders = secondCallInit.headers as Headers;
+    expect(secondHeaders.get("Authorization")).toBe(
+      `L402 ${MACAROON}:${PREIMAGE}`,
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: "paid content" });
@@ -160,8 +162,8 @@ describe("fetchWithL402", () => {
 
     // Verify the Authorization header was set from the cache
     const callInit = fetchMock.mock.calls[0][1] as RequestInit;
-    const headers = callInit.headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe(`L402 ${MACAROON}:${PREIMAGE}`);
+    const headers = callInit.headers as Headers;
+    expect(headers.get("Authorization")).toBe(`L402 ${MACAROON}:${PREIMAGE}`);
 
     expect(await response.json()).toEqual({ data: "cached access" });
   });
@@ -253,9 +255,9 @@ describe("fetchWithL402", () => {
     // Both fetch calls should have the custom header and method
     for (const call of fetchMock.mock.calls) {
       const fetchInit = call[1] as RequestInit;
-      const headers = fetchInit.headers as Record<string, string>;
+      const headers = fetchInit.headers as Headers;
       expect(fetchInit.method).toBe("POST");
-      expect(headers["X-Custom"]).toBe("value");
+      expect(headers.get("X-Custom")).toBe("value");
     }
   });
 
@@ -304,7 +306,9 @@ describe("fetchWithL402", () => {
     expect(await response.json()).toEqual({ second: true });
 
     const lastCallInit = fetchMock.mock.calls[2][1] as RequestInit;
-    const lastHeaders = lastCallInit.headers as Record<string, string>;
-    expect(lastHeaders["Authorization"]).toBe(`L402 ${MACAROON}:${PREIMAGE}`);
+    const lastHeaders = lastCallInit.headers as Headers;
+    expect(lastHeaders.get("Authorization")).toBe(
+      `L402 ${MACAROON}:${PREIMAGE}`,
+    );
   });
 });

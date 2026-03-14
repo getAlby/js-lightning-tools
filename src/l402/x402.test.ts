@@ -87,8 +87,8 @@ describe("fetchWithX402", () => {
     await fetchWithX402(X402_URL, {}, { wallet });
 
     const secondCallInit = fetchMock.mock.calls[1][1] as RequestInit;
-    const headers = secondCallInit.headers as Record<string, string>;
-    const sig = parsePaymentSignature(headers["payment-signature"]);
+    const headers = secondCallInit.headers as Headers;
+    const sig = parsePaymentSignature(headers.get("payment-signature")!);
 
     expect(sig).toMatchObject({
       x402Version: 2,
@@ -145,8 +145,8 @@ describe("fetchWithX402", () => {
     expect(await response.json()).toEqual({ data: "cached access" });
 
     const callInit = fetchMock.mock.calls[0][1] as RequestInit;
-    const headers = callInit.headers as Record<string, string>;
-    const sig = parsePaymentSignature(headers["payment-signature"]);
+    const headers = callInit.headers as Headers;
+    const sig = parsePaymentSignature(headers.get("payment-signature")!);
     expect(sig).toMatchObject({
       x402Version: 2,
       scheme: REQUIREMENTS.scheme,
@@ -399,9 +399,9 @@ describe("fetchWithX402", () => {
 
     for (const call of fetchMock.mock.calls) {
       const fetchInit = call[1] as RequestInit;
-      const headers = fetchInit.headers as Record<string, string>;
+      const headers = fetchInit.headers as Headers;
       expect(fetchInit.method).toBe("POST");
-      expect(headers["X-Custom"]).toBe("value");
+      expect(headers.get("X-Custom")).toBe("value");
     }
   });
 });

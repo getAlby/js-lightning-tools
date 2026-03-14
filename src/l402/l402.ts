@@ -24,18 +24,17 @@ export const fetchWithL402 = async (
   }
   fetchArgs.cache = "no-store";
   fetchArgs.mode = "cors";
-  if (!fetchArgs.headers) {
-    fetchArgs.headers = {};
-  }
+  const headers = new Headers(fetchArgs.headers ?? undefined);
+  fetchArgs.headers = headers;
+
   const cachedL402Data = store.getItem(url);
   if (cachedL402Data) {
     const data = JSON.parse(cachedL402Data);
-    fetchArgs.headers["Authorization"] =
-      `${headerKey} ${data.token}:${data.preimage}`;
+    headers.set("Authorization", `${headerKey} ${data.token}:${data.preimage}`);
     return await fetch(url, fetchArgs);
   }
 
-  fetchArgs.headers["Accept-Authenticate"] = headerKey;
+  headers.set("Accept-Authenticate", headerKey);
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get("www-authenticate");
   if (!header) {
@@ -56,7 +55,6 @@ export const fetchWithL402 = async (
     }),
   );
 
-  fetchArgs.headers["Authorization"] =
-    `${headerKey} ${token}:${invResp.preimage}`;
+  headers.set("Authorization", `${headerKey} ${token}:${invResp.preimage}`);
   return await fetch(url, fetchArgs);
 };
