@@ -15,7 +15,6 @@ const REQUIREMENTS = {
   extra: { invoice: INVOICE },
 };
 
-// Encode a PAYMENT-REQUIRED header value the same way the server would
 function makePaymentRequiredHeader(
   requirements = REQUIREMENTS,
   accepts = [requirements],
@@ -23,7 +22,6 @@ function makePaymentRequiredHeader(
   return btoa(unescape(encodeURIComponent(JSON.stringify({ accepts }))));
 }
 
-// Decode and parse a payment-signature header value back to its object
 function parsePaymentSignature(header: string): Record<string, unknown> {
   return JSON.parse(decodeURIComponent(escape(atob(header))));
 }
@@ -42,31 +40,14 @@ beforeEach(() => {
 // fetchWithX402
 // ---------------------------------------------------------------------------
 describe("fetchWithX402", () => {
-  test("throws when no wallet is provided", async () => {
-    await expect(
-      fetchWithX402(X402_URL, {}, { store: new MemoryStorage() }),
-    ).rejects.toThrow("wallet is missing");
-  });
-
-  test("throws when wallet has no sendPayment or payInvoice", async () => {
-    await expect(
-      fetchWithX402(
-        X402_URL,
-        {},
-        { wallet: {} as never, store: new MemoryStorage() },
-      ),
-    ).rejects.toThrow("wallet must have a sendPayment or payInvoice function");
-  });
-
   test("returns initial response when no PAYMENT-REQUIRED header", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce(JSON.stringify({ data: "free content" }), {
       status: 200,
     });
 
-    const response = await fetchWithX402(X402_URL, {}, { wallet, store });
+    const response = await fetchWithX402(X402_URL, {}, { wallet });
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: "free content" });
@@ -76,7 +57,6 @@ describe("fetchWithX402", () => {
 
   test("pays invoice and retries fetch on 402 challenge", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -86,10 +66,10 @@ describe("fetchWithX402", () => {
       status: 200,
     });
 
-    const response = await fetchWithX402(X402_URL, {}, { wallet, store });
+    const response = await fetchWithX402(X402_URL, {}, { wallet });
 
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
-    expect(wallet.payInvoice).toHaveBeenCalledWith(INVOICE);
+    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: "paid content" });
@@ -97,7 +77,6 @@ describe("fetchWithX402", () => {
 
   test("sets correct payment-signature header on retry", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -105,7 +84,7 @@ describe("fetchWithX402", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
-    await fetchWithX402(X402_URL, {}, { wallet, store });
+    await fetchWithX402(X402_URL, {}, { wallet });
 
     const secondCallInit = fetchMock.mock.calls[1][1] as RequestInit;
     const headers = secondCallInit.headers as Record<string, string>;
@@ -237,7 +216,8 @@ describe("fetchWithX402", () => {
       X402_URL,
       JSON.stringify({
         scheme: "exact",
-        network: "mainnet" /* no preimage, no requirements */,
+        network: "lightning:mainnet",
+        // no preimage, no requirements
       }),
     );
 
@@ -254,35 +234,32 @@ describe("fetchWithX402", () => {
 
   test("throws on invalid base64 PAYMENT-REQUIRED header", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
       headers: { "PAYMENT-REQUIRED": "not-valid-base64!!!" },
     });
 
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow("x402: invalid PAYMENT-REQUIRED header");
+    await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
+      "x402: invalid PAYMENT-REQUIRED header (not valid base64-encoded JSON)",
+    );
   });
 
   test("throws on valid base64 but non-JSON PAYMENT-REQUIRED header", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
       headers: { "PAYMENT-REQUIRED": btoa("this is not json") },
     });
 
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow("x402: invalid PAYMENT-REQUIRED header");
+    await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
+      "x402: invalid PAYMENT-REQUIRED header (not valid base64-encoded JSON)",
+    );
   });
 
   test("throws when accepts array is empty", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -291,47 +268,14 @@ describe("fetchWithX402", () => {
       },
     });
 
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow(
+    await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
       "x402: PAYMENT-REQUIRED header contains no payment options",
     );
   });
 
-  test("throws when requirements missing invoice", async () => {
+  test("throws when no accepted entry has a lightning network", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
-    const bad = { scheme: "exact", network: "mainnet", extra: {} };
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader(bad as never) },
-    });
-
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow("x402: payment requirements missing invoice");
-  });
-
-  test("throws when requirements missing scheme", async () => {
-    const wallet = makeWallet();
-    const store = new MemoryStorage();
-    const bad = { network: "mainnet", extra: { invoice: INVOICE } };
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader(bad as never) },
-    });
-
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow("x402: payment requirements missing scheme or network");
-  });
-
-  test("throws when network is not a lightning network", async () => {
-    const wallet = makeWallet();
-    const store = new MemoryStorage();
-    const bad = {
+    const nonLightning = {
       scheme: "exact",
       network: "bitcoin:mainnet",
       extra: { invoice: INVOICE },
@@ -339,17 +283,34 @@ describe("fetchWithX402", () => {
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
+      headers: {
+        "PAYMENT-REQUIRED": makePaymentRequiredHeader(nonLightning as never, [
+          nonLightning as never,
+        ]),
+      },
+    });
+
+    await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
+      "x402: unsupported x402 network, only lightning networks are supported",
+    );
+  });
+
+  test("throws when requirements missing invoice", async () => {
+    const wallet = makeWallet();
+    const bad = { scheme: "exact", network: "lightning:mainnet", extra: {} };
+
+    fetchMock.mockResponseOnce("Payment Required", {
+      status: 402,
       headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader(bad as never) },
     });
 
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow('x402: unsupported network "bitcoin:mainnet"');
+    await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
+      "x402: payment requirements missing lightning invoice",
+    );
   });
 
   test("accepts lightning:testnet network", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
     const testnet = {
       scheme: "exact",
       network: "lightning:testnet",
@@ -365,75 +326,64 @@ describe("fetchWithX402", () => {
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
     await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
+      fetchWithX402(X402_URL, {}, { wallet }),
     ).resolves.toBeDefined();
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
   });
 
-  test("throws when wallet returns no preimage", async () => {
-    const wallet = { payInvoice: jest.fn().mockResolvedValue({}) };
-    const store = new MemoryStorage();
+  test("picks first lightning entry when accepts contains mixed networks", async () => {
+    const wallet = makeWallet();
+    const nonLightning = {
+      scheme: "exact",
+      network: "bitcoin:mainnet",
+      extra: { invoice: "other" },
+    };
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
+      headers: {
+        "PAYMENT-REQUIRED": makePaymentRequiredHeader(REQUIREMENTS, [
+          nonLightning as never,
+          REQUIREMENTS,
+        ]),
+      },
     });
+    fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow("x402: wallet did not return a preimage");
+    await fetchWithX402(X402_URL, {}, { wallet });
+
+    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
   });
 
   test("propagates wallet payment errors", async () => {
     const wallet = {
       payInvoice: jest.fn().mockRejectedValue(new Error("payment failed")),
     };
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
       headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
     });
 
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet, store }),
-    ).rejects.toThrow("payment failed");
-  });
-
-  test("works with sendPayment wallet method", async () => {
-    const wallet = {
-      sendPayment: jest.fn().mockResolvedValue({ preimage: PREIMAGE }),
-    };
-    const store = new MemoryStorage();
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
-    });
-    fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
-
-    await fetchWithX402(X402_URL, {}, { wallet, store });
-
-    expect(wallet.sendPayment).toHaveBeenCalledTimes(1);
-    expect(wallet.sendPayment).toHaveBeenCalledWith(INVOICE);
+    await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
+      "payment failed",
+    );
   });
 
   test("sets cache to no-store and mode to cors", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
-    await fetchWithX402(X402_URL, {}, { wallet, store });
+    await fetchWithX402(X402_URL, {}, { wallet });
 
     const fetchInit = fetchMock.mock.calls[0][1] as RequestInit;
     expect(fetchInit.cache).toBe("no-store");
     expect(fetchInit.mode).toBe("cors");
   });
 
-  test("passes custom fetchArgs through to fetch calls", async () => {
+  test("passes custom fetchArgs through to all fetch calls", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -444,7 +394,7 @@ describe("fetchWithX402", () => {
     await fetchWithX402(
       X402_URL,
       { method: "POST", headers: { "X-Custom": "value" } },
-      { wallet, store },
+      { wallet },
     );
 
     for (const call of fetchMock.mock.calls) {

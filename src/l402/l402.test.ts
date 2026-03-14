@@ -1,6 +1,11 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithL402 } from "./l402";
-import { MemoryStorage, NoStorage, parseL402, makeAuthenticateHeader } from "./utils";
+import {
+  MemoryStorage,
+  NoStorage,
+  parseL402,
+  makeL402AuthenticateHeader,
+} from "./utils";
 
 const MACAROON =
   "AgEEbHNhdAJCAAAClGOZrh7C569Yc7UMk8merfnMdIviyXr1qscW7VgpChNl21LkZ8Jex5QiPp+E1VaabeJDuWmlrh/j583axFpNAAIXc2VydmljZXM9cmFuZG9tbnVtYmVyOjAAAiZyYW5kb21udW1iZXJfY2FwYWJpbGl0aZVzPWFkZCxzdWJ0cmFjdAAABiAvFpzXGyc+8d/I9nMKKvAYP8w7kUlhuxS0eFN2sqmqHQ==";
@@ -15,7 +20,7 @@ const L402_URL = "https://example.com/protected";
 
 function makeWallet(preimage: string = PREIMAGE) {
   return {
-    sendPayment: jest.fn().mockResolvedValue({ preimage }),
+    payInvoice: jest.fn().mockResolvedValue({ preimage }),
   };
 }
 
@@ -62,18 +67,6 @@ describe("parseL402", () => {
 // fetchWithL402
 // ---------------------------------------------------------------------------
 describe("fetchWithL402", () => {
-  test("throws when no wallet is provided", async () => {
-    await expect(
-      fetchWithL402(L402_URL, {}, { store: new MemoryStorage() }),
-    ).rejects.toThrow("wallet is missing");
-  });
-
-  test("throws when wallet is explicitly undefined", async () => {
-    await expect(
-      fetchWithL402(L402_URL, {}, { wallet: undefined, store: new MemoryStorage() }),
-    ).rejects.toThrow("wallet is missing");
-  });
-
   test("returns initial response when no www-authenticate header (non-402)", async () => {
     const wallet = makeWallet();
     const store = new MemoryStorage();
@@ -85,7 +78,7 @@ describe("fetchWithL402", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: "free content" });
-    expect(wallet.sendPayment).not.toHaveBeenCalled();
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -96,7 +89,12 @@ describe("fetchWithL402", () => {
     // First fetch: 402 with www-authenticate header
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
+      headers: {
+        "www-authenticate": makeL402AuthenticateHeader({
+          macaroon: MACAROON,
+          invoice: INVOICE,
+        }),
+      },
     });
 
     // Second fetch: success after payment
@@ -105,16 +103,14 @@ describe("fetchWithL402", () => {
 
     const response = await fetchWithL402(L402_URL, {}, { wallet, store });
 
-    expect(wallet.sendPayment).toHaveBeenCalledTimes(1);
-    expect(wallet.sendPayment).toHaveBeenCalledWith(INVOICE);
+    expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
+    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     // Verify the second request includes the Authorization header
     const secondCallInit = fetchMock.mock.calls[1][1] as RequestInit;
     const secondHeaders = secondCallInit.headers as Record<string, string>;
-    expect(secondHeaders["Authorization"]).toBe(
-      `L402 ${MACAROON}:${PREIMAGE}`,
-    );
+    expect(secondHeaders["Authorization"]).toBe(`L402 ${MACAROON}:${PREIMAGE}`);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: "paid content" });
@@ -126,7 +122,12 @@ describe("fetchWithL402", () => {
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
+      headers: {
+        "www-authenticate": makeL402AuthenticateHeader({
+          macaroon: MACAROON,
+          invoice: INVOICE,
+        }),
+      },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
@@ -154,37 +155,15 @@ describe("fetchWithL402", () => {
 
     const response = await fetchWithL402(L402_URL, {}, { wallet, store });
 
-    expect(wallet.sendPayment).not.toHaveBeenCalled();
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     // Verify the Authorization header was set from the cache
     const callInit = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = callInit.headers as Record<string, string>;
-    expect(headers["Authorization"]).toBe(
-      `L402 ${MACAROON}:${PREIMAGE}`,
-    );
+    expect(headers["Authorization"]).toBe(`L402 ${MACAROON}:${PREIMAGE}`);
 
     expect(await response.json()).toEqual({ data: "cached access" });
-  });
-
-  test("uses custom LSAT headerKey", async () => {
-    const wallet = makeWallet();
-    const store = new MemoryStorage();
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE, key: "LSAT" }) },
-    });
-    fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
-
-    await fetchWithL402(L402_URL, {}, { wallet, store, headerKey: "LSAT" });
-
-    // Verify the second request uses LSAT in the Authorization header
-    const secondCallInit = fetchMock.mock.calls[1][1] as RequestInit;
-    const secondHeaders = secondCallInit.headers as Record<string, string>;
-    expect(secondHeaders["Authorization"]).toBe(
-      `LSAT ${MACAROON}:${PREIMAGE}`,
-    );
   });
 
   test("works with NoStorage (never caches)", async () => {
@@ -194,7 +173,12 @@ describe("fetchWithL402", () => {
     // First request flow
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
+      headers: {
+        "www-authenticate": makeL402AuthenticateHeader({
+          macaroon: MACAROON,
+          invoice: INVOICE,
+        }),
+      },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ first: true }), {
       status: 200,
@@ -205,7 +189,12 @@ describe("fetchWithL402", () => {
     // Second request flow — should NOT use cache since NoStorage always returns null
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
+      headers: {
+        "www-authenticate": makeL402AuthenticateHeader({
+          macaroon: MACAROON,
+          invoice: INVOICE,
+        }),
+      },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ second: true }), {
       status: 200,
@@ -213,22 +202,25 @@ describe("fetchWithL402", () => {
 
     await fetchWithL402(L402_URL, {}, { wallet, store });
 
-    // wallet.sendPayment should have been called twice (no caching)
-    expect(wallet.sendPayment).toHaveBeenCalledTimes(2);
+    // wallet.payInvoice should have been called twice (no caching)
+    expect(wallet.payInvoice).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
-  test("propagates wallet.sendPayment errors", async () => {
+  test("propagates wallet.payInvoice errors", async () => {
     const wallet = {
-      sendPayment: jest
-        .fn()
-        .mockRejectedValue(new Error("payment failed")),
+      payInvoice: jest.fn().mockRejectedValue(new Error("payment failed")),
     };
     const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
+      headers: {
+        "www-authenticate": makeL402AuthenticateHeader({
+          macaroon: MACAROON,
+          invoice: INVOICE,
+        }),
+      },
     });
 
     await expect(
@@ -243,7 +235,12 @@ describe("fetchWithL402", () => {
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
+      headers: {
+        "www-authenticate": makeL402AuthenticateHeader({
+          macaroon: MACAROON,
+          invoice: INVOICE,
+        }),
+      },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
@@ -282,14 +279,19 @@ describe("fetchWithL402", () => {
     // First request: full L402 handshake
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
-      headers: { "www-authenticate": makeAuthenticateHeader({ macaroon: MACAROON, invoice: INVOICE }) },
+      headers: {
+        "www-authenticate": makeL402AuthenticateHeader({
+          macaroon: MACAROON,
+          invoice: INVOICE,
+        }),
+      },
     });
     fetchMock.mockResponseOnce(JSON.stringify({ first: true }), {
       status: 200,
     });
 
     await fetchWithL402(L402_URL, {}, { wallet, store });
-    expect(wallet.sendPayment).toHaveBeenCalledTimes(1);
+    expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
 
     // Second request: should use cached token, no new payment
     fetchMock.mockResponseOnce(JSON.stringify({ second: true }), {
@@ -298,13 +300,11 @@ describe("fetchWithL402", () => {
 
     const response = await fetchWithL402(L402_URL, {}, { wallet, store });
 
-    expect(wallet.sendPayment).toHaveBeenCalledTimes(1); // still only 1
+    expect(wallet.payInvoice).toHaveBeenCalledTimes(1); // still only 1
     expect(await response.json()).toEqual({ second: true });
 
     const lastCallInit = fetchMock.mock.calls[2][1] as RequestInit;
     const lastHeaders = lastCallInit.headers as Record<string, string>;
-    expect(lastHeaders["Authorization"]).toBe(
-      `L402 ${MACAROON}:${PREIMAGE}`,
-    );
+    expect(lastHeaders["Authorization"]).toBe(`L402 ${MACAROON}:${PREIMAGE}`);
   });
 });
