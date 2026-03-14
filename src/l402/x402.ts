@@ -1,57 +1,22 @@
-import { KVStorage, NoStorage } from "./utils";
+import {
+  KVStorage,
+  NoStorage,
+  buildX402PaymentSignature,
+  Wallet,
+  X402Requirements,
+} from "./utils";
 
 const noStorage = new NoStorage();
-
-interface Wallet {
-  sendPayment?(paymentRequest: string): Promise<{ preimage: string }>;
-  payInvoice?(paymentRequest: string): Promise<{ preimage: string }>;
-}
-
-export interface X402Requirements {
-  scheme: string;
-  network: string;
-  extra: {
-    invoice: string;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-}
-
-export const buildPaymentSignature = (
-  scheme: string,
-  network: string,
-  preimage: string,
-  requirements: X402Requirements,
-): string => {
-  const json = JSON.stringify({
-    x402Version: 2,
-    scheme,
-    network,
-    payload: { preimage },
-    accepted: requirements,
-  });
-  // btoa only handles latin1; encode via UTF-8 to be safe
-  return btoa(unescape(encodeURIComponent(json)));
-};
 
 export const fetchWithX402 = async (
   url: string,
   fetchArgs: RequestInit,
   options: {
-    wallet?: Wallet;
+    wallet: Wallet;
     store?: KVStorage;
   },
 ) => {
-  if (!options) {
-    options = {};
-  }
-  const wallet: Wallet | undefined = options.wallet;
-  if (!wallet) {
-    throw new Error("wallet is missing");
-  }
-  if (!wallet.sendPayment && !wallet.payInvoice) {
-    throw new Error("wallet must have a sendPayment or payInvoice function");
-  }
+  const wallet = options.wallet;
   const store = options.store || noStorage;
   if (!fetchArgs) {
     fetchArgs = {};
@@ -77,7 +42,7 @@ export const fetchWithX402 = async (
       cached?.preimage &&
       cached?.requirements
     ) {
-      fetchArgs.headers["payment-signature"] = buildPaymentSignature(
+      fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
         cached.scheme,
         cached.network,
         cached.preimage,
@@ -108,27 +73,20 @@ export const fetchWithX402 = async (
     );
   }
 
-  const requirements = parsed.accepts[0] as X402Requirements;
-  if (!requirements.extra?.invoice) {
-    throw new Error("x402: payment requirements missing invoice");
-  }
-  if (!requirements.scheme || !requirements.network) {
-    throw new Error("x402: payment requirements missing scheme or network");
-  }
-  if (!requirements.network.startsWith("lightning")) {
+  const requirements = (parsed.accepts as X402Requirements[]).find((e) => {
+    return e.network.startsWith("lightning");
+  });
+  if (!requirements) {
     throw new Error(
-      `x402: unsupported network "${requirements.network}", only lightning networks are supported`,
+      "x402: unsupported x402 network, only lightning networks are supported",
     );
+  }
+  if (!requirements.extra?.invoice) {
+    throw new Error("x402: payment requirements missing lightning invoice");
   }
 
   const invoice = requirements.extra.invoice;
-  const payFn =
-    wallet.sendPayment?.bind(wallet) ?? wallet.payInvoice!.bind(wallet);
-  const invResp = await payFn(invoice);
-
-  if (!invResp?.preimage) {
-    throw new Error("x402: wallet did not return a preimage");
-  }
+  const invResp = await wallet.payInvoice!({ invoice });
 
   store.setItem(
     url,
@@ -140,7 +98,7 @@ export const fetchWithX402 = async (
     }),
   );
 
-  fetchArgs.headers["payment-signature"] = buildPaymentSignature(
+  fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
     requirements.scheme,
     requirements.network,
     invResp.preimage,

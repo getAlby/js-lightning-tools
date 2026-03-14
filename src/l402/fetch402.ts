@@ -1,35 +1,25 @@
-import { KVStorage, NoStorage, parseL402 } from "./utils";
-import { buildPaymentSignature, X402Requirements } from "./x402";
+import {
+  KVStorage,
+  NoStorage,
+  parseL402,
+  buildX402PaymentSignature,
+  Wallet,
+  X402Requirements,
+} from "./utils";
 
 const noStorage = new NoStorage();
 
 const HEADER_KEY = "L402";
 
-interface Wallet {
-  sendPayment?(paymentRequest: string): Promise<{ preimage: string }>;
-  payInvoice?(args: { invoice: string }): Promise<{ preimage: string }>;
-}
-
 export const fetch402 = async (
   url: string,
   fetchArgs: RequestInit,
   options: {
-    headerKey?: string;
-    wallet?: Wallet;
+    wallet: Wallet;
     store?: KVStorage;
   },
 ) => {
-  if (!options) {
-    options = {};
-  }
-  const headerKey = options.headerKey || HEADER_KEY;
-  const wallet: Wallet | undefined = options.wallet;
-  if (!wallet) {
-    throw new Error("wallet is missing");
-  }
-  if (!wallet.sendPayment && !wallet.payInvoice) {
-    throw new Error("wallet must have a sendPayment or payInvoice function");
-  }
+  const wallet = options.wallet;
   const store = options.store || noStorage;
   if (!fetchArgs) {
     fetchArgs = {};
@@ -47,7 +37,7 @@ export const fetch402 = async (
     if (cached?.token && cached?.preimage) {
       // L402 cached
       fetchArgs.headers["Authorization"] =
-        `${headerKey} ${cached.token}:${cached.preimage}`;
+        `${HEADER_KEY} ${cached.token}:${cached.preimage}`;
       return await fetch(url, fetchArgs);
     }
     if (
@@ -57,7 +47,7 @@ export const fetch402 = async (
       cached?.requirements
     ) {
       // X402 cached
-      fetchArgs.headers["payment-signature"] = buildPaymentSignature(
+      fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
         cached.scheme,
         cached.network,
         cached.preimage,
@@ -68,23 +58,22 @@ export const fetch402 = async (
   }
 
   // Initial request — advertise L402 support
-  fetchArgs.headers["Accept-Authenticate"] = headerKey;
+  fetchArgs.headers["Accept-Authenticate"] = HEADER_KEY;
   const initResp = await fetch(url, fetchArgs);
 
   const l402Header = initResp.headers.get("www-authenticate");
   if (l402Header) {
     const details = parseL402(l402Header);
     const token = details.token || details.macaroon;
-    const inv = details.invoice;
+    const invoice = details.invoice;
 
-    const invResp = wallet.sendPayment
-      ? await wallet.sendPayment(inv)
-      : await wallet.payInvoice!({ invoice: inv });
+    const invResp = await wallet.payInvoice!({ invoice });
 
     store.setItem(url, JSON.stringify({ token, preimage: invResp.preimage }));
 
     fetchArgs.headers["Authorization"] =
-      `${headerKey} ${token}:${invResp.preimage}`;
+      `${HEADER_KEY} ${token}:${invResp.preimage}`;
+
     return await fetch(url, fetchArgs);
   }
 
@@ -105,27 +94,20 @@ export const fetch402 = async (
       );
     }
 
-    const requirements = parsed.accepts[0] as X402Requirements;
-    if (!requirements.extra?.invoice) {
-      throw new Error("x402: payment requirements missing invoice");
-    }
-    if (!requirements.scheme || !requirements.network) {
-      throw new Error("x402: payment requirements missing scheme or network");
-    }
-    if (!requirements.network.startsWith("lightning")) {
+    const requirements = (parsed.accepts as X402Requirements[]).find((e) => {
+      return e.network.startsWith("lightning");
+    });
+    if (!requirements) {
       throw new Error(
-        `x402: unsupported network "${requirements.network}", only lightning networks are supported`,
+        "x402: unsupported x402 network, only lightning networks are supported",
       );
+    }
+    if (!requirements.extra?.invoice) {
+      throw new Error("x402: payment requirements missing lightning invoice");
     }
 
     const invoice = requirements.extra.invoice;
-    const invResp = wallet.sendPayment
-      ? await wallet.sendPayment(invoice)
-      : await wallet.payInvoice!({ invoice });
-
-    if (!invResp?.preimage) {
-      throw new Error("x402: wallet did not return a preimage");
-    }
+    const invResp = await wallet.payInvoice!({ invoice });
 
     store.setItem(
       url,
@@ -137,7 +119,7 @@ export const fetch402 = async (
       }),
     );
 
-    fetchArgs.headers["payment-signature"] = buildPaymentSignature(
+    fetchArgs.headers["payment-signature"] = buildX402PaymentSignature(
       requirements.scheme,
       requirements.network,
       invResp.preimage,

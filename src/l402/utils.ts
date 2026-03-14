@@ -3,6 +3,10 @@ export interface KVStorage {
   setItem(key: string, value: string): void;
 }
 
+export interface Wallet {
+  payInvoice(args: { invoice: string }): Promise<{ preimage: string }>;
+}
+
 export class MemoryStorage implements KVStorage {
   storage;
 
@@ -50,8 +54,39 @@ export const parseL402 = (input: string): Record<string, string> => {
   return keyValuePairs;
 };
 
-export const makeAuthenticateHeader = (args: { macaroon: string, invoice: string, key?: string }) => {
+export const makeL402AuthenticateHeader = (args: {
+  macaroon: string;
+  invoice: string;
+  key?: string;
+}) => {
   const key = args.key || "L402";
 
   return `${key} macaroon="${args.macaroon}", invoice="${args.invoice}"`;
+};
+
+export interface X402Requirements {
+  scheme: string;
+  network: string;
+  extra: {
+    invoice: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
 }
+
+export const buildX402PaymentSignature = (
+  scheme: string,
+  network: string,
+  preimage: string,
+  requirements: X402Requirements,
+): string => {
+  const json = JSON.stringify({
+    x402Version: 2,
+    scheme,
+    network,
+    payload: { preimage },
+    accepted: requirements,
+  });
+  // btoa only handles latin1; encode via UTF-8 to be safe
+  return btoa(unescape(encodeURIComponent(json)));
+};
