@@ -181,7 +181,7 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 - url: the L402 protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object that implements `sendPayment(paymentRequest)` and returns `{ preimage }`. Used to pay the L402 invoice.
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the L402 invoice.
   - store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
 
 ##### Examples
@@ -232,13 +232,13 @@ This library includes a `fetchWithX402` function to consume X402-protected resou
 - url: the X402 protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object that implements `payInvoice(paymentRequest)` or `sendPayment(paymentRequest)` and returns `{ preimage }`. Used to pay the X402 invoice.
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the X402 invoice.
   - store: a key/value store object to persist the payment proof for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
 
 ##### Examples
 
 ```js
-import { fetchWithX402 } from "@getalby/lightning-tools/x402";
+import { fetchWithX402 } from "@getalby/lightning-tools/l402";
 
 // pass a wallet that implements payInvoice()
 // the payment proof will be stored in memory and reused for subsequent requests
@@ -279,7 +279,7 @@ await fetchWithX402(
 - url: the protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object that implements `sendPayment(paymentRequest)` or `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402 and X402 invoices.
+  - wallet: any object that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402 and X402 invoices.
   - store: a key/value store object to persist the payment proof for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default no storage is used - pass `window.localStorage` or a similar store to enable caching.
 
 ##### Examples
