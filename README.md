@@ -241,7 +241,7 @@ This library includes a `fetchWithX402` function to consume X402-protected resou
 import { fetchWithX402 } from "@getalby/lightning-tools/l402";
 
 // pass a wallet that implements payInvoice()
-// the payment proof will be stored in memory and reused for subsequent requests
+// the payment proof will not be stored by default. to reuse the proofs for subsequent requests provide a storage
 await fetchWithX402(
   "https://x402.albylabs.com/demo/quote",
   {},
