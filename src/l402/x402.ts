@@ -77,11 +77,11 @@ export const fetchWithX402 = async (
   }
 
   const requirements = (parsed.accepts as X402Requirements[]).find((e) => {
-    return e.network.startsWith("btc") && e.extra.paymentMethod === "lightning";
+    return e.extra.paymentMethod === "lightning";
   });
   if (!requirements) {
     throw new Error(
-      "x402: unsupported x402 network, only lightning networks are supported",
+      "x402: unsupported x402 network, only Bitcoin lightning network is supported.",
     );
   }
   if (!requirements.extra?.invoice) {

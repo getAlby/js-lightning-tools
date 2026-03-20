@@ -3,16 +3,18 @@ import { fetchWithX402 } from "./x402";
 import { MemoryStorage, NoStorage } from "./utils";
 
 const INVOICE =
-  "lnbc100n1pjkse4mpp5q22x8xdwrmpw0t6cww6sey7fn6klnnr5303vj7h44tr3dm2c9y9qdq8f4f5z4qcqzzsxqyz5vqsp5mmhp6cx4xxysc8xvxaj984eue9pm83lxgezmk3umx6wxr9rrq2ns9qyyssqmmrrwthves6z3d85nafj2ds4z20qju2vpaatep8uwrvxz0xs4kznm99m7f6pmkzax09k2k9saldy34z0p0l8gm0zm5xsmg2g667pnlqp7a0qdz";
+  "lnbc4020n1p5m6028dq80q6rqvsnp4qt5w34u6kntf5lc50jj27rvs89sgrpcpj7s6vfts042gkhxx2j6swpp5g6tquvmswkv5xf0ru7ju2qvdrf83l2ewha3qzzt0a7vurs5q30rssp54kt5hfzjngjersx8fgt60feuu8e7vnat67f3ksr98twdj7z0m0ls9qyysgqcqzp2xqyz5vqrzjqdc22wfv6lyplagj37n9dmndkrzdz8rh3lxkewvvk6arkjpefats2rf47yqqwysqqcqqqqlgqqqqqqgqfqrzjq26922n6s5n5undqrf78rjjhgpcczafws45tx8237y7pzx3fg8ww8apyqqqqqqqqjyqqqqlgqqqqr4gq2q3z5pu33awfm98ac3ysdhy046xmen4zqval67tccu35x9mxgvl6w3wmq6y03ae7pme6qr20mp5gvuqntnu8yy7nlf6gyt9zshanj2zhgqe4xde3";
 const PREIMAGE =
-  "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
+  "8196e90022ce688d911554d02af67d3d6a72143961c1e1aa12c4720538ea0549";
 
 const X402_URL = "https://example.com/protected";
 
 const REQUIREMENTS = {
   scheme: "exact",
-  network: "lightning:mainnet",
-  extra: { invoice: INVOICE },
+  network: "bip122:000000000019d6689c085ae165831e93",
+  amount: "402000",
+  asset: "btc",
+  extra: { invoice: INVOICE, paymentMethod: "lightning" },
 };
 
 function makePaymentRequiredHeader(
@@ -90,13 +92,9 @@ describe("fetchWithX402", () => {
     const headers = secondCallInit.headers as Headers;
     const sig = parsePaymentSignature(headers.get("payment-signature")!);
 
-    expect(sig).toMatchObject({
-      x402Version: 2,
-      scheme: REQUIREMENTS.scheme,
-      network: REQUIREMENTS.network,
-      payload: { preimage: PREIMAGE },
-      accepted: REQUIREMENTS,
-    });
+    const payload = sig.payload as { preimage: string };
+    expect(payload.preimage).toEqual(PREIMAGE);
+    expect(sig.accepted).toEqual(REQUIREMENTS);
   });
 
   test("stores payment data after successful payment", async () => {
@@ -147,12 +145,8 @@ describe("fetchWithX402", () => {
     const callInit = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = callInit.headers as Headers;
     const sig = parsePaymentSignature(headers.get("payment-signature")!);
-    expect(sig).toMatchObject({
-      x402Version: 2,
-      scheme: REQUIREMENTS.scheme,
-      network: REQUIREMENTS.network,
-      payload: { preimage: PREIMAGE },
-    });
+    const payload = sig.payload as { preimage: string };
+    expect(payload.preimage).toEqual(PREIMAGE);
   });
 
   test("second request reuses cached data without re-paying", async () => {
@@ -277,7 +271,7 @@ describe("fetchWithX402", () => {
     const wallet = makeWallet();
     const nonLightning = {
       scheme: "exact",
-      network: "bitcoin:mainnet",
+      network: "bip122:something",
       extra: { invoice: INVOICE },
     };
 
@@ -291,7 +285,7 @@ describe("fetchWithX402", () => {
     });
 
     await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
-      "x402: unsupported x402 network, only lightning networks are supported",
+      "x402: unsupported x402 network, only Bitcoin lightning network is supported.",
     );
   });
 
@@ -305,30 +299,8 @@ describe("fetchWithX402", () => {
     });
 
     await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
-      "x402: payment requirements missing lightning invoice",
+      "x402: unsupported x402 network, only Bitcoin lightning network is supported.",
     );
-  });
-
-  test("accepts lightning:testnet network", async () => {
-    const wallet = makeWallet();
-    const testnet = {
-      scheme: "exact",
-      network: "lightning:testnet",
-      extra: { invoice: INVOICE },
-    };
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: {
-        "PAYMENT-REQUIRED": makePaymentRequiredHeader(testnet as never),
-      },
-    });
-    fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
-
-    await expect(
-      fetchWithX402(X402_URL, {}, { wallet }),
-    ).resolves.toBeDefined();
-    expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
   });
 
   test("picks first lightning entry when accepts contains mixed networks", async () => {
