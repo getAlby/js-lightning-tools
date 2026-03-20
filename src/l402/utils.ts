@@ -69,6 +69,7 @@ export interface X402Requirements {
   network: string;
   extra: {
     invoice: string;
+    paymentMethod?: string;
     [key: string]: unknown;
   };
   [key: string]: unknown;

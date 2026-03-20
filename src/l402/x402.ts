@@ -5,6 +5,7 @@ import {
   Wallet,
   X402Requirements,
 } from "./utils";
+import { Invoice } from "../bolt11";
 
 const noStorage = new NoStorage();
 
@@ -76,7 +77,7 @@ export const fetchWithX402 = async (
   }
 
   const requirements = (parsed.accepts as X402Requirements[]).find((e) => {
-    return e.network.startsWith("lightning");
+    return e.network.startsWith("btc") && e.extra.paymentMethod === "lightning";
   });
   if (!requirements) {
     throw new Error(
@@ -87,8 +88,14 @@ export const fetchWithX402 = async (
     throw new Error("x402: payment requirements missing lightning invoice");
   }
 
-  const invoice = requirements.extra.invoice;
-  const invResp = await wallet.payInvoice!({ invoice });
+  const invoice = new Invoice({ pr: requirements.extra.invoice });
+  if (invoice.amountRaw != requirements.amount) {
+    throw new Error(
+      `Invalid invoice amount: ${invoice.amountRaw}. expected ${requirements.amount}`,
+    );
+  }
+
+  const invResp = await wallet.payInvoice!({ invoice: invoice.paymentRequest });
 
   store.setItem(
     url,
