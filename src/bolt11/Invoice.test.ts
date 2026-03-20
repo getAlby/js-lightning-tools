@@ -23,6 +23,8 @@ describe("Invoice", () => {
       "9c0e57f7f1f4823ce6751fc3fd260e55fe12ccb7dbd70ab58e660c03f569ab34",
     );
     expect(decodedInvoice.satoshi).toBe(1);
+    expect(decodedInvoice.millisatoshi).toBe(1000);
+    expect(decodedInvoice.amountRaw).toBe("1000");
     expect(decodedInvoice.expiry).toBe(86400);
     expect(decodedInvoice.timestamp).toBe(1699966882);
     expect(decodedInvoice.createdDate.toISOString()).toBe(

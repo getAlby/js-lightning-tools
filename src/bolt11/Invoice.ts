@@ -9,6 +9,8 @@ export class Invoice {
   preimage: string | null;
   verify: string | null;
   satoshi: number;
+  millisatoshi: number;
+  amountRaw: string;
   expiry: number | undefined; // expiry in seconds (not a timestamp)
   timestamp: number; // created date in seconds
   createdDate: Date;
@@ -27,6 +29,8 @@ export class Invoice {
     }
     this.paymentHash = decodedInvoice.paymentHash;
     this.satoshi = decodedInvoice.satoshi;
+    this.millisatoshi = decodedInvoice.millisatoshi;
+    this.amountRaw = decodedInvoice.amountRaw;
     this.timestamp = decodedInvoice.timestamp;
     this.expiry = decodedInvoice.expiry;
     this.createdDate = new Date(this.timestamp * 1000);
