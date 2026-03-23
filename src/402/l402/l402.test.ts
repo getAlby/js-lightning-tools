@@ -1,11 +1,7 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithL402 } from "./l402";
-import {
-  MemoryStorage,
-  NoStorage,
-  parseL402,
-  makeL402AuthenticateHeader,
-} from "./utils";
+import { MemoryStorage, NoStorage } from "../utils";
+import { parseL402, makeL402AuthenticateHeader } from "./utils";
 
 const MACAROON =
   "AgEEbHNhdAJCAAAClGOZrh7C569Yc7UMk8merfnMdIviyXr1qscW7VgpChNl21LkZ8Jex5QiPp+E1VaabeJDuWmlrh/j583axFpNAAIXc2VydmljZXM9cmFuZG9tbnVtYmVyOjAAAiZyYW5kb21udW1iZXJfY2FwYWJpbGl0aZVzPWFkZCxzdWJ0cmFjdAAABiAvFpzXGyc+8d/I9nMKKvAYP8w7kUlhuxS0eFN2sqmqHQ==";

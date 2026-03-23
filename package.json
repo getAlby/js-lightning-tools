@@ -39,12 +39,12 @@
       "require": "./dist/cjs/fiat.cjs",
       "types": "./dist/types/fiat.d.ts"
     },
-    "./l402": {
-      "import": "./dist/esm/l402.js",
-      "require": "./dist/cjs/l402.cjs",
-      "types": "./dist/types/l402.d.ts"
-    },
     "./402": {
+      "import": "./dist/esm/402.js",
+      "require": "./dist/cjs/402.cjs",
+      "types": "./dist/types/402.d.ts"
+    },
+    "./l402": {
       "import": "./dist/esm/l402.js",
       "require": "./dist/cjs/l402.cjs",
       "types": "./dist/types/l402.d.ts"

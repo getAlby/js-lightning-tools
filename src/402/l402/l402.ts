@@ -1,8 +1,9 @@
-import { KVStorage, NoStorage, parseL402, Wallet } from "./utils";
+import { KVStorage, NoStorage, Wallet } from "../utils";
+import { parseL402 } from "./utils";
 
 const noStorage = new NoStorage();
 
-const HEADER_KEY = "L402";
+export const HEADER_KEY = "L402";
 
 export const fetchWithL402 = async (
   url: string,

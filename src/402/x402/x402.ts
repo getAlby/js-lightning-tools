@@ -1,21 +1,13 @@
-import {
-  KVStorage,
-  NoStorage,
-  buildX402PaymentSignature,
-  Wallet,
-  X402Requirements,
-} from "./utils";
-import { Invoice } from "../bolt11";
+import { KVStorage, NoStorage, Wallet } from "../utils";
+import { buildX402PaymentSignature, X402Requirements } from "./utils";
+import { Invoice } from "../../bolt11";
 
 const noStorage = new NoStorage();
 
 export const fetchWithX402 = async (
   url: string,
   fetchArgs: RequestInit,
-  options: {
-    wallet: Wallet;
-    store?: KVStorage;
-  },
+  options: { wallet: Wallet; store?: KVStorage },
 ) => {
   const wallet = options.wallet;
   const store = options.store || noStorage;
@@ -95,7 +87,7 @@ export const fetchWithX402 = async (
     );
   }
 
-  const invResp = await wallet.payInvoice!({ invoice: invoice.paymentRequest });
+  await wallet.payInvoice!({ invoice: invoice.paymentRequest });
 
   store.setItem(
     url,

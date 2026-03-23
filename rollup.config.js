@@ -19,8 +19,9 @@ const entries = [
   { name: "index", input: "src/index.ts" },
   { name: "bolt11", input: "src/bolt11/index.ts" },
   { name: "fiat", input: "src/fiat/index.ts" },
-  { name: "l402", input: "src/l402/index.ts" },
-  { name: "x402", input: "src/x402/index.ts" },
+  { name: "402", input: "src/402/index.ts" },
+  { name: "l402", input: "src/402/l402/index.ts" },
+  { name: "x402", input: "src/402/x402/index.ts" },
   { name: "lnurl", input: "src/lnurl/index.ts" },
   { name: "podcasting2", input: "src/podcasting2/index.ts" },
 ];

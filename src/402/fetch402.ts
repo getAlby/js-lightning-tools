@@ -1,15 +1,9 @@
-import {
-  KVStorage,
-  NoStorage,
-  parseL402,
-  buildX402PaymentSignature,
-  Wallet,
-  X402Requirements,
-} from "./utils";
+import { KVStorage, NoStorage, Wallet } from "./utils";
+import { parseL402 } from "./l402/utils";
+import { buildX402PaymentSignature, X402Requirements } from "./x402/utils";
+import { HEADER_KEY } from "./l402/l402";
 
 const noStorage = new NoStorage();
-
-const HEADER_KEY = "L402";
 
 export const fetch402 = async (
   url: string,
