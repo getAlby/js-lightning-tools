@@ -44,7 +44,7 @@ export const fetch402 = async (
     if (
       cached?.scheme &&
       cached?.network &&
-      cached?.preimage &&
+      cached?.invoice &&
       cached?.requirements
     ) {
       // X402 cached
@@ -53,7 +53,7 @@ export const fetch402 = async (
         buildX402PaymentSignature(
           cached.scheme,
           cached.network,
-          cached.preimage,
+          cached.invoice,
           cached.requirements,
         ),
       );
@@ -98,7 +98,7 @@ export const fetch402 = async (
     }
 
     const requirements = (parsed.accepts as X402Requirements[]).find((e) => {
-      return e.network.startsWith("lightning");
+      return e.extra?.paymentMethod === "lightning";
     });
     if (!requirements) {
       throw new Error(
@@ -110,14 +110,14 @@ export const fetch402 = async (
     }
 
     const invoice = requirements.extra.invoice;
-    const invResp = await wallet.payInvoice!({ invoice });
+    await wallet.payInvoice!({ invoice });
 
     store.setItem(
       url,
       JSON.stringify({
         scheme: requirements.scheme,
         network: requirements.network,
-        preimage: invResp.preimage,
+        invoice,
         requirements,
       }),
     );
@@ -127,7 +127,7 @@ export const fetch402 = async (
       buildX402PaymentSignature(
         requirements.scheme,
         requirements.network,
-        invResp.preimage,
+        invoice,
         requirements,
       ),
     );

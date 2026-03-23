@@ -78,14 +78,14 @@ export interface X402Requirements {
 export const buildX402PaymentSignature = (
   scheme: string,
   network: string,
-  preimage: string,
+  invoice: string,
   requirements: X402Requirements,
 ): string => {
   const json = JSON.stringify({
     x402Version: 2,
     scheme,
     network,
-    payload: { preimage },
+    payload: { invoice },
     accepted: requirements,
   });
   // btoa only handles latin1; encode via UTF-8 to be safe

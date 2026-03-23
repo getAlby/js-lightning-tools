@@ -92,8 +92,8 @@ describe("fetchWithX402", () => {
     const headers = secondCallInit.headers as Headers;
     const sig = parsePaymentSignature(headers.get("payment-signature")!);
 
-    const payload = sig.payload as { preimage: string };
-    expect(payload.preimage).toEqual(PREIMAGE);
+    const payload = sig.payload as { invoice: string };
+    expect(payload.invoice).toEqual(INVOICE);
     expect(sig.accepted).toEqual(REQUIREMENTS);
   });
 
@@ -109,11 +109,11 @@ describe("fetchWithX402", () => {
 
     await fetchWithX402(X402_URL, {}, { wallet, store });
 
-    const stored = JSON.parse(store.getItem(X402_URL));
+    const stored = JSON.parse(store.getItem(X402_URL) as string);
     expect(stored).toMatchObject({
       scheme: REQUIREMENTS.scheme,
       network: REQUIREMENTS.network,
-      preimage: PREIMAGE,
+      invoice: INVOICE,
       requirements: REQUIREMENTS,
     });
   });
@@ -127,7 +127,7 @@ describe("fetchWithX402", () => {
       JSON.stringify({
         scheme: REQUIREMENTS.scheme,
         network: REQUIREMENTS.network,
-        preimage: PREIMAGE,
+        invoice: INVOICE,
         requirements: REQUIREMENTS,
       }),
     );
@@ -145,8 +145,8 @@ describe("fetchWithX402", () => {
     const callInit = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = callInit.headers as Headers;
     const sig = parsePaymentSignature(headers.get("payment-signature")!);
-    const payload = sig.payload as { preimage: string };
-    expect(payload.preimage).toEqual(PREIMAGE);
+    const payload = sig.payload as { invoice: string };
+    expect(payload.invoice).toEqual(INVOICE);
   });
 
   test("second request reuses cached data without re-paying", async () => {
@@ -202,7 +202,7 @@ describe("fetchWithX402", () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
-  test("falls through on incomplete cache entry (missing preimage)", async () => {
+  test("falls through on incomplete cache entry (missing invoice)", async () => {
     const wallet = makeWallet();
     const store = new MemoryStorage();
 
@@ -210,8 +210,8 @@ describe("fetchWithX402", () => {
       X402_URL,
       JSON.stringify({
         scheme: "exact",
-        network: "lightning:mainnet",
-        // no preimage, no requirements
+        network: "bip122:000000000019d6689c085ae165831e93",
+        // no invoice, no requirements
       }),
     );
 

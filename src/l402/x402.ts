@@ -32,14 +32,14 @@ export const fetchWithX402 = async (
     let cached: {
       scheme: string;
       network: string;
-      preimage: string;
+      invoice: string;
       requirements: X402Requirements;
     } | null = null;
     cached = JSON.parse(cachedRaw);
     if (
       cached?.scheme &&
       cached?.network &&
-      cached?.preimage &&
+      cached?.invoice &&
       cached?.requirements
     ) {
       headers.set(
@@ -47,7 +47,7 @@ export const fetchWithX402 = async (
         buildX402PaymentSignature(
           cached.scheme,
           cached.network,
-          cached.preimage,
+          cached.invoice,
           cached.requirements,
         ),
       );
@@ -102,7 +102,7 @@ export const fetchWithX402 = async (
     JSON.stringify({
       scheme: requirements.scheme,
       network: requirements.network,
-      preimage: invResp.preimage,
+      invoice: invoice.paymentRequest,
       requirements,
     }),
   );
@@ -112,7 +112,7 @@ export const fetchWithX402 = async (
     buildX402PaymentSignature(
       requirements.scheme,
       requirements.network,
-      invResp.preimage,
+      invoice.paymentRequest,
       requirements,
     ),
   );
