@@ -1,7 +1,7 @@
 import { KVStorage, NoStorage, Wallet } from "./utils";
-import { parseL402 } from "./l402/utils";
-import { buildX402PaymentSignature, X402Requirements } from "./x402/utils";
-import { HEADER_KEY } from "./l402/l402";
+import { buildX402PaymentSignature } from "./x402/utils";
+import { HEADER_KEY, handleL402Payment } from "./l402/l402";
+import { handleX402Payment } from "./x402/x402";
 
 const noStorage = new NoStorage();
 
@@ -61,71 +61,12 @@ export const fetch402 = async (
 
   const l402Header = initResp.headers.get("www-authenticate");
   if (l402Header) {
-    const details = parseL402(l402Header);
-    const token = details.token || details.macaroon;
-    const invoice = details.invoice;
-
-    const invResp = await wallet.payInvoice!({ invoice });
-
-    store.setItem(url, JSON.stringify({ token, preimage: invResp.preimage }));
-
-    headers.set("Authorization", `${HEADER_KEY} ${token}:${invResp.preimage}`);
-
-    return await fetch(url, fetchArgs);
+    return handleL402Payment(l402Header, url, fetchArgs, headers, wallet, store, HEADER_KEY);
   }
 
   const x402Header = initResp.headers.get("PAYMENT-REQUIRED");
   if (x402Header) {
-    let parsed: { accepts?: unknown[] };
-    try {
-      parsed = JSON.parse(decodeURIComponent(escape(atob(x402Header))));
-    } catch (_) {
-      throw new Error(
-        "x402: invalid PAYMENT-REQUIRED header (not valid base64-encoded JSON)",
-      );
-    }
-
-    if (!Array.isArray(parsed.accepts) || parsed.accepts.length === 0) {
-      throw new Error(
-        "x402: PAYMENT-REQUIRED header contains no payment options",
-      );
-    }
-
-    const requirements = (parsed.accepts as X402Requirements[]).find((e) => {
-      return e.extra?.paymentMethod === "lightning";
-    });
-    if (!requirements) {
-      throw new Error(
-        "x402: unsupported x402 network, only lightning networks are supported",
-      );
-    }
-    if (!requirements.extra?.invoice) {
-      throw new Error("x402: payment requirements missing lightning invoice");
-    }
-
-    const invoice = requirements.extra.invoice;
-    await wallet.payInvoice!({ invoice });
-
-    store.setItem(
-      url,
-      JSON.stringify({
-        scheme: requirements.scheme,
-        network: requirements.network,
-        invoice,
-        requirements,
-      }),
-    );
-
-    headers.set(
-      "payment-signature",
-      buildX402PaymentSignature(
-        requirements.scheme,
-        requirements.network,
-        invoice,
-        requirements,
-      ),
-    );
-    return await fetch(url, fetchArgs);
+    return handleX402Payment(x402Header, url, fetchArgs, headers, wallet, store);
   }
 
   return initResp;

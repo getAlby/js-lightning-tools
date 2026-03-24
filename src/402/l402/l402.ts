@@ -5,6 +5,32 @@ const noStorage = new NoStorage();
 
 export const HEADER_KEY = "L402";
 
+export const handleL402Payment = async (
+  l402Header: string,
+  url: string,
+  fetchArgs: RequestInit,
+  headers: Headers,
+  wallet: Wallet,
+  store: KVStorage,
+  headerKey: string,
+): Promise<Response> => {
+  const details = parseL402(l402Header);
+  const token = details.token || details.macaroon;
+  const invoice = details.invoice;
+
+  if (!token) {
+    throw new Error("L402: missing token/macaroon in WWW-Authenticate header");
+  }
+  if (!invoice) {
+    throw new Error("L402: missing invoice in WWW-Authenticate header");
+  }
+
+  const invResp = await wallet.payInvoice({ invoice });
+  store.setItem(url, JSON.stringify({ token, preimage: invResp.preimage }));
+  headers.set("Authorization", `${headerKey} ${token}:${invResp.preimage}`);
+  return fetch(url, fetchArgs);
+};
+
 export const fetchWithL402 = async (
   url: string,
   fetchArgs: RequestInit,
@@ -42,20 +68,5 @@ export const fetchWithL402 = async (
     return initResp;
   }
 
-  const details = parseL402(header);
-  const token = details.token || details.macaroon;
-  const invoice = details.invoice;
-
-  const invResp = await wallet.payInvoice({ invoice });
-
-  store.setItem(
-    url,
-    JSON.stringify({
-      token: token,
-      preimage: invResp.preimage,
-    }),
-  );
-
-  headers.set("Authorization", `${headerKey} ${token}:${invResp.preimage}`);
-  return await fetch(url, fetchArgs);
+  return handleL402Payment(header, url, fetchArgs, headers, wallet, store, headerKey);
 };
