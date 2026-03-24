@@ -1,4 +1,4 @@
-import { fetch402 } from "@getalby/lightning-tools/402";
+import { fetch402 } from "../src/402/index.ts";
 import { NWCClient } from "@getalby/sdk";
 
 // fetch402 works with both L402 and X402 endpoints —
@@ -11,13 +11,11 @@ if (!nostrWalletConnectUrl) {
   throw new Error("Please set a NWC_URL env variable");
 }
 
-const nwc = new NWCClient({
-  nostrWalletConnectUrl,
-});
+const nwc = new NWCClient({ nostrWalletConnectUrl });
 
 fetch402(url, {}, { wallet: nwc })
   .then((response) => response.json())
   .then((data) => {
     console.info(data);
-    nwc.close();
-  });
+  })
+  .finally(() => nwc.close());
