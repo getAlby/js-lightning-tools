@@ -1,4 +1,4 @@
-import { fetch402 } from "../src/402/index.ts";
+import { fetch402 } from "@getalby/lightning-tools/402";
 import { NWCClient } from "@getalby/sdk";
 
 // fetch402 works with both L402 and X402 endpoints —

@@ -1,4 +1,4 @@
-import { fetchWithL402 } from "../src/402/l402/index.ts";
+import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 import { NWCClient } from "@getalby/sdk";
 
 const url =

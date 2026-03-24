@@ -1,6 +1,5 @@
 import { LightningAddress } from "@getalby/lightning-tools/lnurl";
 import { NostrWebLNProvider } from "@getalby/sdk";
-import "websocket-polyfill";
 import { finalizeEvent, getPublicKey } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 

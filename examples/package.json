@@ -1,0 +1,18 @@
+{
+  "name": "@getalby/lightning-tools-examples",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "402": "node 402.js",
+    "l402": "node l402.js",
+    "x402": "node x402.js",
+    "request-invoice": "node request-invoice.js",
+    "zaps-nwc": "node zaps-nwc.js"
+  },
+  "dependencies": {
+    "@getalby/lightning-tools": "file:..",
+    "@getalby/sdk": "^7.0.0",
+    "@noble/hashes": "^2.0.1",
+    "nostr-tools": "^2.16.1"
+  }
+}
