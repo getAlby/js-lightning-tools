@@ -54,6 +54,11 @@
       "require": "./dist/cjs/x402.cjs",
       "types": "./dist/types/x402.d.ts"
     },
+    "./mpp": {
+      "import": "./dist/esm/mpp.js",
+      "require": "./dist/cjs/mpp.cjs",
+      "types": "./dist/types/mpp.d.ts"
+    },
     "./lnurl": {
       "import": "./dist/esm/lnurl.js",
       "require": "./dist/cjs/lnurl.cjs",

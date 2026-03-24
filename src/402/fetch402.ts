@@ -2,6 +2,7 @@ import { KVStorage, NoStorage, Wallet } from "./utils";
 import { buildX402PaymentSignature } from "./x402/utils";
 import { HEADER_KEY, handleL402Payment } from "./l402/l402";
 import { handleX402Payment } from "./x402/x402";
+import { handleMppChargePayment } from "./mpp/mpp";
 
 const noStorage = new NoStorage();
 
@@ -59,10 +60,19 @@ export const fetch402 = async (
   headers.set("Accept-Authenticate", HEADER_KEY);
   const initResp = await fetch(url, fetchArgs);
 
-  const l402Header = initResp.headers.get("www-authenticate");
-  if (l402Header) {
+  const wwwAuthHeader = initResp.headers.get("www-authenticate");
+  if (wwwAuthHeader) {
+    if (wwwAuthHeader.trimStart().toLowerCase().startsWith("payment")) {
+      return handleMppChargePayment(
+        wwwAuthHeader,
+        url,
+        fetchArgs,
+        headers,
+        wallet,
+      );
+    }
     return handleL402Payment(
-      l402Header,
+      wwwAuthHeader,
       url,
       fetchArgs,
       headers,
