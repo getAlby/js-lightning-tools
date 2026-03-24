@@ -28,7 +28,7 @@ or for use without any build tools:
 
 ```html
 <script type="module">
-  import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0"; // jsdelivr.net, skypack.dev also work
+  import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@7"; // jsdelivr.net, skypack.dev also work
 
   // use LightningAddress normally...
   (async () => {
@@ -168,6 +168,8 @@ Native zaps without a browser extension are possible by using a Nostr Wallet Con
 
 See [examples/zaps-nwc](examples/zaps-nwc.js)
 
+> All examples in the [examples/](examples/) directory are runnable. See [examples/README.md](examples/README.md) for setup instructions.
+
 ### L402
 
 L402 is a protocol standard based on the HTTP 402 Payment Required error code
@@ -189,10 +191,10 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 ```js
 import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 
-// pass a wallet that implements sendPayment()
+// pass a wallet that implements payInvoice()
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
 await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
+  "https://lightningfaucet.com/api/l402/satoshi_quote",
   {},
   { wallet: myWallet, store: window.localStorage },
 )
@@ -202,21 +204,22 @@ await fetchWithL402(
 
 ```js
 import { fetchWithL402 } from "@getalby/lightning-tools/l402";
-import { NostrWebLNProvider } from "@getalby/sdk";
+import { NWCClient } from "@getalby/sdk";
 
-// use a NWC provider as the wallet to do the payments
-const nwc = new NostrWebLNProvider({
-  nostrWalletConnectUrl: loadNWCUrl(),
+// use a NWC client as the wallet to do the payments
+const nwc = new NWCClient({
+  nostrWalletConnectUrl: "nostr+walletconnect://...",
 });
 
 // this will fetch the resource and pay the invoice using the NWC wallet
 await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
+  "https://lightningfaucet.com/api/l402/satoshi_quote",
   {},
   { wallet: nwc },
 )
   .then((res) => res.json())
-  .then(console.log);
+  .then(console.log)
+  .finally(() => nwc.close());
 ```
 
 ### X402
@@ -238,36 +241,23 @@ This library includes a `fetchWithX402` function to consume X402-protected resou
 ##### Examples
 
 ```js
-import { fetchWithX402 } from "@getalby/lightning-tools/l402";
+import { fetchWithX402 } from "@getalby/lightning-tools/x402";
+import { NWCClient } from "@getalby/sdk";
 
-// pass a wallet that implements payInvoice()
+// use a NWC client as the wallet to do the payments
+const nwc = new NWCClient({
+  nostrWalletConnectUrl: "nostr+walletconnect://...",
+});
+
 // the payment proof will not be stored by default. to reuse the proofs for subsequent requests provide a storage
 await fetchWithX402(
   "https://x402.albylabs.com/demo/quote",
   {},
-  { wallet: myWallet, store: window.localStorage },
+  { wallet: nwc, store: window.localStorage },
 )
   .then((res) => res.json())
-  .then(console.log);
-```
-
-```js
-import { fetchWithX402 } from "@getalby/lightning-tools/x402";
-import { NostrWebLNProvider } from "@getalby/sdk";
-
-// use a NWC provider as the wallet to do the payments
-const nwc = new NostrWebLNProvider({
-  nostrWalletConnectUrl: loadNWCUrl(),
-});
-
-// this will fetch the resource and pay the invoice using the NWC wallet
-await fetchWithX402(
-  "https://x402.albylabs.com/demo/quote",
-  {},
-  { wallet: nwc },
-)
-  .then((res) => res.json())
-  .then(console.log);
+  .then(console.log)
+  .finally(() => nwc.close());
 ```
 
 ### fetch402
@@ -286,10 +276,10 @@ await fetchWithX402(
 
 
 ```js
-import { fetch402 } from "@getalby/lightning-tools/l402";
-import { NostrWebLNProvider } from "@getalby/sdk";
+import { fetch402 } from "@getalby/lightning-tools/402";
+import { NWCClient } from "@getalby/sdk";
 
-const nwc = new NostrWebLNProvider({
+const nwc = new NWCClient({
   nostrWalletConnectUrl: "nostr+walletconnect://...",
 });
 
@@ -297,10 +287,11 @@ const nwc = new NostrWebLNProvider({
 await fetch402(
   "https://example.com/protected-resource",
   {},
-  { wallet: nwc, store: window.localStorage  },
+  { wallet: nwc, store: window.localStorage },
 )
   .then((res) => res.json())
-  .then(console.log);
+  .then(console.log)
+  .finally(() => nwc.close());
 ```
 
 ### Basic invoice decoding
