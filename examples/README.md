@@ -10,6 +10,7 @@ yarn
 ```
 
 > `yarn` links the local package via `file:..` — if you change library source, rebuild first:
+>
 > ```bash
 > cd .. && yarn build && cd examples
 > ```
@@ -18,7 +19,7 @@ yarn
 
 ### x402 / L402 — paid API fetch
 
-These examples fetch a URL protected by an HTTP 402 payment wall. You need an [NWC](https://nwc.getalby.com) connection string.
+These examples fetch a URL protected by an HTTP 402 payment wall. You need an [NWC](https://www.nwc.dev) connection string.
 
 ```bash
 NWC_URL="nostr+walletconnect://..." yarn 402      # auto-detects L402 or x402
@@ -27,6 +28,7 @@ NWC_URL="nostr+walletconnect://..." yarn l402     # L402 only
 ```
 
 Override the default URL:
+
 ```bash
 URL="https://your-402-endpoint.example.com" NWC_URL="nostr+walletconnect://..." yarn 402
 ```

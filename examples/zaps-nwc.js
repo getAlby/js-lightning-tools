@@ -5,9 +5,8 @@ import { hexToBytes } from "@noble/hashes/utils";
 
 // your private key is required to sign zap request events
 const nostrPrivateKey = process.env.NOSTR_PRIVATE_KEY;
+
 // NWC url will be used to pay the zap invoice.
-// It can be created in advanced at nwc.getalby.com,
-// or use webln.NostrWebLNProvider.withNewSecret() to generate a new one
 const nostrWalletConnectUrl = process.env.NWC_URL;
 
 if (!nostrPrivateKey || !nostrWalletConnectUrl) {
@@ -15,9 +14,7 @@ if (!nostrPrivateKey || !nostrWalletConnectUrl) {
 }
 
 (async () => {
-  const nostrWeblnProvider = new NostrWebLNProvider({
-    nostrWalletConnectUrl,
-  });
+  const nostrWeblnProvider = new NostrWebLNProvider({ nostrWalletConnectUrl });
   // or use nostrWeblnProvider.initNWC(); to get a new NWC url
   const nostrProvider = {
     getPublicKey: () =>
