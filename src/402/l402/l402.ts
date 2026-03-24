@@ -68,5 +68,13 @@ export const fetchWithL402 = async (
     return initResp;
   }
 
-  return handleL402Payment(header, url, fetchArgs, headers, wallet, store, headerKey);
+  return handleL402Payment(
+    header,
+    url,
+    fetchArgs,
+    headers,
+    wallet,
+    store,
+    headerKey,
+  );
 };

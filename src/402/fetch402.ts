@@ -61,12 +61,27 @@ export const fetch402 = async (
 
   const l402Header = initResp.headers.get("www-authenticate");
   if (l402Header) {
-    return handleL402Payment(l402Header, url, fetchArgs, headers, wallet, store, HEADER_KEY);
+    return handleL402Payment(
+      l402Header,
+      url,
+      fetchArgs,
+      headers,
+      wallet,
+      store,
+      HEADER_KEY,
+    );
   }
 
   const x402Header = initResp.headers.get("PAYMENT-REQUIRED");
   if (x402Header) {
-    return handleX402Payment(x402Header, url, fetchArgs, headers, wallet, store);
+    return handleX402Payment(
+      x402Header,
+      url,
+      fetchArgs,
+      headers,
+      wallet,
+      store,
+    );
   }
 
   return initResp;
