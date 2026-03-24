@@ -194,7 +194,7 @@ import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 // pass a wallet that implements payInvoice()
 // the tokens/preimage data will be stored in the browser's localStorage and used for any following request
 await fetchWithL402(
-  "https://lightningfaucet.com/api/l402/satoshi_quote",
+  "https://l402.example.com/protected-resource",
   {},
   { wallet: myWallet, store: window.localStorage },
 )
@@ -213,7 +213,7 @@ const nwc = new NWCClient({
 
 // this will fetch the resource and pay the invoice using the NWC wallet
 await fetchWithL402(
-  "https://lightningfaucet.com/api/l402/satoshi_quote",
+  "https://l402.example.com/protected-resource",
   {},
   { wallet: nwc },
 )
@@ -251,7 +251,7 @@ const nwc = new NWCClient({
 
 // the payment proof will not be stored by default. to reuse the proofs for subsequent requests provide a storage
 await fetchWithX402(
-  "https://x402.albylabs.com/demo/quote",
+  "https://x402.example.com/protected-resource",
   {},
   { wallet: nwc, store: window.localStorage },
 )

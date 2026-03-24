@@ -1,8 +1,7 @@
 import { fetchWithL402 } from "@getalby/lightning-tools/l402";
 import { NWCClient } from "@getalby/sdk";
 
-const url =
-  process.env.URL || "https://lsat-weather-api.getalby.repl.co/kigali";
+const url = process.env.URL || "https://l402.example.com/protected-resource";
 
 const nostrWalletConnectUrl = process.env.NWC_URL;
 
