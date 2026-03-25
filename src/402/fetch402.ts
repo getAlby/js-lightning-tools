@@ -74,14 +74,7 @@ export const fetch402 = async (
 
   const x402Header = initResp.headers.get("PAYMENT-REQUIRED");
   if (x402Header) {
-    return handleX402Payment(
-      x402Header,
-      url,
-      fetchArgs,
-      headers,
-      wallet,
-      store,
-    );
+    return handleX402Payment(x402Header, url, fetchArgs, headers, wallet);
   }
 
   return initResp;

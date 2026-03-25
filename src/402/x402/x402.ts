@@ -1,8 +1,6 @@
-import { KVStorage, NoStorage, Wallet } from "../utils";
+import { Wallet } from "../utils";
 import { buildX402PaymentSignature, X402Requirements } from "./utils";
 import { Invoice } from "../../bolt11";
-
-const noStorage = new NoStorage();
 
 export const handleX402Payment = async (
   x402Header: string,
@@ -10,7 +8,6 @@ export const handleX402Payment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-  store: KVStorage,
 ): Promise<Response> => {
   let parsed: { accepts?: unknown[] };
   try {
@@ -48,16 +45,6 @@ export const handleX402Payment = async (
 
   await wallet.payInvoice!({ invoice: invoice.paymentRequest });
 
-  store.setItem(
-    url,
-    JSON.stringify({
-      scheme: requirements.scheme,
-      network: requirements.network,
-      invoice: invoice.paymentRequest,
-      requirements,
-    }),
-  );
-
   headers.set(
     "payment-signature",
     buildX402PaymentSignature(
@@ -73,10 +60,9 @@ export const handleX402Payment = async (
 export const fetchWithX402 = async (
   url: string,
   fetchArgs: RequestInit,
-  options: { wallet: Wallet; store?: KVStorage },
+  options: { wallet: Wallet },
 ) => {
   const wallet = options.wallet;
-  const store = options.store || noStorage;
   if (!fetchArgs) {
     fetchArgs = {};
   }
@@ -85,39 +71,11 @@ export const fetchWithX402 = async (
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
 
-  const cachedRaw = store.getItem(url);
-  if (cachedRaw) {
-    let cached: {
-      scheme: string;
-      network: string;
-      invoice: string;
-      requirements: X402Requirements;
-    } | null = null;
-    cached = JSON.parse(cachedRaw);
-    if (
-      cached?.scheme &&
-      cached?.network &&
-      cached?.invoice &&
-      cached?.requirements
-    ) {
-      headers.set(
-        "payment-signature",
-        buildX402PaymentSignature(
-          cached.scheme,
-          cached.network,
-          cached.invoice,
-          cached.requirements,
-        ),
-      );
-      return await fetch(url, fetchArgs);
-    }
-  }
-
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get("PAYMENT-REQUIRED");
   if (!header) {
     return initResp;
   }
 
-  return handleX402Payment(header, url, fetchArgs, headers, wallet, store);
+  return handleX402Payment(header, url, fetchArgs, headers, wallet);
 };

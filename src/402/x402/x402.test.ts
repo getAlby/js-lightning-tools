@@ -1,6 +1,5 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithX402 } from "./x402";
-import { MemoryStorage, NoStorage } from "../utils";
 
 const INVOICE =
   "lnbc4020n1p5m6028dq80q6rqvsnp4qt5w34u6kntf5lc50jj27rvs89sgrpcpj7s6vfts042gkhxx2j6swpp5g6tquvmswkv5xf0ru7ju2qvdrf83l2ewha3qzzt0a7vurs5q30rssp54kt5hfzjngjersx8fgt60feuu8e7vnat67f3ksr98twdj7z0m0ls9qyysgqcqzp2xqyz5vqrzjqdc22wfv6lyplagj37n9dmndkrzdz8rh3lxkewvvk6arkjpefats2rf47yqqwysqqcqqqqlgqqqqqqgqfqrzjq26922n6s5n5undqrf78rjjhgpcczafws45tx8237y7pzx3fg8ww8apyqqqqqqqqjyqqqqlgqqqqr4gq2q3z5pu33awfm98ac3ysdhy046xmen4zqval67tccu35x9mxgvl6w3wmq6y03ae7pme6qr20mp5gvuqntnu8yy7nlf6gyt9zshanj2zhgqe4xde3";
@@ -97,61 +96,8 @@ describe("fetchWithX402", () => {
     expect(sig.accepted).toEqual(REQUIREMENTS);
   });
 
-  test("stores payment data after successful payment", async () => {
+  test("pays invoice on every request (no caching)", async () => {
     const wallet = makeWallet();
-    const store = new MemoryStorage();
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
-    });
-    fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
-
-    await fetchWithX402(X402_URL, {}, { wallet, store });
-
-    const stored = JSON.parse(store.getItem(X402_URL) as string);
-    expect(stored).toMatchObject({
-      scheme: REQUIREMENTS.scheme,
-      network: REQUIREMENTS.network,
-      invoice: INVOICE,
-      requirements: REQUIREMENTS,
-    });
-  });
-
-  test("uses cached payment data without calling wallet", async () => {
-    const wallet = makeWallet();
-    const store = new MemoryStorage();
-
-    store.setItem(
-      X402_URL,
-      JSON.stringify({
-        scheme: REQUIREMENTS.scheme,
-        network: REQUIREMENTS.network,
-        invoice: INVOICE,
-        requirements: REQUIREMENTS,
-      }),
-    );
-
-    fetchMock.mockResponseOnce(JSON.stringify({ data: "cached access" }), {
-      status: 200,
-    });
-
-    const response = await fetchWithX402(X402_URL, {}, { wallet, store });
-
-    expect(wallet.payInvoice).not.toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(await response.json()).toEqual({ data: "cached access" });
-
-    const callInit = fetchMock.mock.calls[0][1] as RequestInit;
-    const headers = callInit.headers as Headers;
-    const sig = parsePaymentSignature(headers.get("payment-signature")!);
-    const payload = sig.payload as { invoice: string };
-    expect(payload.invoice).toEqual(INVOICE);
-  });
-
-  test("second request reuses cached data without re-paying", async () => {
-    const wallet = makeWallet();
-    const store = new MemoryStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -161,32 +107,7 @@ describe("fetchWithX402", () => {
       status: 200,
     });
 
-    await fetchWithX402(X402_URL, {}, { wallet, store });
-    expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
-
-    fetchMock.mockResponseOnce(JSON.stringify({ second: true }), {
-      status: 200,
-    });
-
-    const response = await fetchWithX402(X402_URL, {}, { wallet, store });
-
-    expect(wallet.payInvoice).toHaveBeenCalledTimes(1); // still only 1
-    expect(await response.json()).toEqual({ second: true });
-  });
-
-  test("works with NoStorage (never caches, pays every time)", async () => {
-    const wallet = makeWallet();
-    const store = new NoStorage();
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
-    });
-    fetchMock.mockResponseOnce(JSON.stringify({ first: true }), {
-      status: 200,
-    });
-
-    await fetchWithX402(X402_URL, {}, { wallet, store });
+    await fetchWithX402(X402_URL, {}, { wallet });
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -196,34 +117,10 @@ describe("fetchWithX402", () => {
       status: 200,
     });
 
-    await fetchWithX402(X402_URL, {}, { wallet, store });
+    await fetchWithX402(X402_URL, {}, { wallet });
 
     expect(wallet.payInvoice).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenCalledTimes(4);
-  });
-
-  test("falls through on incomplete cache entry (missing invoice)", async () => {
-    const wallet = makeWallet();
-    const store = new MemoryStorage();
-
-    store.setItem(
-      X402_URL,
-      JSON.stringify({
-        scheme: "exact",
-        network: "bip122:000000000019d6689c085ae165831e93",
-        // no invoice, no requirements
-      }),
-    );
-
-    fetchMock.mockResponseOnce("Payment Required", {
-      status: 402,
-      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
-    });
-    fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
-
-    await fetchWithX402(X402_URL, {}, { wallet, store });
-
-    expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
   });
 
   test("throws on invalid base64 PAYMENT-REQUIRED header", async () => {
