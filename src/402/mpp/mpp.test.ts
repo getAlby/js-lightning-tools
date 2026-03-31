@@ -1,6 +1,5 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithMpp } from "./mpp";
-import { NoStorage } from "../utils";
 import {
   buildMppCredential,
   decodeBase64url,
@@ -384,9 +383,8 @@ describe("fetchWithMpp", () => {
     );
   });
 
-  test("works with NoStorage option (accepted for API compat)", async () => {
+  test("works with minimal options (wallet only)", async () => {
     const wallet = makeWallet();
-    const store = new NoStorage();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -400,7 +398,7 @@ describe("fetchWithMpp", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
-    const response = await fetchWithMpp(MPP_URL, {}, { wallet, store });
+    const response = await fetchWithMpp(MPP_URL, {}, { wallet });
     expect(response.status).toBe(200);
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
   });

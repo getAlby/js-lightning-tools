@@ -1,13 +1,10 @@
-import { KVStorage, NoStorage, Wallet } from "../utils";
+import { Wallet } from "../utils";
 import {
   buildMppCredential,
   decodeBase64url,
   MppChargeRequest,
   parseMppChallenge,
 } from "./utils";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const noStorage = new NoStorage();
 
 /**
  * Handle a `WWW-Authenticate: Payment …` challenge produced by a
@@ -73,7 +70,7 @@ export const handleMppChargePayment = async (
 export const fetchWithMpp = async (
   url: string,
   fetchArgs: RequestInit,
-  options: { wallet: Wallet; store?: KVStorage },
+  options: { wallet: Wallet },
 ): Promise<Response> => {
   const wallet = options.wallet;
   if (!wallet) {

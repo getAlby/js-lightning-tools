@@ -64,15 +64,25 @@ export const parseMppChallenge = (header: string): MppChallenge | null => {
 };
 
 /** Decode a base64url string (no padding required) to a UTF-8 string. */
-export const decodeBase64url = (input: string): string =>
-  decodeURIComponent(escape(atob(input.replace(/-/g, "+").replace(/_/g, "/"))));
+export const decodeBase64url = (input: string): string => {
+  const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder("utf-8").decode(bytes);
+};
 
 /** Encode a UTF-8 string to base64url without padding. */
-const encodeBase64url = (input: string): string =>
-  btoa(unescape(encodeURIComponent(input)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+const encodeBase64url = (input: string): string => {
+  const bytes = new TextEncoder().encode(input);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+};
 
 /**
  * JSON Canonicalization Scheme (RFC 8785).
