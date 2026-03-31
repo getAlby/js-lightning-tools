@@ -1,9 +1,5 @@
-import { KVStorage, NoStorage, Wallet } from "../utils";
+import { Wallet } from "../utils";
 import { parseL402 } from "./utils";
-
-const noStorage = new NoStorage();
-
-export const HEADER_KEY = "L402";
 
 export const handleL402Payment = async (
   l402Header: string,
@@ -11,8 +7,6 @@ export const handleL402Payment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-  store: KVStorage,
-  headerKey: string,
 ): Promise<Response> => {
   const details = parseL402(l402Header);
   const token = details.token || details.macaroon;
@@ -26,8 +20,7 @@ export const handleL402Payment = async (
   }
 
   const invResp = await wallet.payInvoice({ invoice });
-  store.setItem(url, JSON.stringify({ token, preimage: invResp.preimage }));
-  headers.set("Authorization", `${headerKey} ${token}:${invResp.preimage}`);
+  headers.set("Authorization", `L402 ${token}:${invResp.preimage}`);
   return fetch(url, fetchArgs);
 };
 
@@ -36,16 +29,12 @@ export const fetchWithL402 = async (
   fetchArgs: RequestInit,
   options: {
     wallet: Wallet;
-    headerKey?: string;
-    store?: KVStorage;
   },
 ) => {
-  const headerKey = options.headerKey || HEADER_KEY;
   const wallet = options.wallet;
   if (!wallet) {
     throw new Error("wallet is missing");
   }
-  const store = options.store || noStorage;
   if (!fetchArgs) {
     fetchArgs = {};
   }
@@ -54,27 +43,11 @@ export const fetchWithL402 = async (
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
 
-  const cachedL402Data = store.getItem(url);
-  if (cachedL402Data) {
-    const data = JSON.parse(cachedL402Data);
-    headers.set("Authorization", `${headerKey} ${data.token}:${data.preimage}`);
-    return await fetch(url, fetchArgs);
-  }
-
-  headers.set("Accept-Authenticate", headerKey);
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get("www-authenticate");
   if (!header) {
     return initResp;
   }
 
-  return handleL402Payment(
-    header,
-    url,
-    fetchArgs,
-    headers,
-    wallet,
-    store,
-    headerKey,
-  );
+  return handleL402Payment(header, url, fetchArgs, headers, wallet);
 };

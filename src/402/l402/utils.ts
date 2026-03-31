@@ -20,11 +20,13 @@ export const parseL402 = (input: string): Record<string, string> => {
 };
 
 export const makeL402AuthenticateHeader = (args: {
-  macaroon: string;
+  macaroon?: string;
+  token?: string;
   invoice: string;
-  key?: string;
 }) => {
-  const key = args.key || "L402";
-
-  return `${key} macaroon="${args.macaroon}", invoice="${args.invoice}"`;
+  if (args.macaroon) {
+    return `L402 version="0" macaroon="${args.macaroon}", invoice="${args.invoice}"`;
+  } else {
+    return `L402 version="0" token="${args.token}", invoice="${args.invoice}"`;
+  }
 };
