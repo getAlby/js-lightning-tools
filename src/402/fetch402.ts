@@ -1,6 +1,7 @@
 import { Wallet } from "./utils";
 import { handleL402Payment } from "./l402/l402";
 import { handleX402Payment } from "./x402/x402";
+import { handleMppChargePayment } from "./mpp/mpp";
 
 export const fetch402 = async (
   url: string,
@@ -20,9 +21,26 @@ export const fetch402 = async (
 
   const initResp = await fetch(url, fetchArgs);
 
-  const l402Header = initResp.headers.get("www-authenticate");
-  if (l402Header) {
-    return handleL402Payment(l402Header, url, fetchArgs, headers, wallet);
+  const wwwAuthHeader = initResp.headers.get("www-authenticate");
+  if (wwwAuthHeader) {
+    if (wwwAuthHeader.trimStart().toLowerCase().startsWith("payment")) {
+      return handleMppChargePayment(
+        wwwAuthHeader,
+        url,
+        fetchArgs,
+        headers,
+        wallet,
+      );
+    }
+    return handleL402Payment(
+      wwwAuthHeader,
+      url,
+      fetchArgs,
+      headers,
+      wallet,
+      store,
+      HEADER_KEY,
+    );
   }
 
   const x402Header = initResp.headers.get("PAYMENT-REQUIRED");

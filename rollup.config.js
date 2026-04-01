@@ -22,6 +22,7 @@ const entries = [
   { name: "402", input: "src/402/index.ts" },
   { name: "l402", input: "src/402/l402/index.ts" },
   { name: "x402", input: "src/402/x402/index.ts" },
+  { name: "mpp", input: "src/402/mpp/index.ts" },
   { name: "lnurl", input: "src/lnurl/index.ts" },
   { name: "podcasting2", input: "src/podcasting2/index.ts" },
 ];
