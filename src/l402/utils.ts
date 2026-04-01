@@ -29,6 +29,11 @@ export class NoStorage implements KVStorage {
   setItem(key: string, value: unknown) {}
 }
 
+/**
+ * Client: parse "www-authenticate" header from server response
+ * @param input
+ * @returns details from the header value (token or macaroon, invoice)
+ */
 export const parseL402 = (input: string): Record<string, string> => {
   // Remove the L402 and LSAT identifiers
   const string = input.replace("L402", "").replace("LSAT", "").trim();
@@ -50,8 +55,44 @@ export const parseL402 = (input: string): Record<string, string> => {
   return keyValuePairs;
 };
 
-export const makeAuthenticateHeader = (args: { macaroon: string, invoice: string, key?: string }) => {
+/**
+ * Server: create a WWW-Authenticate header for a given macaroon and invoice
+ * @param args the macaroon and invoice generated for the client's request
+ * @returns the header value
+ */
+export const makeL402AuthenticateHeader = (args: {
+  macaroon: string;
+  invoice: string;
+  key?: string;
+}) => {
   const key = args.key || "L402";
 
   return `${key} macaroon="${args.macaroon}", invoice="${args.invoice}"`;
+};
+
+/**
+ * @deprecated - use makeL402AuthenticateHeader
+ */
+export const makeAuthenticateHeader = makeL402AuthenticateHeader;
+
+/**
+ * Server: parse "authorization" header sent from client
+ * @param input value from authorization header
+ * @param key e.g. "L402"
+ * @returns the macaroon and preimage
+ */
+export function parseL402Authorization(
+  input: string,
+  key = "L402",
+): { macaroon: string; preimage: string } | null {
+  if (!input.startsWith(key)) return null;
+  const credentials = input.slice(key.length + " ".length);
+  const colonIndex = credentials.indexOf(":");
+  if (colonIndex === -1) {
+    throw new Error("Invalid authorization header value");
+  }
+  return {
+    macaroon: credentials.slice(0, colonIndex),
+    preimage: credentials.slice(colonIndex + 1),
+  };
 }

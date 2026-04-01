@@ -1,7 +1,5 @@
 import { InvoiceArgs, SuccessAction } from "./types";
-import { sha256 } from "@noble/hashes/sha256";
-import { bytesToHex } from "@noble/hashes/utils";
-import { decodeInvoice, fromHexString } from "./utils";
+import { decodeInvoice, validatePreimage } from "./utils";
 
 export class Invoice {
   paymentRequest: string;
@@ -51,12 +49,7 @@ export class Invoice {
   validatePreimage(preimage: string): boolean {
     if (!preimage || !this.paymentHash) return false;
 
-    try {
-      const preimageHash = bytesToHex(sha256(fromHexString(preimage)));
-      return this.paymentHash === preimageHash;
-    } catch {
-      return false;
-    }
+    return validatePreimage(preimage, this.paymentHash);
   }
 
   async verifyPayment(): Promise<boolean> {
