@@ -236,8 +236,6 @@ This library includes a `fetchWithX402` function to consume X402-protected resou
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
   - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the X402 invoice.
-  - store: a key/value store object to persist the payment proof for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
-
 ##### Examples
 
 ```js
