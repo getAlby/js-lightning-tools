@@ -1,4 +1,4 @@
-import { fetchWithMpp } from "../dist/esm/mpp.js";
+import { fetchWithMpp } from "@getalby/lightning-tools/mpp";
 import { NWCClient } from "@getalby/sdk";
 
 const url = process.env.URL || "https://api.ppq.ai/v1/data/api/exa/answer";
