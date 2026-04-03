@@ -23,7 +23,8 @@ export const fetch402 = async (
 
   const wwwAuthHeader = initResp.headers.get("www-authenticate");
   if (wwwAuthHeader) {
-    if (wwwAuthHeader.trimStart().toLowerCase().startsWith("payment")) {
+    const trimmed = wwwAuthHeader.trimStart().toLowerCase();
+    if (trimmed.startsWith("payment")) {
       return handleMppChargePayment(
         wwwAuthHeader,
         url,
@@ -32,7 +33,12 @@ export const fetch402 = async (
         wallet,
       );
     }
-    return handleL402Payment(wwwAuthHeader, url, fetchArgs, headers, wallet);
+    if (trimmed.startsWith("l402") || trimmed.startsWith("lsat")) {
+      return handleL402Payment(wwwAuthHeader, url, fetchArgs, headers, wallet);
+    }
+    throw new Error(
+      `fetch402: unsupported WWW-Authenticate scheme: ${wwwAuthHeader}`,
+    );
   }
 
   const x402Header = initResp.headers.get("PAYMENT-REQUIRED");
