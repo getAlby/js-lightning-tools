@@ -1,2 +1,1 @@
-export * from "./x402";
-export * from "./utils";
+export { fetchWithX402 } from "./x402";

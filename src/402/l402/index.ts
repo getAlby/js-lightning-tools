@@ -1,2 +1,1 @@
-export * from "./l402";
-export * from "./utils";
+export { fetchWithL402 } from "./l402";

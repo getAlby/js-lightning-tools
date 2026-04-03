@@ -1,2 +1,1 @@
-export * from "./mpp";
-export * from "./utils";
+export { fetchWithMpp } from "./mpp";
