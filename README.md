@@ -224,7 +224,7 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 ##### Examples
 
 ```js
-import { fetchWithL402 } from "@getalby/lightning-tools/l402";
+import { fetchWithL402 } from "@getalby/lightning-tools/402/l402";
 import { NWCClient } from "@getalby/sdk";
 
 const nwc = new NWCClient({
@@ -259,7 +259,7 @@ This library includes a `fetchWithX402` function to consume X402-protected resou
 ##### Examples
 
 ```js
-import { fetchWithX402 } from "@getalby/lightning-tools/x402";
+import { fetchWithX402 } from "@getalby/lightning-tools/402/x402";
 import { NWCClient } from "@getalby/sdk";
 
 const nwc = new NWCClient({
@@ -294,7 +294,7 @@ This library includes a `fetchWithMpp` function to consume MPP-protected resourc
 ##### Examples
 
 ```js
-import { fetchWithMpp } from "@getalby/lightning-tools/x402";
+import { fetchWithMpp } from "@getalby/lightning-tools/402/mpp";
 import { NWCClient } from "@getalby/sdk";
 
 const nwc = new NWCClient({

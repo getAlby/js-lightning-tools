@@ -1,4 +1,4 @@
-import { fetchWithX402 } from "@getalby/lightning-tools/x402";
+import { fetchWithX402 } from "@getalby/lightning-tools/402/x402";
 import { NWCClient } from "@getalby/sdk";
 
 const url = process.env.URL || "https://x402.albylabs.com/demo/quote";

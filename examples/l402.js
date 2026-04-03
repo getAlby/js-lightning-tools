@@ -1,4 +1,4 @@
-import { fetchWithL402 } from "@getalby/lightning-tools/l402";
+import { fetchWithL402 } from "@getalby/lightning-tools/402/l402";
 import { NWCClient } from "@getalby/sdk";
 
 const url = process.env.URL || "https://l402.example.com/protected-resource";
