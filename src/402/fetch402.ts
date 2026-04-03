@@ -32,15 +32,7 @@ export const fetch402 = async (
         wallet,
       );
     }
-    return handleL402Payment(
-      wwwAuthHeader,
-      url,
-      fetchArgs,
-      headers,
-      wallet,
-      store,
-      HEADER_KEY,
-    );
+    return handleL402Payment(wwwAuthHeader, url, fetchArgs, headers, wallet);
   }
 
   const x402Header = initResp.headers.get("PAYMENT-REQUIRED");
