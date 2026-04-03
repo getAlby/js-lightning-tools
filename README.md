@@ -184,7 +184,7 @@ This library includes functions to consome those resources.
 - url: the protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402 and X402 invoices.
+  - wallet: any object that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402, X402 and MPP invoices.
 
 ##### Examples
 

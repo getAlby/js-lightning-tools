@@ -1,7 +1,7 @@
 import { fetch402 } from "@getalby/lightning-tools/402";
 import { NWCClient } from "@getalby/sdk";
 
-// fetch402 works with both L402 and X402 endpoints —
+// fetch402 works with L402, X402 and MPP endpoints —
 // it detects the protocol from the server's response headers automatically.
 const url = process.env.URL || "https://x402.albylabs.com/demo/quote";
 
