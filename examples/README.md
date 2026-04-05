@@ -48,5 +48,3 @@ Sends a zap to a lightning address using NWC for payment and a Nostr key for sig
 ```bash
 NOSTR_PRIVATE_KEY="your-hex-private-key" NWC_URL="nostr+walletconnect://..." yarn zaps-nwc
 ```
-
-> **`zaps.js`** is a browser-only example (uses `window.webln`) and is not runnable as a Node script.
