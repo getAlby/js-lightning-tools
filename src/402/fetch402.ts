@@ -1,4 +1,4 @@
-import { Wallet } from "./utils";
+import { Wallet, createGuardedWallet } from "./utils";
 import { handleL402Payment } from "./l402/l402";
 import { handleX402Payment } from "./x402/x402";
 import { handleMppChargePayment } from "./mpp/mpp";
@@ -8,9 +8,13 @@ export const fetch402 = async (
   fetchArgs: RequestInit,
   options: {
     wallet: Wallet;
+    maxAmount?: number;
   },
 ) => {
-  const wallet = options.wallet;
+  const wallet =
+    options.maxAmount != null
+      ? createGuardedWallet(options.wallet, options.maxAmount)
+      : options.wallet;
   if (!fetchArgs) {
     fetchArgs = {};
   }
