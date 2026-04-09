@@ -11,6 +11,8 @@ export const fromHexString = (hexString: string) =>
 type DecodedInvoice = {
   paymentHash: string;
   satoshi: number;
+  millisatoshi: number;
+  amountRaw: string;
   timestamp: number;
   expiry: number | undefined;
   description: string | undefined;
@@ -34,10 +36,14 @@ export const decodeInvoice = (
     const paymentHash = hashTag.value;
 
     let satoshi = 0;
+    let millisatoshi = 0;
+    let amountRaw = "0";
 
     const amountTag = decoded.sections.find((value) => value.name === "amount");
 
     if (amountTag?.name === "amount" && amountTag.value) {
+      amountRaw = amountTag.value;
+      millisatoshi = parseInt(amountTag.value);
       satoshi = parseInt(amountTag.value) / 1000; // millisats
     }
 
@@ -68,6 +74,8 @@ export const decodeInvoice = (
     return {
       paymentHash,
       satoshi,
+      millisatoshi,
+      amountRaw,
       timestamp,
       expiry,
       description,

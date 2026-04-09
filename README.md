@@ -28,7 +28,7 @@ or for use without any build tools:
 
 ```html
 <script type="module">
-  import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0"; // jsdelivr.net, skypack.dev also work
+  import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@7"; // jsdelivr.net, skypack.dev also work
 
   // use LightningAddress normally...
   (async () => {
@@ -168,7 +168,45 @@ Native zaps without a browser extension are possible by using a Nostr Wallet Con
 
 See [examples/zaps-nwc](examples/zaps-nwc.js)
 
-### L402
+> All examples in the [examples/](examples/) directory are runnable. See [examples/README.md](examples/README.md) for setup instructions.
+
+### HTTP 402 - requesting HTTP resources that require a payment
+
+L402, X402, MPP are protocol standards based on the HTTP 402 `Payment Required` code
+for machine-to-machine payments. It is used to charge for HTTP API requests, tool calls, or agentic payments.
+
+This library includes functions to consome those resources.
+
+#### fetch402(url: string, fetchArgs, options)
+
+`fetch402` is a single function that transparently handles L402 and X402 and MPP protected resources. Use it when you don't know or don't care which protocol the server uses — it will detect the protocol from the response headers and pay accordingly.
+
+- url: the protected URL
+- fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
+- options:
+  - wallet: any object that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402, X402 and MPP invoices.
+
+##### Examples
+
+```js
+import { fetch402 } from "@getalby/lightning-tools/402";
+import { NWCClient } from "@getalby/sdk";
+
+const nwc = new NWCClient({
+  nostrWalletConnectUrl: "nostr+walletconnect://...",
+});
+
+await fetch402(
+  "https://example.com/protected-resource",
+  {},
+  { wallet: nwc },
+)
+  .then((res) => res.json())
+  .then(console.log)
+  .finally(() => nwc.close());
+```
+
+#### L402
 
 L402 is a protocol standard based on the HTTP 402 Payment Required error code
 designed to support the use case of charging for services and
@@ -176,59 +214,101 @@ authenticating users in distributed networks.
 
 This library includes a `fetchWithL402` function to consume L402 protected resources.
 
-#### fetchWithL402(url: string, fetchArgs, options)
+##### fetchWithL402(url: string, fetchArgs, options)
 
 - url: the L402 protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object that implements `sendPayment(paymentRequest)` and returns `{ preimage }`. Used to pay the L402 invoice.
-  - store: a key/value store object to persiste the l402 for each URL. The store must implement a `getItem()`/`setItem()` function as the browser's localStorage. By default a memory storage is used.
-  - headerKey: defaults to L402 but if you need to consume an old LSAT API set this to LSAT
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the L402 invoice.
 
 ##### Examples
 
 ```js
-import { fetchWithL402 } from "@getalby/lightning-tools/l402";
+import { fetchWithL402 } from "@getalby/lightning-tools/402/l402";
+import { NWCClient } from "@getalby/sdk";
 
-// pass a wallet that implements sendPayment()
-// the tokens/preimage data will be stored in the browser's localStorage and used for any following request
-await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
-  {},
-  { wallet: myWallet, store: window.localStorage },
-)
-  .then((res) => res.json())
-  .then(console.log);
-```
-
-```js
-import { fetchWithL402 } from "@getalby/lightning-tools/l402";
-import { NostrWebLNProvider } from "@getalby/sdk";
-
-// use a NWC provider as the wallet to do the payments
-const nwc = new NostrWebLNProvider({
-  nostrWalletConnectUrl: loadNWCUrl(),
+const nwc = new NWCClient({
+  nostrWalletConnectUrl: "nostr+walletconnect://...",
 });
 
-// this will fetch the resource and pay the invoice using the NWC wallet
 await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
+  "https://l402.example.com/protected-resource",
   {},
   { wallet: nwc },
 )
   .then((res) => res.json())
-  .then(console.log);
+  .then(console.log)
+  .finally(() => nwc.close());
 ```
 
-```js
-import { fetchWithL402, NoStorage } from "@getalby/lightning-tools/l402";
+#### X402
 
-// do not store the tokens
-await fetchWithL402(
-  "https://lsat-weather-api.getalby.repl.co/kigali",
+Similar to L402 X402 is an open protocol for machine-to-machine payments built on the HTTP 402 Payment Required status code.
+It enables APIs and resources to request payments inline, without prior registration or authentication. 
+
+This library includes a `fetchWithX402` function to consume X402-protected resources that support the lightning network. 
+(Note: X402 works also with other coins and network. This library supports X402 resources that accept Bitcoin on the lightning network)
+
+##### fetchWithX402(url: string, fetchArgs, options)
+
+- url: the X402 protected URL
+- fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
+- options:
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the X402 invoice.
+
+##### Examples
+
+```js
+import { fetchWithX402 } from "@getalby/lightning-tools/402/x402";
+import { NWCClient } from "@getalby/sdk";
+
+const nwc = new NWCClient({
+  nostrWalletConnectUrl: "nostr+walletconnect://...",
+});
+
+await fetchWithX402(
+  "https://x402.example.com/protected-resource",
   {},
-  { store: new NoStorage() },
-);
+  { wallet: nwc },
+)
+  .then((res) => res.json())
+  .then(console.log)
+  .finally(() => nwc.close());
+```
+
+#### MPP
+
+MPP is an open protocol for machine-to-machine payments built on the HTTP 402 Payment Required status code.
+Charge for API requests, tool calls, or content—agents and apps pay per request in the same HTTP call.
+
+This library includes a `fetchWithMpp` function to consume MPP-protected resources that support the lightning network. 
+(Note: MPP works also with other payment methods. This library supports resources that accept Bitcoin on the lightning network)
+
+##### fetchWithMpp(url: string, fetchArgs, options)
+
+- url: the MPP protected URL
+- fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
+- options:
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the X402 invoice.
+
+##### Examples
+
+```js
+import { fetchWithMpp } from "@getalby/lightning-tools/402/mpp";
+import { NWCClient } from "@getalby/sdk";
+
+const nwc = new NWCClient({
+  nostrWalletConnectUrl: "nostr+walletconnect://...",
+});
+
+await fetchWithMpp(
+  "https://mpp.example.com/protected-resource",
+  {},
+  { wallet: nwc },
+)
+  .then((res) => res.json())
+  .then(console.log)
+  .finally(() => nwc.close());
 ```
 
 ### Basic invoice decoding
