@@ -43,9 +43,18 @@ export async function verifyL402Macaroon<T = unknown>(
   }
 
   try {
-    return JSON.parse(
+    const parsed: unknown = JSON.parse(
       Buffer.from(encoded, "base64url").toString("utf8"),
-    ) as MacaroonPayload<T>;
+    );
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed) ||
+      typeof (parsed as Record<string, unknown>).paymentHash !== "string"
+    ) {
+      throw new Error("Invalid macaroon payload");
+    }
+    return parsed as MacaroonPayload<T>;
   } catch {
     throw new Error("Invalid macaroon token");
   }
