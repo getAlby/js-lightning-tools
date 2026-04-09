@@ -90,6 +90,8 @@ export function validatePreimage(
   paymentHash: string,
 ): boolean {
   try {
+    if (!/^[0-9a-fA-F]{64}$/.test(preimage)) return false;
+    if (!/^[0-9a-fA-F]{64}$/.test(paymentHash)) return false;
     const preimageHash = bytesToHex(sha256(fromHexString(preimage)));
     return paymentHash === preimageHash;
   } catch {
