@@ -2,18 +2,18 @@ export type MacaroonPayload<T> = T & {
   paymentHash: string; // hex — SHA256 of the preimage
 };
 
-export async function issueL402Macaroon<T = unknown>(
+export async function issueL402Macaroon<T extends Record<string, unknown>>(
   secret: string,
   paymentHash: string,
-  params: T,
+  params?: T,
 ): Promise<string> {
-  if (params["paymentHash"]) {
+  if (
+    params !== undefined &&
+    Object.prototype.hasOwnProperty.call(params, "paymentHash")
+  ) {
     throw new Error("paymentHash is reserved");
   }
-  const payload: MacaroonPayload<T> = {
-    ...params,
-    paymentHash,
-  };
+  const payload = { ...params, paymentHash } as MacaroonPayload<T>;
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const mac = await sign(secret, encoded);
   return `${encoded}.${mac}`;

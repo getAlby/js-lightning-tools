@@ -116,4 +116,16 @@ describe("issueL402Macaroon / verifyL402Macaroon", () => {
       "Invalid macaroon token",
     );
   });
+
+  test("throws when params contains reserved paymentHash key", async () => {
+    await expect(
+      issueL402Macaroon(SECRET, PAYMENT_HASH, { paymentHash: "other" }),
+    ).rejects.toThrow("paymentHash is reserved");
+  });
+
+  test("does not throw when params is omitted", async () => {
+    await expect(
+      issueL402Macaroon(SECRET, PAYMENT_HASH),
+    ).resolves.toBeDefined();
+  });
 });
