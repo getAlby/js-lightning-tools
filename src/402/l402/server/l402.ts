@@ -7,9 +7,12 @@ export async function issueL402Macaroon<T = unknown>(
   paymentHash: string,
   params: T,
 ): Promise<string> {
+  if (params["paymentHash"]) {
+    throw new Error("paymentHash is reserved");
+  }
   const payload: MacaroonPayload<T> = {
-    paymentHash,
     ...params,
+    paymentHash,
   };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const mac = await sign(secret, encoded);
