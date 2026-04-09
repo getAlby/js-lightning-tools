@@ -12,13 +12,30 @@ import { issueL402Macaroon, verifyL402Macaroon } from "./l402";
 // makeL402AuthenticateHeader
 // ---------------------------------------------------------------------------
 describe("makeL402AuthenticateHeader", () => {
-  test("produces correct L402 header with default key", () => {
+  test("produces correct L402 header with macaroon", () => {
     const header = makeL402AuthenticateHeader({
       macaroon: MACAROON,
       invoice: INVOICE,
     });
     expect(header).toBe(
       `L402 version="0" macaroon="${MACAROON}", invoice="${INVOICE}"`,
+    );
+  });
+
+  test("produces correct L402 header with token", () => {
+    const TOKEN = "sometoken";
+    const header = makeL402AuthenticateHeader({
+      token: TOKEN,
+      invoice: INVOICE,
+    });
+    expect(header).toBe(
+      `L402 version="0" token="${TOKEN}", invoice="${INVOICE}"`,
+    );
+  });
+
+  test("throws when neither macaroon nor token is provided", () => {
+    expect(() => makeL402AuthenticateHeader({ invoice: INVOICE })).toThrow(
+      "one of macaroon or token must be provided",
     );
   });
 });

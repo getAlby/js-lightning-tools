@@ -8,6 +8,11 @@ export const makeL402AuthenticateHeader = (args: {
   token?: string;
   invoice: string;
 }) => {
+  if (!args.macaroon && !args.token) {
+    throw new Error(
+      "makeL402AuthenticateHeader: one of macaroon or token must be provided",
+    );
+  }
   if (args.macaroon) {
     return `L402 version="0" macaroon="${args.macaroon}", invoice="${args.invoice}"`;
   } else {
