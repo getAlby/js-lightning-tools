@@ -12,16 +12,6 @@ import { issueL402Macaroon, verifyL402Macaroon } from "./l402";
 // makeL402AuthenticateHeader
 // ---------------------------------------------------------------------------
 describe("makeL402AuthenticateHeader", () => {
-  test("produces correct L402 header with macaroon", () => {
-    const header = makeL402AuthenticateHeader({
-      macaroon: MACAROON,
-      invoice: INVOICE,
-    });
-    expect(header).toBe(
-      `L402 version="0" macaroon="${MACAROON}", invoice="${INVOICE}"`,
-    );
-  });
-
   test("produces correct L402 header with token", () => {
     const TOKEN = "sometoken";
     const header = makeL402AuthenticateHeader({
@@ -33,9 +23,9 @@ describe("makeL402AuthenticateHeader", () => {
     );
   });
 
-  test("throws when neither macaroon nor token is provided", () => {
+  test("throws when token is not provided", () => {
     expect(() => makeL402AuthenticateHeader({ invoice: INVOICE })).toThrow(
-      "one of macaroon or token must be provided",
+      "token must be provided",
     );
   });
 });
@@ -47,12 +37,18 @@ describe("parseL402Authorization", () => {
   test("parses valid L402 authorization header", () => {
     const input = `L402 ${MACAROON}:${PREIMAGE}`;
     const result = parseL402Authorization(input);
-    expect(result).toEqual({ macaroon: MACAROON, preimage: PREIMAGE });
+    expect(result).toEqual({ token: MACAROON, preimage: PREIMAGE });
   });
 
   test("returns null when key does not match", () => {
     const input = `Bearer ${MACAROON}:${PREIMAGE}`;
     expect(parseL402Authorization(input)).toBeNull();
+  });
+
+  test("parses valid LSAT authorization header (backwards compat)", () => {
+    const input = `LSAT ${MACAROON}:${PREIMAGE}`;
+    const result = parseL402Authorization(input);
+    expect(result).toEqual({ token: MACAROON, preimage: PREIMAGE });
   });
 
   test("throws when colon separator is missing", () => {

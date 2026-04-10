@@ -1,14 +1,20 @@
+interface WwwAuthenticatePayload {
+  token: string;
+  invoice: string;
+  [key: string]: string; // Allows any other string properties
+}
+
 /**
  * Client: parse "www-authenticate" header from server response
  * @param input
  * @returns details from the header value (token or macaroon, invoice)
  */
-export const parseL402 = (input: string): Record<string, string> => {
+export const parseL402 = (input: string): WwwAuthenticatePayload => {
   // Remove the L402 and LSAT identifiers
   const string = input.replace("L402", "").replace("LSAT", "").trim();
 
   // Initialize an object to store the key-value pairs
-  const keyValuePairs = {};
+  const keyValuePairs: Record<string, string> = {};
 
   // Regular expression to match key and (quoted or unquoted) value
   const regex = /(\w+)=("([^"]*)"|'([^']*)'|([^,]*))/g;
@@ -21,5 +27,24 @@ export const parseL402 = (input: string): Record<string, string> => {
     keyValuePairs[match[1]] = match[3] || match[4] || match[5];
   }
 
-  return keyValuePairs;
+  if (!keyValuePairs["token"] && keyValuePairs["macaroon"]) {
+    // fallback to old naming
+    keyValuePairs["token"] = keyValuePairs["macaroon"];
+    delete keyValuePairs["macaroon"];
+  }
+
+  if (
+    !("token" in keyValuePairs) ||
+    typeof keyValuePairs["token"] !== "string"
+  ) {
+    throw new Error("No macaroon or token found in www-authenticate header");
+  }
+  if (
+    !("invoice" in keyValuePairs) ||
+    typeof keyValuePairs["invoice"] !== "string"
+  ) {
+    throw new Error("No invoice found in www-authenticate header");
+  }
+
+  return keyValuePairs as WwwAuthenticatePayload;
 };

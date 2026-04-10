@@ -29,7 +29,7 @@ describe("parseL402", () => {
   test("should correctly parse L402 string with macaroon", () => {
     const testString = `L402 macaroon="${MACAROON}", invoice="${INVOICE}"`;
     const result = parseL402(testString);
-    expect(result).toEqual({ macaroon: MACAROON, invoice: INVOICE });
+    expect(result).toEqual({ token: MACAROON, invoice: INVOICE });
   });
 
   test("should correctly parse L402 string based with token", () => {
@@ -37,7 +37,7 @@ describe("parseL402", () => {
     const result = parseL402(testString);
     expect(result).toEqual({
       version: "0",
-      macaroon: MACAROON,
+      token: MACAROON,
       invoice: INVOICE,
     });
   });
@@ -45,19 +45,19 @@ describe("parseL402", () => {
   test("should correctly parse LSAT string", () => {
     const testString = `LSAT macaroon="${MACAROON}", invoice="${INVOICE}"`;
     const result = parseL402(testString);
-    expect(result).toEqual({ macaroon: MACAROON, invoice: INVOICE });
+    expect(result).toEqual({ token: MACAROON, invoice: INVOICE });
   });
 
   test("should correctly handle unquoted values", () => {
     const testString = `L402 macaroon=${MACAROON}, invoice=${INVOICE}`;
     const result = parseL402(testString);
-    expect(result).toEqual({ macaroon: MACAROON, invoice: INVOICE });
+    expect(result).toEqual({ token: MACAROON, invoice: INVOICE });
   });
 
   test("should correctly handle single-quoted values", () => {
     const testString = `LSAT macaroon='${MACAROON}', invoice='${INVOICE}'`;
     const result = parseL402(testString);
-    expect(result).toEqual({ macaroon: MACAROON, invoice: INVOICE });
+    expect(result).toEqual({ token: MACAROON, invoice: INVOICE });
   });
 });
 
@@ -87,7 +87,7 @@ describe("fetchWithL402", () => {
       status: 402,
       headers: {
         "www-authenticate": makeL402AuthenticateHeader({
-          macaroon: MACAROON,
+          token: MACAROON,
           invoice: INVOICE,
         }),
       },
@@ -123,7 +123,7 @@ describe("fetchWithL402", () => {
       status: 402,
       headers: {
         "www-authenticate": makeL402AuthenticateHeader({
-          macaroon: MACAROON,
+          token: MACAROON,
           invoice: INVOICE,
         }),
       },
@@ -142,7 +142,7 @@ describe("fetchWithL402", () => {
       status: 402,
       headers: {
         "www-authenticate": makeL402AuthenticateHeader({
-          macaroon: MACAROON,
+          token: MACAROON,
           invoice: INVOICE,
         }),
       },

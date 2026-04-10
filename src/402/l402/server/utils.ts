@@ -4,20 +4,14 @@
  * @returns the header value
  */
 export const makeL402AuthenticateHeader = (args: {
-  macaroon?: string;
   token?: string;
   invoice: string;
 }) => {
-  if (!args.macaroon && !args.token) {
-    throw new Error(
-      "makeL402AuthenticateHeader: one of macaroon or token must be provided",
-    );
+  if (!args.token) {
+    throw new Error("token must be provided");
   }
-  if (args.macaroon) {
-    return `L402 version="0" macaroon="${args.macaroon}", invoice="${args.invoice}"`;
-  } else {
-    return `L402 version="0" token="${args.token}", invoice="${args.invoice}"`;
-  }
+
+  return `L402 version="0" token="${args.token}", invoice="${args.invoice}"`;
 };
 
 /**
@@ -27,16 +21,18 @@ export const makeL402AuthenticateHeader = (args: {
  */
 export function parseL402Authorization(
   input: string,
-): { macaroon: string; preimage: string } | null {
+): { token: string; preimage: string } | null {
+  // Backwards compat: LSAT was the former name of L402
+  const normalized = input.replace(/^LSAT /, "L402 ");
   const prefix = "L402 ";
-  if (!input.startsWith(prefix)) return null;
-  const credentials = input.slice(prefix.length);
+  if (!normalized.startsWith(prefix)) return null;
+  const credentials = normalized.slice(prefix.length);
   const colonIndex = credentials.indexOf(":");
   if (colonIndex === -1) {
     throw new Error("Invalid authorization header value");
   }
   return {
-    macaroon: credentials.slice(0, colonIndex),
+    token: credentials.slice(0, colonIndex),
     preimage: credentials.slice(colonIndex + 1),
   };
 }
