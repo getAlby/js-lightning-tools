@@ -1,4 +1,4 @@
-import { Wallet } from "../utils";
+import { Wallet, Fetch402Result } from "../utils";
 import { parseL402 } from "./utils";
 
 export const handleL402Payment = async (
@@ -7,7 +7,7 @@ export const handleL402Payment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-): Promise<Response> => {
+): Promise<Fetch402Result> => {
   const details = parseL402(l402Header);
   const token = details.token || details.macaroon;
   const invoice = details.invoice;
@@ -20,8 +20,17 @@ export const handleL402Payment = async (
   }
 
   const invResp = await wallet.payInvoice({ invoice });
-  headers.set("Authorization", `L402 ${token}:${invResp.preimage}`);
-  return fetch(url, fetchArgs);
+  const headerValue = `L402 ${token}:${invResp.preimage}`;
+  headers.set("Authorization", headerValue);
+  const response = await fetch(url, fetchArgs);
+  return {
+    response,
+    credentials: {
+      type: "l402",
+      headerName: "Authorization",
+      headerValue,
+    },
+  };
 };
 
 export const fetchWithL402 = async (
@@ -30,7 +39,7 @@ export const fetchWithL402 = async (
   options: {
     wallet: Wallet;
   },
-) => {
+): Promise<Fetch402Result> => {
   const wallet = options.wallet;
   if (!wallet) {
     throw new Error("wallet is missing");
@@ -46,7 +55,7 @@ export const fetchWithL402 = async (
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get("www-authenticate");
   if (!header) {
-    return initResp;
+    return { response: initResp };
   }
 
   return handleL402Payment(header, url, fetchArgs, headers, wallet);

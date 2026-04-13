@@ -207,10 +207,11 @@ describe("fetchWithMpp", () => {
       status: 200,
     });
 
-    const response = await fetchWithMpp(MPP_URL, {}, { wallet });
+    const result = await fetchWithMpp(MPP_URL, {}, { wallet });
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: "free content" });
+    expect(result.response.status).toBe(200);
+    expect(await result.response.json()).toEqual({ data: "free content" });
+    expect(result.credentials).toBeUndefined();
     expect(wallet.payInvoice).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -225,10 +226,11 @@ describe("fetchWithMpp", () => {
       },
     });
 
-    const response = await fetchWithMpp(MPP_URL, {}, { wallet });
+    const result = await fetchWithMpp(MPP_URL, {}, { wallet });
 
     // Returns the 402 response without attempting payment
-    expect(response.status).toBe(402);
+    expect(result.response.status).toBe(402);
+    expect(result.credentials).toBeUndefined();
     expect(wallet.payInvoice).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -250,13 +252,19 @@ describe("fetchWithMpp", () => {
       status: 200,
     });
 
-    const response = await fetchWithMpp(MPP_URL, {}, { wallet });
+    const result = await fetchWithMpp(MPP_URL, {}, { wallet });
 
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
     expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: "paid content" });
+    expect(result.response.status).toBe(200);
+    expect(await result.response.json()).toEqual({ data: "paid content" });
+
+    // Verify credentials are returned
+    expect(result.credentials).toBeDefined();
+    expect(result.credentials!.type).toBe("mpp");
+    expect(result.credentials!.headerName).toBe("Authorization");
+    expect(result.credentials!.headerValue).toMatch(/^Payment [A-Za-z0-9_-]+$/);
   });
 
   test("sets correct Authorization: Payment <token> header on retry", async () => {
@@ -398,8 +406,8 @@ describe("fetchWithMpp", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify({ ok: true }), { status: 200 });
 
-    const response = await fetchWithMpp(MPP_URL, {}, { wallet });
-    expect(response.status).toBe(200);
+    const result = await fetchWithMpp(MPP_URL, {}, { wallet });
+    expect(result.response.status).toBe(200);
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
   });
 

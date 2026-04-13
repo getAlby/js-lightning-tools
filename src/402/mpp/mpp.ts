@@ -1,4 +1,4 @@
-import { Wallet } from "../utils";
+import { Wallet, Fetch402Result } from "../utils";
 import {
   buildMppCredential,
   decodeBase64url,
@@ -23,7 +23,7 @@ export const handleMppChargePayment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-): Promise<Response> => {
+): Promise<Fetch402Result> => {
   const challenge = parseMppChallenge(wwwAuthHeader);
   if (!challenge) {
     throw new Error(
@@ -49,9 +49,18 @@ export const handleMppChargePayment = async (
 
   // Per spec: Authorization: Payment <base64url-token>  (single token, no wrapper)
   const credential = buildMppCredential(challenge, invResp.preimage);
-  headers.set("Authorization", `Payment ${credential}`);
+  const headerValue = `Payment ${credential}`;
+  headers.set("Authorization", headerValue);
 
-  return fetch(url, fetchArgs);
+  const response = await fetch(url, fetchArgs);
+  return {
+    response,
+    credentials: {
+      type: "mpp",
+      headerName: "Authorization",
+      headerValue,
+    },
+  };
 };
 
 /**
@@ -71,7 +80,7 @@ export const fetchWithMpp = async (
   url: string,
   fetchArgs: RequestInit,
   options: { wallet: Wallet },
-): Promise<Response> => {
+): Promise<Fetch402Result> => {
   const wallet = options.wallet;
   if (!wallet) {
     throw new Error("wallet is missing");
@@ -90,7 +99,7 @@ export const fetchWithMpp = async (
     !wwwAuthHeader ||
     !wwwAuthHeader.trimStart().toLowerCase().startsWith("payment")
   ) {
-    return initResp;
+    return { response: initResp };
   }
 
   return handleMppChargePayment(wwwAuthHeader, url, fetchArgs, headers, wallet);

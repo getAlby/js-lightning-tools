@@ -48,10 +48,11 @@ describe("fetchWithX402", () => {
       status: 200,
     });
 
-    const response = await fetchWithX402(X402_URL, {}, { wallet });
+    const result = await fetchWithX402(X402_URL, {}, { wallet });
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: "free content" });
+    expect(result.response.status).toBe(200);
+    expect(await result.response.json()).toEqual({ data: "free content" });
+    expect(result.credentials).toBeUndefined();
     expect(wallet.payInvoice).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -67,13 +68,18 @@ describe("fetchWithX402", () => {
       status: 200,
     });
 
-    const response = await fetchWithX402(X402_URL, {}, { wallet });
+    const result = await fetchWithX402(X402_URL, {}, { wallet });
 
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
     expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: "paid content" });
+    expect(result.response.status).toBe(200);
+    expect(await result.response.json()).toEqual({ data: "paid content" });
+
+    // Verify credentials are returned
+    expect(result.credentials).toBeDefined();
+    expect(result.credentials!.type).toBe("x402");
+    expect(result.credentials!.headerName).toBe("payment-signature");
   });
 
   test("sets correct payment-signature header on retry", async () => {

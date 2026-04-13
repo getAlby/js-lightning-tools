@@ -1,4 +1,4 @@
-import { Wallet } from "../utils";
+import { Wallet, Fetch402Result } from "../utils";
 import { buildX402PaymentSignature, X402Requirements } from "./utils";
 import { Invoice } from "../../bolt11";
 
@@ -8,7 +8,7 @@ export const handleX402Payment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-): Promise<Response> => {
+): Promise<Fetch402Result> => {
   let parsed: { accepts?: unknown[] };
   try {
     parsed = JSON.parse(decodeURIComponent(escape(atob(x402Header))));
@@ -45,23 +45,30 @@ export const handleX402Payment = async (
 
   await wallet.payInvoice!({ invoice: invoice.paymentRequest });
 
-  headers.set(
-    "payment-signature",
-    buildX402PaymentSignature(
-      requirements.scheme,
-      requirements.network,
-      invoice.paymentRequest,
-      requirements,
-    ),
+  const headerValue = buildX402PaymentSignature(
+    requirements.scheme,
+    requirements.network,
+    invoice.paymentRequest,
+    requirements,
   );
-  return fetch(url, fetchArgs);
+  headers.set("payment-signature", headerValue);
+
+  const response = await fetch(url, fetchArgs);
+  return {
+    response,
+    credentials: {
+      type: "x402",
+      headerName: "payment-signature",
+      headerValue,
+    },
+  };
 };
 
 export const fetchWithX402 = async (
   url: string,
   fetchArgs: RequestInit,
   options: { wallet: Wallet },
-) => {
+): Promise<Fetch402Result> => {
   const wallet = options.wallet;
   if (!fetchArgs) {
     fetchArgs = {};
@@ -74,7 +81,7 @@ export const fetchWithX402 = async (
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get("PAYMENT-REQUIRED");
   if (!header) {
-    return initResp;
+    return { response: initResp };
   }
 
   return handleX402Payment(header, url, fetchArgs, headers, wallet);

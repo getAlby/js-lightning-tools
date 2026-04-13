@@ -70,10 +70,11 @@ describe("fetchWithL402", () => {
 
     fetchMock.mockResponseOnce(body, { status: 200 });
 
-    const response = await fetchWithL402(L402_URL, {}, { wallet });
+    const result = await fetchWithL402(L402_URL, {}, { wallet });
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: "free content" });
+    expect(result.response.status).toBe(200);
+    expect(await result.response.json()).toEqual({ data: "free content" });
+    expect(result.credentials).toBeUndefined();
     expect(wallet.payInvoice).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -96,7 +97,7 @@ describe("fetchWithL402", () => {
     const body = JSON.stringify({ data: "paid content" });
     fetchMock.mockResponseOnce(body, { status: 200 });
 
-    const response = await fetchWithL402(L402_URL, {}, { wallet });
+    const result = await fetchWithL402(L402_URL, {}, { wallet });
 
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
     expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
@@ -109,8 +110,15 @@ describe("fetchWithL402", () => {
       `L402 ${MACAROON}:${PREIMAGE}`,
     );
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: "paid content" });
+    expect(result.response.status).toBe(200);
+    expect(await result.response.json()).toEqual({ data: "paid content" });
+
+    // Verify credentials are returned
+    expect(result.credentials).toEqual({
+      type: "l402",
+      headerName: "Authorization",
+      headerValue: `L402 ${MACAROON}:${PREIMAGE}`,
+    });
   });
 
   test("propagates wallet.payInvoice errors", async () => {
