@@ -2,13 +2,9 @@ import { Wallet } from "../utils";
 import { buildX402PaymentSignature, X402Requirements } from "./utils";
 import { Invoice } from "../../bolt11";
 
-export const handleX402Payment = async (
+const decodeX402Header = (
   x402Header: string,
-  url: string,
-  fetchArgs: RequestInit,
-  headers: Headers,
-  wallet: Wallet,
-): Promise<Response> => {
+): { accepts: X402Requirements[] } => {
   let parsed: { accepts?: unknown[] };
   try {
     parsed = JSON.parse(decodeURIComponent(escape(atob(x402Header))));
@@ -23,10 +19,44 @@ export const handleX402Payment = async (
       "x402: PAYMENT-REQUIRED header contains no payment options",
     );
   }
+  return { accepts: parsed.accepts as X402Requirements[] };
+};
 
-  const requirements = (parsed.accepts as X402Requirements[]).find((e) => {
-    return e.extra?.paymentMethod === "lightning";
-  });
+/**
+ * Probe a PAYMENT-REQUIRED header for a lightning-payable offer without
+ * throwing. Returns the matching requirements, or null if the header has no
+ * lightning entry (e.g. USDC-only endpoints) or is malformed. Used by the
+ * top-level fetch402 dispatcher to decide whether to attempt payment or hand
+ * the 402 back to the caller.
+ */
+export const findX402LightningRequirements = (
+  x402Header: string,
+): X402Requirements | null => {
+  let accepts: X402Requirements[];
+  try {
+    ({ accepts } = decodeX402Header(x402Header));
+  } catch (_) {
+    return null;
+  }
+  const requirements = accepts.find(
+    (e) => e.extra?.paymentMethod === "lightning",
+  );
+  if (!requirements?.extra?.invoice) return null;
+  return requirements;
+};
+
+export const handleX402Payment = async (
+  x402Header: string,
+  url: string,
+  fetchArgs: RequestInit,
+  headers: Headers,
+  wallet: Wallet,
+): Promise<Response> => {
+  const { accepts } = decodeX402Header(x402Header);
+
+  const requirements = accepts.find(
+    (e) => e.extra?.paymentMethod === "lightning",
+  );
   if (!requirements) {
     throw new Error(
       "x402: unsupported x402 network, only Bitcoin lightning network is supported.",
