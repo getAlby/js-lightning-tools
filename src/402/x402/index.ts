@@ -1,1 +1,1 @@
-export { fetchWithX402 } from "./x402";
+export { fetchWithX402, findX402LightningRequirements } from "./x402";
