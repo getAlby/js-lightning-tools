@@ -64,16 +64,16 @@ describe("fetch402 dispatcher", () => {
   });
 
   test("falls through unknown WWW-Authenticate Payment method to x402 lightning offer", async () => {
-    // Asterpay-style: Payment method="asterpay" alongside x402 PAYMENT-REQUIRED
-    // with both USDC and lightning entries. We don't speak `method=asterpay`,
-    // so we must fall through to x402 and pay the lightning entry.
+    // An unknown WWW-Authenticate Payment method alongside x402 PAYMENT-REQUIRED
+    // with both USDC and lightning entries. We don't speak `method=unknown`, so
+    // we must fall through to x402 and pay the lightning entry.
     const wallet = makeWallet();
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
       headers: {
         "WWW-Authenticate":
-          'Payment id="abc", realm="example.com", method="asterpay", intent="charge", request="eyJhIjoxfQ"',
+          'Payment id="abc", realm="example.com", method="unknown", intent="charge", request="eyJhIjoxfQ"',
         "PAYMENT-REQUIRED": paymentRequiredHeader([
           USDC_REQUIREMENTS,
           LIGHTNING_REQUIREMENTS,
@@ -116,7 +116,7 @@ describe("fetch402 dispatcher", () => {
       status: 402,
       headers: {
         "WWW-Authenticate":
-          'Payment id="abc", realm="example.com", method="asterpay", intent="charge", request="eyJhIjoxfQ"',
+          'Payment id="abc", realm="example.com", method="unknown", intent="charge", request="eyJhIjoxfQ"',
       },
     });
 
