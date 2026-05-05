@@ -39,7 +39,7 @@ export const findX402LightningRequirements = (
     return null;
   }
   const requirements = accepts.find(
-    (e) => e.extra?.paymentMethod === "lightning",
+    (e) => e?.extra?.paymentMethod === "lightning",
   );
   if (!requirements?.extra?.invoice) return null;
   return requirements;
@@ -55,7 +55,7 @@ export const handleX402Payment = async (
   const { accepts } = decodeX402Header(x402Header);
 
   const requirements = accepts.find(
-    (e) => e.extra?.paymentMethod === "lightning",
+    (e) => e?.extra?.paymentMethod === "lightning",
   );
   if (!requirements) {
     throw new Error(

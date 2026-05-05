@@ -126,6 +126,25 @@ describe("fetch402 dispatcher", () => {
     expect(response.status).toBe(402);
   });
 
+  test("returns original 402 when PAYMENT-REQUIRED accepts contains a malformed entry", async () => {
+    // Malformed accepts entry (e.g., null) must not throw — the dispatcher
+    // probes for a payable lightning offer and falls through when none is found.
+    const wallet = makeWallet();
+
+    fetchMock.mockResponseOnce("Payment Required", {
+      status: 402,
+      headers: {
+        "PAYMENT-REQUIRED": paymentRequiredHeader([null]),
+      },
+    });
+
+    const response = await fetch402(URL, {}, { wallet });
+
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
+    expect(response.status).toBe(402);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   test("pays MPP-lightning challenge when method=lightning intent=charge", async () => {
     const wallet = makeWallet();
 
