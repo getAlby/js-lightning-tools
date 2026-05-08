@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@getalby/lightning-tools": ["src/index.ts"],
+      "@getalby/lightning-tools/bolt11": ["src/bolt11/index.ts"],
+      "@getalby/lightning-tools/fiat": ["src/fiat/index.ts"],
+      "@getalby/lightning-tools/lnurl": ["src/lnurl/index.ts"],
+      "@getalby/lightning-tools/402": ["src/402/index.ts"],
+      "@getalby/lightning-tools/402/l402": ["src/402/l402/index.ts"],
+      "@getalby/lightning-tools/402/x402": ["src/402/x402/index.ts"],
+      "@getalby/lightning-tools/402/mpp": ["src/402/mpp/index.ts"],
+      "@getalby/lightning-tools/podcasting": ["src/podcasting2/index.ts"]
+    },
+    "types": ["jest", "node"]
+  },
+  "include": [
+    "e2e/**/*.ts",
+    "src/**/*.ts",
+    "setupJest.ts",
+    "jest.e2e.config.ts"
+  ]
+}

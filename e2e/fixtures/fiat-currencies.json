@@ -1,0 +1,20 @@
+{
+  "usd": {
+    "iso_code": "USD",
+    "name": "United States Dollar",
+    "priority": 1,
+    "symbol": "$"
+  },
+  "eur": {
+    "iso_code": "EUR",
+    "name": "Euro",
+    "priority": 2,
+    "symbol": "€"
+  },
+  "btc": {
+    "iso_code": "BTC",
+    "name": "Bitcoin",
+    "priority": 100,
+    "symbol": "₿"
+  }
+}
