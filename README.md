@@ -196,11 +196,7 @@ const nwc = new NWCClient({
   nostrWalletConnectUrl: "nostr+walletconnect://...",
 });
 
-await fetch402(
-  "https://example.com/protected-resource",
-  {},
-  { wallet: nwc },
-)
+await fetch402("https://example.com/protected-resource", {}, { wallet: nwc })
   .then((res) => res.json())
   .then(console.log)
   .finally(() => nwc.close());
@@ -244,9 +240,9 @@ await fetchWithL402(
 #### X402
 
 Similar to L402 X402 is an open protocol for machine-to-machine payments built on the HTTP 402 Payment Required status code.
-It enables APIs and resources to request payments inline, without prior registration or authentication. 
+It enables APIs and resources to request payments inline, without prior registration or authentication.
 
-This library includes a `fetchWithX402` function to consume X402-protected resources that support the lightning network. 
+This library includes a `fetchWithX402` function to consume X402-protected resources that support the lightning network.
 (Note: X402 works also with other coins and network. This library supports X402 resources that accept Bitcoin on the lightning network)
 
 ##### fetchWithX402(url: string, fetchArgs, options)
@@ -281,7 +277,7 @@ await fetchWithX402(
 MPP is an open protocol for machine-to-machine payments built on the HTTP 402 Payment Required status code.
 Charge for API requests, tool calls, or content—agents and apps pay per request in the same HTTP call.
 
-This library includes a `fetchWithMpp` function to consume MPP-protected resources that support the lightning network. 
+This library includes a `fetchWithMpp` function to consume MPP-protected resources that support the lightning network.
 (Note: MPP works also with other payment methods. This library supports resources that accept Bitcoin on the lightning network)
 
 ##### fetchWithMpp(url: string, fetchArgs, options)
@@ -356,6 +352,30 @@ await fiat.getFormattedFiatValue({
   locale: "en",
 });
 ```
+
+### BIP21 (`bitcoin:` URIs)
+
+Parse [BIP21](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki) payment URIs, including the unified-QR `lightning=` fallback parameter.
+
+```js
+import { parseBip21 } from "@getalby/lightning-tools";
+
+const result = parseBip21(
+  "bitcoin:bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4?amount=0.001&label=Donation&lightning=lnbc...",
+);
+
+if (result) {
+  result.address; // "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+  result.amount; // 0.001 (BTC)
+  result.amountSats; // 100000
+  result.label; // "Donation"
+  result.lightning; // BOLT11 fallback, if present
+  result.lno; // BOLT12 offer, if present
+  result.unknownRequiredParams; // reject the URI if non-empty (BIP21 `req-*` rule)
+}
+```
+
+`parseBip21` returns `null` for inputs that don't start with the `bitcoin:` scheme. Address validation is intentionally out of scope — validate the returned `address` with your own check if needed.
 
 ### 🤖 Lightning Address Proxy
 

@@ -68,6 +68,11 @@
       "import": "./dist/esm/podcasting2.js",
       "require": "./dist/cjs/podcasting2.cjs",
       "types": "./dist/types/podcasting2.d.ts"
+    },
+    "./bip21": {
+      "import": "./dist/esm/bip21.js",
+      "require": "./dist/cjs/bip21.cjs",
+      "types": "./dist/types/bip21.d.ts"
     }
   },
   "scripts": {

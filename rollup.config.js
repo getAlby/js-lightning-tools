@@ -25,6 +25,7 @@ const entries = [
   { name: "402/mpp", input: "src/402/mpp/index.ts" },
   { name: "lnurl", input: "src/lnurl/index.ts" },
   { name: "podcasting2", input: "src/podcasting2/index.ts" },
+  { name: "bip21", input: "src/bip21/index.ts" },
 ];
 
 const subBundles = entries.flatMap(({ name, input }) => [
