@@ -2,6 +2,46 @@ import type { Bip21 } from "./types";
 
 const BIP21_SCHEME = /^bitcoin:/i;
 
+// BIP21 grammar: amountparam = "amount=" *digit [ "." *digit ]
+// We require at least one digit on either side of the decimal point — this is
+// slightly stricter than the spec ABNF but matches every real-world example
+// (the spec shows "50", "50.00", "20.3"). Crucially this rejects scientific
+// notation ("1e-3"), hex ("0x10"), commas, signs, and leading "+" / "-".
+const BIP21_AMOUNT_RE = /^(\d+)(?:\.(\d+))?$/;
+
+const SATS_PER_BTC = 100_000_000n;
+const BTC_DECIMALS = 8;
+
+/**
+ * Convert a BIP21-compliant decimal BTC string to an integer number of
+ * satoshis using exact decimal arithmetic (no floats). Fractional digits
+ * beyond 8 are rounded half-up to the nearest satoshi.
+ *
+ * Assumes the input has already been validated against BIP21_AMOUNT_RE.
+ */
+const btcStringToSats = (btc: string): number => {
+  const match = BIP21_AMOUNT_RE.exec(btc);
+  if (!match) {
+    // Should be unreachable — caller pre-validates.
+    return Number.NaN;
+  }
+  const [, integerPart, rawFractional = ""] = match;
+
+  let fractionalSats: bigint;
+  if (rawFractional.length <= BTC_DECIMALS) {
+    fractionalSats = BigInt(rawFractional.padEnd(BTC_DECIMALS, "0"));
+  } else {
+    // Round half-up at the satoshi boundary.
+    const truncated = rawFractional.slice(0, BTC_DECIMALS);
+    const roundDigit = rawFractional.charCodeAt(BTC_DECIMALS) - 48;
+    fractionalSats = BigInt(truncated);
+    if (roundDigit >= 5) fractionalSats += 1n;
+  }
+
+  const totalSats = BigInt(integerPart) * SATS_PER_BTC + fractionalSats;
+  return Number(totalSats);
+};
+
 /**
  * Parse a BIP21 (`bitcoin:`) URI. Returns `null` if the input doesn't have the
  * `bitcoin:` scheme.
@@ -19,11 +59,15 @@ const BIP21_SCHEME = /^bitcoin:/i;
  * // => { address: "bc1q...", amount: 0.001, amountSats: 100000, lightning: "lnbc...", ... }
  */
 export const parseBip21 = (uri: string): Bip21 | null => {
-  if (typeof uri !== "string" || !BIP21_SCHEME.test(uri)) {
+  if (typeof uri !== "string") {
+    return null;
+  }
+  const normalized = uri.trim();
+  if (!BIP21_SCHEME.test(normalized)) {
     return null;
   }
 
-  const withoutScheme = uri.replace(BIP21_SCHEME, "");
+  const withoutScheme = normalized.replace(BIP21_SCHEME, "");
   const queryStart = withoutScheme.indexOf("?");
   const address =
     queryStart === -1 ? withoutScheme : withoutScheme.slice(0, queryStart);
@@ -61,12 +105,9 @@ export const parseBip21 = (uri: string): Bip21 | null => {
     unknownRequiredParams,
   };
 
-  if (params.amount !== undefined) {
-    const amount = Number(params.amount);
-    if (Number.isFinite(amount) && amount >= 0) {
-      result.amount = amount;
-      result.amountSats = Math.round(amount * 1e8);
-    }
+  if (params.amount !== undefined && BIP21_AMOUNT_RE.test(params.amount)) {
+    result.amount = Number(params.amount);
+    result.amountSats = btcStringToSats(params.amount);
   }
   if (params.label !== undefined) result.label = params.label;
   if (params.message !== undefined) result.message = params.message;
@@ -78,4 +119,4 @@ export const parseBip21 = (uri: string): Bip21 | null => {
 
 /** Returns true if the input starts with the `bitcoin:` URI scheme. */
 export const isBip21 = (uri: string): boolean =>
-  typeof uri === "string" && BIP21_SCHEME.test(uri);
+  typeof uri === "string" && BIP21_SCHEME.test(uri.trim());
