@@ -33,6 +33,15 @@ const CHARGE_REQUEST: MppChargeRequest = {
 
 const ENCODED_REQUEST = encodeMppChargeRequest(CHARGE_REQUEST);
 
+// A real, decodable 402-sat invoice used where the payment amount is asserted.
+const REAL_INVOICE =
+  "lnbc4020n1p5m6028dq80q6rqvsnp4qt5w34u6kntf5lc50jj27rvs89sgrpcpj7s6vfts042gkhxx2j6swpp5g6tquvmswkv5xf0ru7ju2qvdrf83l2ewha3qzzt0a7vurs5q30rssp54kt5hfzjngjersx8fgt60feuu8e7vnat67f3ksr98twdj7z0m0ls9qyysgqcqzp2xqyz5vqrzjqdc22wfv6lyplagj37n9dmndkrzdz8rh3lxkewvvk6arkjpefats2rf47yqqwysqqcqqqqlgqqqqqqgqfqrzjq26922n6s5n5undqrf78rjjhgpcczafws45tx8237y7pzx3fg8ww8apyqqqqqqqqjyqqqqlgqqqqr4gq2q3z5pu33awfm98ac3ysdhy046xmen4zqval67tccu35x9mxgvl6w3wmq6y03ae7pme6qr20mp5gvuqntnu8yy7nlf6gyt9zshanj2zhgqe4xde3";
+const ENCODED_REAL_REQUEST = encodeMppChargeRequest({
+  amount: "402",
+  currency: "sat",
+  methodDetails: { invoice: REAL_INVOICE },
+});
+
 function makeWallet(preimage: string = PREIMAGE) {
   return {
     payInvoice: jest.fn().mockResolvedValue({ preimage }),
@@ -319,6 +328,63 @@ describe("fetchWithMpp", () => {
     const decoded = JSON.parse(decodeBase64url(token));
 
     expect(decoded.challenge.expires).toBe(expires);
+  });
+
+  test("attaches payment info (credentials, amount, fee) after paying", async () => {
+    const wallet = {
+      payInvoice: jest
+        .fn()
+        .mockResolvedValue({ preimage: PREIMAGE, fees_paid: 250 }),
+    };
+
+    fetchMock.mockResponseOnce("Payment Required", {
+      status: 402,
+      headers: {
+        "www-authenticate": makeMppWwwAuthenticateHeader({
+          id: CHALLENGE_ID,
+          realm: REALM,
+          request: ENCODED_REAL_REQUEST,
+        }),
+      },
+    });
+    fetchMock.mockResponseOnce(JSON.stringify({ data: "paid content" }), {
+      status: 200,
+    });
+
+    const response = await fetchWithMpp(MPP_URL, {}, { wallet });
+
+    expect(response.payment?.paid).toBe(true);
+    expect(response.payment?.amount).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.feesPaid).toBe(250);
+    expect(response.payment?.preimage).toBe(PREIMAGE);
+    expect(response.payment?.credentials.header).toBe("Authorization");
+    // The returned credential is exactly the Authorization value that was sent
+    const sentHeaders = (fetchMock.mock.calls[1][1] as RequestInit)
+      .headers as Headers;
+    expect(response.payment?.credentials.value).toBe(
+      sentHeaders.get("Authorization"),
+    );
+  });
+
+  test("reuses supplied credentials without paying again (polling)", async () => {
+    const wallet = makeWallet();
+    const credentials = {
+      header: "Authorization",
+      value: "Payment cached-token",
+    };
+
+    fetchMock.mockResponseOnce(JSON.stringify({ status: "processing" }), {
+      status: 200,
+    });
+
+    const response = await fetchWithMpp(MPP_URL, {}, { wallet, credentials });
+
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
+    const callInit = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((callInit.headers as Headers).get("Authorization")).toBe(
+      credentials.value,
+    );
+    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
   });
 
   test("sets cache to no-store and mode to cors", async () => {

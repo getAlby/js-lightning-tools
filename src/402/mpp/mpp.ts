@@ -1,4 +1,12 @@
-import { Wallet } from "../utils";
+import {
+  applyCredentials,
+  attachPayment,
+  Fetch402Options,
+  getInvoiceAmount,
+  PaidResponse,
+  reusedCredentialPayment,
+  Wallet,
+} from "../utils";
 import {
   buildMppCredential,
   decodeBase64url,
@@ -23,7 +31,7 @@ export const handleMppChargePayment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-): Promise<Response> => {
+): Promise<PaidResponse> => {
   const challenge = parseMppChallenge(wwwAuthHeader);
   if (!challenge) {
     throw new Error(
@@ -49,9 +57,17 @@ export const handleMppChargePayment = async (
 
   // Per spec: Authorization: Payment <base64url-token>  (single token, no wrapper)
   const credential = buildMppCredential(challenge, invResp.preimage);
-  headers.set("Authorization", `Payment ${credential}`);
+  const value = `Payment ${credential}`;
+  headers.set("Authorization", value);
 
-  return fetch(url, fetchArgs);
+  const response = await fetch(url, fetchArgs);
+  return attachPayment(response, {
+    paid: true,
+    amount: getInvoiceAmount(invoice),
+    feesPaid: invResp.fees_paid,
+    preimage: invResp.preimage,
+    credentials: { header: "Authorization", value },
+  });
 };
 
 /**
@@ -63,15 +79,17 @@ export const handleMppChargePayment = async (
  * the function pays the embedded BOLT11 invoice and retries with the
  * resulting preimage as the credential.
  *
- * Note: lightning-charge uses consume-once challenge semantics – each
- * challenge embeds a fresh invoice, so paid credentials cannot be reused.
- * The `store` option is accepted for API consistency but is not used.
+ * Pass a previous credential via `options.credentials` to reuse it (e.g. when
+ * polling); the credential is applied and the function NEVER pays again, even
+ * if the server still responds with a 402 (that response is returned as-is).
+ * Note: lightning-charge typically uses consume-once challenge semantics, so a
+ * reused credential is only accepted by servers that explicitly support it.
  */
 export const fetchWithMpp = async (
   url: string,
   fetchArgs: RequestInit,
-  options: { wallet: Wallet },
-): Promise<Response> => {
+  options: Fetch402Options,
+): Promise<PaidResponse> => {
   const wallet = options.wallet;
   if (!wallet) {
     throw new Error("wallet is missing");
@@ -83,6 +101,19 @@ export const fetchWithMpp = async (
   fetchArgs.mode = "cors";
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
+
+  // If the caller supplied a credential, we MUST use it and never pay again —
+  // even if the server still responds with a 402. Re-paying here is the exact
+  // double-charge this API exists to prevent; the caller decides what to do
+  // with a rejected credential (retry after settlement, top up, etc.).
+  if (options.credentials) {
+    applyCredentials(headers, options.credentials);
+    const reusedResp = await fetch(url, fetchArgs);
+    return attachPayment(
+      reusedResp,
+      reusedCredentialPayment(options.credentials),
+    );
+  }
 
   const initResp = await fetch(url, fetchArgs);
   const wwwAuthHeader = initResp.headers.get("www-authenticate");

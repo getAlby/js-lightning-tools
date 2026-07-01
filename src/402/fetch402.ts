@@ -1,4 +1,11 @@
-import { Wallet, createGuardedWallet } from "./utils";
+import {
+  applyCredentials,
+  attachPayment,
+  createGuardedWallet,
+  Fetch402Options,
+  PaidResponse,
+  reusedCredentialPayment,
+} from "./utils";
 import { handleL402Payment } from "./l402/l402";
 import { findX402LightningRequirements, handleX402Payment } from "./x402/x402";
 import { handleMppChargePayment } from "./mpp/mpp";
@@ -7,11 +14,10 @@ import { parseMppChallenge } from "./mpp/utils";
 export const fetch402 = async (
   url: string,
   fetchArgs: RequestInit,
-  options: {
-    wallet: Wallet;
+  options: Fetch402Options & {
     maxAmount?: number;
   },
-) => {
+): Promise<PaidResponse> => {
   const wallet = options.maxAmount
     ? createGuardedWallet(options.wallet, options.maxAmount)
     : options.wallet;
@@ -22,6 +28,19 @@ export const fetch402 = async (
   fetchArgs.mode = "cors";
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
+
+  // If the caller supplied a credential, we MUST use it and never pay again —
+  // even if the server still responds with a 402. Re-paying here is the exact
+  // double-charge this API exists to prevent; the caller decides what to do
+  // with a rejected credential (retry after settlement, top up, etc.).
+  if (options.credentials) {
+    applyCredentials(headers, options.credentials);
+    const reusedResp = await fetch(url, fetchArgs);
+    return attachPayment(
+      reusedResp,
+      reusedCredentialPayment(options.credentials),
+    );
+  }
 
   const initResp = await fetch(url, fetchArgs);
 

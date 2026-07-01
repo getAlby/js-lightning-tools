@@ -1,4 +1,12 @@
-import { Wallet } from "../utils";
+import {
+  applyCredentials,
+  attachPayment,
+  Fetch402Options,
+  getInvoiceAmount,
+  PaidResponse,
+  reusedCredentialPayment,
+  Wallet,
+} from "../utils";
 import { parseL402 } from "./utils";
 
 export const handleL402Payment = async (
@@ -7,7 +15,7 @@ export const handleL402Payment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-): Promise<Response> => {
+): Promise<PaidResponse> => {
   const details = parseL402(l402Header);
   const token = details.token || details.macaroon;
   const invoice = details.invoice;
@@ -20,17 +28,23 @@ export const handleL402Payment = async (
   }
 
   const invResp = await wallet.payInvoice({ invoice });
-  headers.set("Authorization", `L402 ${token}:${invResp.preimage}`);
-  return fetch(url, fetchArgs);
+  const value = `L402 ${token}:${invResp.preimage}`;
+  headers.set("Authorization", value);
+  const response = await fetch(url, fetchArgs);
+  return attachPayment(response, {
+    paid: true,
+    amount: getInvoiceAmount(invoice),
+    feesPaid: invResp.fees_paid,
+    preimage: invResp.preimage,
+    credentials: { header: "Authorization", value },
+  });
 };
 
 export const fetchWithL402 = async (
   url: string,
   fetchArgs: RequestInit,
-  options: {
-    wallet: Wallet;
-  },
-) => {
+  options: Fetch402Options,
+): Promise<PaidResponse> => {
   const wallet = options.wallet;
   if (!wallet) {
     throw new Error("wallet is missing");
@@ -42,6 +56,19 @@ export const fetchWithL402 = async (
   fetchArgs.mode = "cors";
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
+
+  // If the caller supplied a credential, we MUST use it and never pay again —
+  // even if the server still responds with a 402. Re-paying here is the exact
+  // double-charge this API exists to prevent; the caller decides what to do
+  // with a rejected credential (retry after settlement, top up, etc.).
+  if (options.credentials) {
+    applyCredentials(headers, options.credentials);
+    const reusedResp = await fetch(url, fetchArgs);
+    return attachPayment(
+      reusedResp,
+      reusedCredentialPayment(options.credentials),
+    );
+  }
 
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get("www-authenticate");
