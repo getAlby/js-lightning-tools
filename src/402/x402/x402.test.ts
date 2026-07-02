@@ -96,6 +96,54 @@ describe("fetchWithX402", () => {
     expect(sig.accepted).toEqual(REQUIREMENTS);
   });
 
+  test("attaches payment info (credentials, amount, fee) after paying", async () => {
+    const wallet = {
+      payInvoice: jest
+        .fn()
+        .mockResolvedValue({ preimage: PREIMAGE, fees_paid: 500 }),
+    };
+
+    fetchMock.mockResponseOnce("Payment Required", {
+      status: 402,
+      headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
+    });
+    fetchMock.mockResponseOnce(JSON.stringify({ data: "paid content" }), {
+      status: 200,
+    });
+
+    const response = await fetchWithX402(X402_URL, {}, { wallet });
+
+    expect(response.payment?.paid).toBe(true);
+    expect(response.payment?.amount).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.feesPaid).toBe(500);
+    expect(response.payment?.preimage).toBe(PREIMAGE);
+    expect(response.payment?.credentials.header).toBe("payment-signature");
+    // The returned credential is exactly the payment-signature that was sent
+    const sentSig = (fetchMock.mock.calls[1][1] as RequestInit)
+      .headers as Headers;
+    expect(response.payment?.credentials.value).toBe(
+      sentSig.get("payment-signature"),
+    );
+  });
+
+  test("reuses supplied credentials without paying again (polling)", async () => {
+    const wallet = makeWallet();
+    const credentials = { header: "payment-signature", value: "cached-sig" };
+
+    fetchMock.mockResponseOnce(JSON.stringify({ status: "processing" }), {
+      status: 200,
+    });
+
+    const response = await fetchWithX402(X402_URL, {}, { wallet, credentials });
+
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
+    const callInit = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((callInit.headers as Headers).get("payment-signature")).toBe(
+      "cached-sig",
+    );
+    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
+  });
+
   test("pays invoice on every request (no caching)", async () => {
     const wallet = makeWallet();
 

@@ -184,7 +184,8 @@ This library includes functions to consome those resources.
 - url: the protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay L402, X402 and MPP invoices.
+  - wallet: any object that implements `payInvoice({ invoice })` and returns `{ preimage, fees_paid? }`. Used to pay L402, X402 and MPP invoices.
+  - credentials (optional): a credential from a previous paid request (`response.payment.credentials`). When provided it is applied to the request before it is sent so the server can authorize it without a new payment — see [Payment info & polling](#payment-info--polling).
 
 ##### Examples
 
@@ -196,14 +197,51 @@ const nwc = new NWCClient({
   nostrWalletConnectUrl: "nostr+walletconnect://...",
 });
 
-await fetch402(
-  "https://example.com/protected-resource",
-  {},
-  { wallet: nwc },
-)
+await fetch402("https://example.com/protected-resource", {}, { wallet: nwc })
   .then((res) => res.json())
   .then(console.log)
   .finally(() => nwc.close());
+```
+
+#### Payment info & polling
+
+All of the 402 fetch helpers (`fetch402`, `fetchWithL402`, `fetchWithX402`, `fetchWithMpp`) return a standard `fetch` `Response`. When a payment was made (or a supplied credential was reused) the response also carries a `payment` property:
+
+```ts
+interface PaymentInfo {
+  paid: boolean; // whether a lightning payment was made for this request
+  amount: number; // amount of the paid invoice, in satoshis (0 when paid is false)
+  feesPaid?: number; // routing fees in millisatoshis, when reported by the wallet
+  preimage?: string; // payment preimage, when a payment was made
+  credentials: {
+    // reusable credential — pass back via options.credentials
+    header: string; // e.g. "Authorization" (L402/MPP) or "payment-signature" (x402)
+    value: string;
+  };
+}
+```
+
+This lets you inspect what a request cost, and — by passing `credentials` back on a follow-up request — authorize subsequent calls without paying again (e.g. polling a long-running video/song generation job).
+
+> **Important:** when you pass `credentials`, the helper reuses them and **never pays a second time**. If the server still responds with a `402` (e.g. the credential expired or the balance is depleted), that `402` response is returned to you as-is — the library will not silently pay another invoice. You decide what to do next: retry the same credential, or make a fresh unauthenticated request to pay again.
+
+```js
+// First request (no credentials): pays once and returns the content plus a reusable credential
+const res = await fetch402(url, { method: "POST", body }, { wallet: nwc });
+const job = await res.json();
+console.info(`Paid ${res.payment.amount} sats`);
+
+// Follow-up requests reuse the credential — these NEVER pay again
+const pollRes = await fetch402(
+  `${url}/status/${job.id}`,
+  {},
+  { wallet: nwc, credentials: res.payment.credentials },
+);
+if (pollRes.status === 402) {
+  // credential not (yet) accepted — retry the same credential later, do not re-pay
+} else {
+  console.info(await pollRes.json());
+}
 ```
 
 #### L402
@@ -219,7 +257,8 @@ This library includes a `fetchWithL402` function to consume L402 protected resou
 - url: the L402 protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the L402 invoice.
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage, fees_paid? }`. Used to pay the L402 invoice.
+  - credentials (optional): a credential from a previous paid request — see [Payment info & polling](#payment-info--polling).
 
 ##### Examples
 
@@ -244,9 +283,9 @@ await fetchWithL402(
 #### X402
 
 Similar to L402 X402 is an open protocol for machine-to-machine payments built on the HTTP 402 Payment Required status code.
-It enables APIs and resources to request payments inline, without prior registration or authentication. 
+It enables APIs and resources to request payments inline, without prior registration or authentication.
 
-This library includes a `fetchWithX402` function to consume X402-protected resources that support the lightning network. 
+This library includes a `fetchWithX402` function to consume X402-protected resources that support the lightning network.
 (Note: X402 works also with other coins and network. This library supports X402 resources that accept Bitcoin on the lightning network)
 
 ##### fetchWithX402(url: string, fetchArgs, options)
@@ -254,7 +293,8 @@ This library includes a `fetchWithX402` function to consume X402-protected resou
 - url: the X402 protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the X402 invoice.
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage, fees_paid? }`. Used to pay the X402 invoice.
+  - credentials (optional): a credential from a previous paid request — see [Payment info & polling](#payment-info--polling).
 
 ##### Examples
 
@@ -281,7 +321,7 @@ await fetchWithX402(
 MPP is an open protocol for machine-to-machine payments built on the HTTP 402 Payment Required status code.
 Charge for API requests, tool calls, or content—agents and apps pay per request in the same HTTP call.
 
-This library includes a `fetchWithMpp` function to consume MPP-protected resources that support the lightning network. 
+This library includes a `fetchWithMpp` function to consume MPP-protected resources that support the lightning network.
 (Note: MPP works also with other payment methods. This library supports resources that accept Bitcoin on the lightning network)
 
 ##### fetchWithMpp(url: string, fetchArgs, options)
@@ -289,7 +329,8 @@ This library includes a `fetchWithMpp` function to consume MPP-protected resourc
 - url: the MPP protected URL
 - fetchArgs: arguments are passed to the underlying `fetch()` function used to do the HTTP request
 - options:
-  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage }`. Used to pay the X402 invoice.
+  - wallet: any object (e.g. a NWC client) that implements `payInvoice({ invoice })` and returns `{ preimage, fees_paid? }`. Used to pay the MPP invoice.
+  - credentials (optional): a credential from a previous paid request — see [Payment info & polling](#payment-info--polling).
 
 ##### Examples
 

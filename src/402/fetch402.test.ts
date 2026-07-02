@@ -170,6 +170,47 @@ describe("fetch402 dispatcher", () => {
     expect(response.status).toBe(200);
   });
 
+  test("attaches payment info after paying a lightning offer", async () => {
+    const wallet = {
+      payInvoice: jest
+        .fn()
+        .mockResolvedValue({ preimage: PREIMAGE, fees_paid: 42 }),
+    };
+
+    fetchMock.mockResponseOnce("Payment Required", {
+      status: 402,
+      headers: {
+        "PAYMENT-REQUIRED": paymentRequiredHeader([LIGHTNING_REQUIREMENTS]),
+      },
+    });
+    fetchMock.mockResponseOnce(JSON.stringify({ paid: true }), { status: 200 });
+
+    const response = await fetch402(URL, {}, { wallet });
+
+    expect(response.payment?.paid).toBe(true);
+    expect(response.payment?.amount).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.feesPaid).toBe(42);
+    expect(response.payment?.credentials.header).toBe("payment-signature");
+  });
+
+  test("reuses supplied credentials without paying again (polling)", async () => {
+    const wallet = makeWallet();
+    const credentials = { header: "payment-signature", value: "cached-sig" };
+
+    fetchMock.mockResponseOnce(JSON.stringify({ status: "processing" }), {
+      status: 200,
+    });
+
+    const response = await fetch402(URL, {}, { wallet, credentials });
+
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
+    const callInit = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((callInit.headers as Headers).get("payment-signature")).toBe(
+      "cached-sig",
+    );
+    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
+  });
+
   test("returns 200 unchanged when there is no 402", async () => {
     const wallet = makeWallet();
 

@@ -1,4 +1,11 @@
-import { Wallet } from "../utils";
+import {
+  applyCredentials,
+  attachPayment,
+  Fetch402Options,
+  PaidResponse,
+  reusedCredentialPayment,
+  Wallet,
+} from "../utils";
 import { buildX402PaymentSignature, X402Requirements } from "./utils";
 import { Invoice } from "../../bolt11";
 
@@ -51,7 +58,7 @@ export const handleX402Payment = async (
   fetchArgs: RequestInit,
   headers: Headers,
   wallet: Wallet,
-): Promise<Response> => {
+): Promise<PaidResponse> => {
   const { accepts } = decodeX402Header(x402Header);
 
   const requirements = accepts.find(
@@ -73,25 +80,30 @@ export const handleX402Payment = async (
     );
   }
 
-  await wallet.payInvoice!({ invoice: invoice.paymentRequest });
+  const invResp = await wallet.payInvoice({ invoice: invoice.paymentRequest });
 
-  headers.set(
-    "payment-signature",
-    buildX402PaymentSignature(
-      requirements.scheme,
-      requirements.network,
-      invoice.paymentRequest,
-      requirements,
-    ),
+  const value = buildX402PaymentSignature(
+    requirements.scheme,
+    requirements.network,
+    invoice.paymentRequest,
+    requirements,
   );
-  return fetch(url, fetchArgs);
+  headers.set("payment-signature", value);
+  const response = await fetch(url, fetchArgs);
+  return attachPayment(response, {
+    paid: true,
+    amount: invoice.satoshi,
+    feesPaid: invResp.fees_paid,
+    preimage: invResp.preimage,
+    credentials: { header: "payment-signature", value },
+  });
 };
 
 export const fetchWithX402 = async (
   url: string,
   fetchArgs: RequestInit,
-  options: { wallet: Wallet },
-) => {
+  options: Fetch402Options,
+): Promise<PaidResponse> => {
   const wallet = options.wallet;
   if (!fetchArgs) {
     fetchArgs = {};
@@ -100,6 +112,19 @@ export const fetchWithX402 = async (
   fetchArgs.mode = "cors";
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
+
+  // If the caller supplied a credential, we MUST use it and never pay again —
+  // even if the server still responds with a 402. Re-paying here is the exact
+  // double-charge this API exists to prevent; the caller decides what to do
+  // with a rejected credential (retry after settlement, top up, etc.).
+  if (options.credentials) {
+    applyCredentials(headers, options.credentials);
+    const reusedResp = await fetch(url, fetchArgs);
+    return attachPayment(
+      reusedResp,
+      reusedCredentialPayment(options.credentials),
+    );
+  }
 
   const initResp = await fetch(url, fetchArgs);
   const header = initResp.headers.get("PAYMENT-REQUIRED");
