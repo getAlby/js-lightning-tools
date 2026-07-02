@@ -19,6 +19,9 @@ export const handleL402Payment = async (
   const details = parseL402(l402Header);
   const token = details.token || details.macaroon;
   const invoice = details.invoice;
+  // Preserve the scheme the server challenged with (L402 or LSAT) so the
+  // retry's Authorization header matches what the server expects.
+  const scheme = /^\s*LSAT\b/i.test(l402Header) ? "LSAT" : "L402";
 
   if (!token) {
     throw new Error("L402: missing token/macaroon in WWW-Authenticate header");
@@ -28,7 +31,7 @@ export const handleL402Payment = async (
   }
 
   const invResp = await wallet.payInvoice({ invoice });
-  const value = `L402 ${token}:${invResp.preimage}`;
+  const value = `${scheme} ${token}:${invResp.preimage}`;
   headers.set("Authorization", value);
   const response = await fetch(url, fetchArgs);
   return attachPayment(response, {
