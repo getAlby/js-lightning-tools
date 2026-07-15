@@ -28,9 +28,9 @@ export interface PaymentInfo {
   /** Whether a lightning payment was made to obtain this response. */
   paid: boolean;
   /** Amount of the paid invoice, in satoshis (0 when `paid` is false). */
-  amount: number;
+  amountSat: number;
   /** Routing fees paid, in millisatoshis, when reported by the wallet. */
-  feesPaid?: number;
+  feesPaidMsat?: number;
   /** Payment preimage, present when a payment was made. */
   preimage?: string;
   /**
@@ -78,7 +78,7 @@ export const attachPayment = (
 export const reusedCredentialPayment = (
   credentials: PaymentCredentials | undefined,
 ): PaymentInfo | undefined =>
-  credentials ? { paid: false, amount: 0, credentials } : undefined;
+  credentials ? { paid: false, amountSat: 0, credentials } : undefined;
 
 /** Satoshi amount of a BOLT11 invoice (0 when it cannot be decoded). */
 export const getInvoiceAmount = (invoice: string): number => {

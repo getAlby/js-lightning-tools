@@ -188,8 +188,8 @@ describe("fetch402 dispatcher", () => {
     const response = await fetch402(URL, {}, { wallet });
 
     expect(response.payment?.paid).toBe(true);
-    expect(response.payment?.amount).toBe(402); // lnbc4020n = 402 sats
-    expect(response.payment?.feesPaid).toBe(42);
+    expect(response.payment?.amountSat).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.feesPaidMsat).toBe(42);
     expect(response.payment?.credentials.header).toBe("payment-signature");
   });
 
@@ -208,7 +208,11 @@ describe("fetch402 dispatcher", () => {
     expect((callInit.headers as Headers).get("payment-signature")).toBe(
       "cached-sig",
     );
-    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
+    expect(response.payment).toEqual({
+      paid: false,
+      amountSat: 0,
+      credentials,
+    });
   });
 
   test("returns 200 unchanged when there is no 402", async () => {

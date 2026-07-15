@@ -210,8 +210,8 @@ All of the 402 fetch helpers (`fetch402`, `fetchWithL402`, `fetchWithX402`, `fet
 ```ts
 interface PaymentInfo {
   paid: boolean; // whether a lightning payment was made for this request
-  amount: number; // amount of the paid invoice, in satoshis (0 when paid is false)
-  feesPaid?: number; // routing fees in millisatoshis, when reported by the wallet
+  amountSat: number; // amount of the paid invoice, in satoshis (0 when paid is false)
+  feesPaidMsat?: number; // routing fees in millisatoshis, when reported by the wallet
   preimage?: string; // payment preimage, when a payment was made
   credentials: {
     // reusable credential — pass back via options.credentials
@@ -229,7 +229,7 @@ This lets you inspect what a request cost, and — by passing `credentials` back
 // First request (no credentials): pays once and returns the content plus a reusable credential
 const res = await fetch402(url, { method: "POST", body }, { wallet: nwc });
 const job = await res.json();
-console.info(`Paid ${res.payment.amount} sats`);
+console.info(`Paid ${res.payment.amountSat} sats`);
 
 // Follow-up requests reuse the credential — these NEVER pay again
 const pollRes = await fetch402(
