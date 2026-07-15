@@ -63,8 +63,8 @@ export const handleMppChargePayment = async (
   const response = await fetch(url, fetchArgs);
   return attachPayment(response, {
     paid: true,
-    amount: getInvoiceAmount(invoice),
-    feesPaid: invResp.fees_paid,
+    amountSat: getInvoiceAmount(invoice),
+    feesPaidMsat: invResp.fees_paid,
     preimage: invResp.preimage,
     credentials: { header: "Authorization", value },
   });

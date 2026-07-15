@@ -92,8 +92,8 @@ export const handleX402Payment = async (
   const response = await fetch(url, fetchArgs);
   return attachPayment(response, {
     paid: true,
-    amount: invoice.satoshi,
-    feesPaid: invResp.fees_paid,
+    amountSat: invoice.satoshi,
+    feesPaidMsat: invResp.fees_paid,
     preimage: invResp.preimage,
     credentials: { header: "payment-signature", value },
   });

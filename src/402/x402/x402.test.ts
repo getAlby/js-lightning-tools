@@ -114,8 +114,8 @@ describe("fetchWithX402", () => {
     const response = await fetchWithX402(X402_URL, {}, { wallet });
 
     expect(response.payment?.paid).toBe(true);
-    expect(response.payment?.amount).toBe(402); // lnbc4020n = 402 sats
-    expect(response.payment?.feesPaid).toBe(500);
+    expect(response.payment?.amountSat).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.feesPaidMsat).toBe(500);
     expect(response.payment?.preimage).toBe(PREIMAGE);
     expect(response.payment?.credentials.header).toBe("payment-signature");
     // The returned credential is exactly the payment-signature that was sent
@@ -141,7 +141,11 @@ describe("fetchWithX402", () => {
     expect((callInit.headers as Headers).get("payment-signature")).toBe(
       "cached-sig",
     );
-    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
+    expect(response.payment).toEqual({
+      paid: false,
+      amountSat: 0,
+      credentials,
+    });
   });
 
   test("pays invoice on every request (no caching)", async () => {
