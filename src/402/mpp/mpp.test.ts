@@ -1,5 +1,7 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithMpp } from "./mpp";
+import { Fetch402PaymentError } from "../utils";
+import { Invoice } from "../../bolt11";
 import {
   buildMppCredential,
   decodeBase64url,
@@ -439,14 +441,21 @@ describe("fetchWithMpp", () => {
         "www-authenticate": makeMppWwwAuthenticateHeader({
           id: CHALLENGE_ID,
           realm: REALM,
-          request: ENCODED_REQUEST,
+          request: ENCODED_REAL_REQUEST,
         }),
       },
     });
 
-    await expect(fetchWithMpp(MPP_URL, {}, { wallet })).rejects.toThrow(
-      "payment failed",
+    const error = await fetchWithMpp(MPP_URL, {}, { wallet }).catch((e) => e);
+    expect(error).toBeInstanceOf(Fetch402PaymentError);
+    expect(error.paid).toBe(false);
+    expect(error.invoice).toBe(REAL_INVOICE);
+    expect(error.paymentHash).toBe(
+      new Invoice({ pr: REAL_INVOICE }).paymentHash,
     );
+    expect(error.preimage).toBeUndefined();
+    expect(error.credentials).toBeUndefined();
+    expect((error.cause as Error).message).toBe("payment failed");
   });
 
   test("works with minimal options (wallet only)", async () => {

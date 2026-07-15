@@ -244,6 +244,75 @@ if (pollRes.status === 402) {
 }
 ```
 
+##### Recovering from a failure after paying
+
+If the invoice is paid but the flow then fails (the wallet times out, or the
+request _after_ payment hits a network error), the helper throws a
+`Fetch402PaymentError` instead of a bare `Error`. It carries everything needed
+to reconcile the payment **without paying the same invoice again**:
+
+```ts
+class Fetch402PaymentError extends Error {
+  invoice: string; // the invoice that was paid (or attempted)
+  paymentHash: string; // decoded from the invoice — use it to look up settlement
+  paid: boolean; // whether the wallet reported the payment succeeded
+  preimage?: string; // present when paid
+  credentials?: PaymentCredentials; // present when paid — retry with these
+  pendingPayment: PendingPayment; // opaque token to resume via options.resume
+  cause?: unknown; // the underlying wallet/fetch error
+}
+```
+
+Every field is plain data, so the error survives `JSON.stringify` and can be
+forwarded across process/CLI boundaries. (After a round-trip it's a plain
+object, so match on `e.name === "Fetch402PaymentError"` rather than
+`instanceof`.)
+
+```js
+try {
+  const res = await fetch402(url, { method: "POST", body }, { wallet: nwc });
+} catch (e) {
+  if (e.name !== "Fetch402PaymentError") throw e;
+
+  if (e.paid) {
+    // Payment succeeded but the follow-up request failed. The credential is
+    // already built — retry with it, DON'T pay again.
+    await fetch402(
+      url,
+      { method: "POST", body },
+      { wallet: nwc, credentials: e.credentials },
+    );
+  } else {
+    // payInvoice never returned (e.g. a timeout), but the payment may have
+    // settled anyway. Ask the wallet whether this payment hash settled.
+    const lookup = await nwc.lookupInvoice({ payment_hash: e.paymentHash });
+
+    if (lookup?.preimage) {
+      // It settled — you have ALREADY PAID. Resume the same request: pass the
+      // recovered preimage back with the error's pendingPayment and the library
+      // rebuilds the credential internally and sends it WITHOUT paying again.
+      await fetch402(
+        url,
+        { method: "POST", body },
+        {
+          wallet: nwc,
+          resume: {
+            pendingPayment: e.pendingPayment,
+            preimage: lookup.preimage,
+          },
+        },
+      );
+    } else if (lookup?.state === "failed") {
+      // Explicitly FAILED — no funds moved, safe to retry from scratch.
+      await fetch402(url, { method: "POST", body }, { wallet: nwc });
+    } else {
+      // Still pending / in-flight — do NOT retry yet: it may still settle and a
+      // fresh payment would double-pay. Wait and re-check the payment hash.
+    }
+  }
+}
+```
+
 #### L402
 
 L402 is a protocol standard based on the HTTP 402 Payment Required error code
