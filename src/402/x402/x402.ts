@@ -95,7 +95,7 @@ export const handleX402Payment = async (
         requirements,
       ),
     },
-    amount: invoice.satoshi,
+    amountSat: invoice.satoshi,
   });
 };
 

@@ -90,9 +90,9 @@ export interface PaymentInfo {
   /** Whether a lightning payment was made to obtain this response. */
   paid: boolean;
   /** Amount of the paid invoice, in satoshis (0 when `paid` is false). */
-  amount: number;
+  amountSat: number;
   /** Routing fees paid, in millisatoshis, when reported by the wallet. */
-  feesPaid?: number;
+  feesPaidMsat?: number;
   /** Payment preimage, present when a payment was made. */
   preimage?: string;
   /**
@@ -152,7 +152,7 @@ export const attachPayment = (
 export const reusedCredentialPayment = (
   credentials: PaymentCredentials | undefined,
 ): PaymentInfo | undefined =>
-  credentials ? { paid: false, amount: 0, credentials } : undefined;
+  credentials ? { paid: false, amountSat: 0, credentials } : undefined;
 
 /**
  * If the caller supplied a reusable `credentials` or a `resume` token, apply it
@@ -184,7 +184,7 @@ export const tryReusePayment = async (
     // The payment already happened (earlier); this request itself does not pay.
     return attachPayment(response, {
       paid: false,
-      amount: 0,
+      amountSat: 0,
       preimage,
       credentials,
     });
@@ -288,10 +288,17 @@ export const payAndFetch = async (args: {
   /** How to build the credential once the preimage is known. */
   pendingPayment: PendingPayment;
   /** Invoice amount in satoshis, for the attached PaymentInfo. */
-  amount: number;
+  amountSat: number;
 }): Promise<PaidResponse> => {
-  const { wallet, invoice, url, fetchArgs, headers, pendingPayment, amount } =
-    args;
+  const {
+    wallet,
+    invoice,
+    url,
+    fetchArgs,
+    headers,
+    pendingPayment,
+    amountSat,
+  } = args;
 
   let invResp: { preimage: string; fees_paid?: number };
   try {
@@ -330,8 +337,8 @@ export const payAndFetch = async (args: {
 
   return attachPayment(response, {
     paid: true,
-    amount,
-    feesPaid: invResp.fees_paid,
+    amountSat,
+    feesPaidMsat: invResp.fees_paid,
     preimage: invResp.preimage,
     credentials,
   });

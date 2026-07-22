@@ -356,8 +356,8 @@ describe("fetchWithMpp", () => {
     const response = await fetchWithMpp(MPP_URL, {}, { wallet });
 
     expect(response.payment?.paid).toBe(true);
-    expect(response.payment?.amount).toBe(402); // lnbc4020n = 402 sats
-    expect(response.payment?.feesPaid).toBe(250);
+    expect(response.payment?.amountSat).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.feesPaidMsat).toBe(250);
     expect(response.payment?.preimage).toBe(PREIMAGE);
     expect(response.payment?.credentials.header).toBe("Authorization");
     // The returned credential is exactly the Authorization value that was sent
@@ -386,7 +386,11 @@ describe("fetchWithMpp", () => {
     expect((callInit.headers as Headers).get("Authorization")).toBe(
       credentials.value,
     );
-    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
+    expect(response.payment).toEqual({
+      paid: false,
+      amountSat: 0,
+      credentials,
+    });
   });
 
   test("sets cache to no-store and mode to cors", async () => {

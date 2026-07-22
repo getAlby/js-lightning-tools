@@ -54,7 +54,7 @@ export const handleMppChargePayment = async (
     fetchArgs,
     headers,
     pendingPayment: { scheme: "mpp", header: "Authorization", challenge },
-    amount: getInvoiceAmount(invoice),
+    amountSat: getInvoiceAmount(invoice),
   });
 };
 

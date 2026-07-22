@@ -41,7 +41,7 @@ export const handleL402Payment = async (
       token,
       authScheme: scheme,
     },
-    amount: getInvoiceAmount(invoice),
+    amountSat: getInvoiceAmount(invoice),
   });
 };
 

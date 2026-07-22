@@ -143,8 +143,8 @@ describe("fetchWithL402", () => {
 
     expect(response.payment).toEqual({
       paid: true,
-      amount: 402, // lnbc4020n = 402 sats
-      feesPaid: 1000,
+      amountSat: 402, // lnbc4020n = 402 sats
+      feesPaidMsat: 1000,
       preimage: PREIMAGE,
       credentials: {
         header: "Authorization",
@@ -185,7 +185,11 @@ describe("fetchWithL402", () => {
     expect(headers.get("Authorization")).toBe(credentials.value);
 
     // and echoed back so the caller can keep polling
-    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
+    expect(response.payment).toEqual({
+      paid: false,
+      amountSat: 0,
+      credentials,
+    });
   });
 
   test("NEVER pays again when supplied credentials are rejected with a fresh 402", async () => {
@@ -216,7 +220,11 @@ describe("fetchWithL402", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(response.status).toBe(402);
     // The supplied credential is echoed back so the caller can retry it later.
-    expect(response.payment).toEqual({ paid: false, amount: 0, credentials });
+    expect(response.payment).toEqual({
+      paid: false,
+      amountSat: 0,
+      credentials,
+    });
   });
 
   test("propagates wallet.payInvoice errors", async () => {
@@ -317,7 +325,7 @@ describe("fetchWithL402", () => {
     expect(response.status).toBe(200);
     expect(response.payment).toEqual({
       paid: false,
-      amount: 0,
+      amountSat: 0,
       preimage: PREIMAGE,
       credentials: {
         header: "Authorization",
