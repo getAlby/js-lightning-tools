@@ -2,7 +2,7 @@ import fetchMock from "jest-fetch-mock";
 import { fetchWithL402 } from "./l402";
 import { parseL402 } from "./utils";
 import { makeL402AuthenticateHeader } from "./server/utils";
-import { Fetch402PaymentError } from "../utils";
+import { Fetch402InterruptedError } from "../utils";
 import { Invoice } from "../../bolt11";
 
 const MACAROON =
@@ -243,13 +243,15 @@ describe("fetchWithL402", () => {
     });
 
     const error = await fetchWithL402(L402_URL, {}, { wallet }).catch((e) => e);
-    expect(error).toBeInstanceOf(Fetch402PaymentError);
+    expect(error).toBeInstanceOf(Fetch402InterruptedError);
     expect(error.paid).toBe(false);
     expect(error.invoice).toBe(REAL_INVOICE);
     expect(error.paymentHash).toBe(
       new Invoice({ pr: REAL_INVOICE }).paymentHash,
     );
+    expect(error.amountSat).toBe(402);
     expect(error.preimage).toBeUndefined();
+    expect(error.feesPaidMsat).toBeUndefined();
     expect(error.credentials).toBeUndefined();
     // The pendingPayment carries the macaroon so the credential can be rebuilt
     // once the preimage is recovered (see the resume test below).
@@ -334,10 +336,15 @@ describe("fetchWithL402", () => {
     });
   });
 
-  test("throws recoverable Fetch402PaymentError when the request after payment fails", async () => {
+  test("throws recoverable Fetch402InterruptedError when the request after payment fails", async () => {
     // The invoice is already paid; a network error on the retry must NOT lose
-    // the preimage/credential (else the caller would pay the same invoice again).
-    const wallet = makeWallet();
+    // the preimage/credential (else the caller would pay the same invoice again)
+    // nor the payment's cost details (amount and routing fees).
+    const wallet = {
+      payInvoice: jest
+        .fn()
+        .mockResolvedValue({ preimage: PREIMAGE, fees_paid: 3000 }),
+    };
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -353,13 +360,15 @@ describe("fetchWithL402", () => {
 
     const error = await fetchWithL402(L402_URL, {}, { wallet }).catch((e) => e);
     expect(wallet.payInvoice).toHaveBeenCalledTimes(1);
-    expect(error).toBeInstanceOf(Fetch402PaymentError);
+    expect(error).toBeInstanceOf(Fetch402InterruptedError);
     expect(error.paid).toBe(true);
     expect(error.invoice).toBe(REAL_INVOICE);
     expect(error.paymentHash).toBe(
       new Invoice({ pr: REAL_INVOICE }).paymentHash,
     );
+    expect(error.amountSat).toBe(402);
     expect(error.preimage).toBe(PREIMAGE);
+    expect(error.feesPaidMsat).toBe(3000);
     expect(error.credentials).toEqual({
       header: "Authorization",
       value: `L402 ${MACAROON}:${PREIMAGE}`,

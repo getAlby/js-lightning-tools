@@ -248,15 +248,17 @@ if (pollRes.status === 402) {
 
 If the invoice is paid but the flow then fails (the wallet times out, or the
 request _after_ payment hits a network error), the helper throws a
-`Fetch402PaymentError` instead of a bare `Error`. It carries everything needed
+`Fetch402InterruptedError` instead of a bare `Error`. It carries everything needed
 to reconcile the payment **without paying the same invoice again**:
 
 ```ts
-class Fetch402PaymentError extends Error {
+class Fetch402InterruptedError extends Error {
   invoice: string; // the invoice that was paid (or attempted)
   paymentHash: string; // decoded from the invoice — use it to look up settlement
+  amountSat: number; // invoice amount in satoshis, decoded from the invoice
   paid: boolean; // whether the wallet reported the payment succeeded
   preimage?: string; // present when paid
+  feesPaidMsat?: number; // routing fees in millisatoshis, present when paid (if reported)
   credentials?: PaymentCredentials; // present when paid — retry with these
   pendingPayment: PendingPayment; // opaque token to resume via options.resume
   cause?: unknown; // the underlying wallet/fetch error
@@ -265,14 +267,14 @@ class Fetch402PaymentError extends Error {
 
 Every field is plain data, so the error survives `JSON.stringify` and can be
 forwarded across process/CLI boundaries. (After a round-trip it's a plain
-object, so match on `e.name === "Fetch402PaymentError"` rather than
+object, so match on `e.name === "Fetch402InterruptedError"` rather than
 `instanceof`.)
 
 ```js
 try {
   const res = await fetch402(url, { method: "POST", body }, { wallet: nwc });
 } catch (e) {
-  if (e.name !== "Fetch402PaymentError") throw e;
+  if (e.name !== "Fetch402InterruptedError") throw e;
 
   if (e.paid) {
     // Payment succeeded but the follow-up request failed. The credential is
