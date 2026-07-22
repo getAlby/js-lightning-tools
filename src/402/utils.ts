@@ -117,7 +117,7 @@ export interface Fetch402Options {
   credentials?: PaymentCredentials;
   /**
    * Resume a payment that was interrupted by a timeout. When `payInvoice` throws
-   * (see {@link Fetch402PaymentError} with `paid: false`) the payment may still
+   * (see {@link Fetch402InterruptedError} with `paid: false`) the payment may still
    * have settled; look the payment up in your wallet by `paymentHash`, and if it
    * settled pass the recovered `preimage` back here together with the error's
    * `pendingPayment`. The helper rebuilds the credential and sends the request
@@ -226,20 +226,24 @@ export const getPaymentHash = (invoice: string): string => {
  *
  * All fields are plain data so the error survives `JSON.stringify` and can be
  * forwarded across process/CLI boundaries. Note: after such a round-trip the
- * value is a plain object, so match on `name === "Fetch402PaymentError"` (or
+ * value is a plain object, so match on `name === "Fetch402InterruptedError"` (or
  * the presence of `paymentHash`) rather than `instanceof`.
  */
-export class Fetch402PaymentError extends Error {
+export class Fetch402InterruptedError extends Error {
   /** Discriminator that survives serialization (`instanceof` does not). */
-  readonly name = "Fetch402PaymentError";
+  readonly name = "Fetch402InterruptedError";
   /** The invoice that was paid (or attempted). */
   readonly invoice: string;
   /** Payment hash decoded from the invoice; use it to look up settlement. */
   readonly paymentHash: string;
+  /** Amount of the invoice in satoshis, decoded from it (0 when it cannot be decoded). */
+  readonly amountSat: number;
   /** Whether `wallet.payInvoice` reported success before the failure. */
   readonly paid: boolean;
   /** Payment preimage, present when the invoice was paid. */
   readonly preimage?: string;
+  /** Routing fees in millisatoshis, present when `paid` and reported by the wallet. */
+  readonly feesPaidMsat?: number;
   /** Reusable credential, present when `paid` (already built for you). */
   readonly credentials?: PaymentCredentials;
   /**
@@ -257,6 +261,7 @@ export class Fetch402PaymentError extends Error {
       paid: boolean;
       pendingPayment: PendingPayment;
       preimage?: string;
+      feesPaidMsat?: number;
       credentials?: PaymentCredentials;
       cause?: unknown;
     },
@@ -264,8 +269,10 @@ export class Fetch402PaymentError extends Error {
     super(message);
     this.invoice = details.invoice;
     this.paymentHash = getPaymentHash(details.invoice);
+    this.amountSat = getInvoiceAmount(details.invoice);
     this.paid = details.paid;
     this.preimage = details.preimage;
+    this.feesPaidMsat = details.feesPaidMsat;
     this.credentials = details.credentials;
     this.pendingPayment = details.pendingPayment;
     this.cause = details.cause;
@@ -275,7 +282,7 @@ export class Fetch402PaymentError extends Error {
 /**
  * Shared tail of every 402 handler: pay the invoice, apply the resulting
  * credential, retry the request, and attach payment metadata. Any failure
- * during or after payment is rethrown as {@link Fetch402PaymentError} so a
+ * during or after payment is rethrown as {@link Fetch402InterruptedError} so a
  * thrown error never loses the paid invoice/credential and the caller can
  * reconcile instead of paying twice.
  */
@@ -307,7 +314,7 @@ export const payAndFetch = async (args: {
     // Payment may or may not have settled (e.g. a wallet timeout). Surface the
     // paymentHash (to look up settlement) and the pendingPayment (to resume from
     // a recovered preimage via options.resume) so the caller need never re-pay.
-    throw new Fetch402PaymentError(
+    throw new Fetch402InterruptedError(
       "402: payInvoice failed; look up paymentHash before retrying to avoid double payment",
       { invoice, paid: false, pendingPayment, cause },
     );
@@ -322,13 +329,14 @@ export const payAndFetch = async (args: {
   } catch (cause) {
     // The invoice is already paid — a retry MUST reuse these credentials rather
     // than pay again.
-    throw new Fetch402PaymentError(
+    throw new Fetch402InterruptedError(
       "402: request after payment failed; retry with credentials instead of paying again",
       {
         invoice,
         paid: true,
         pendingPayment,
         preimage: invResp.preimage,
+        feesPaidMsat: invResp.fees_paid,
         credentials,
         cause,
       },

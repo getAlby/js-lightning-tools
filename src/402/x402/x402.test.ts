@@ -1,6 +1,6 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithX402 } from "./x402";
-import { Fetch402PaymentError } from "../utils";
+import { Fetch402InterruptedError } from "../utils";
 import { Invoice } from "../../bolt11";
 
 const INVOICE =
@@ -289,7 +289,7 @@ describe("fetchWithX402", () => {
     });
 
     const error = await fetchWithX402(X402_URL, {}, { wallet }).catch((e) => e);
-    expect(error).toBeInstanceOf(Fetch402PaymentError);
+    expect(error).toBeInstanceOf(Fetch402InterruptedError);
     expect(error.paid).toBe(false);
     expect(error.invoice).toBe(INVOICE);
     expect(error.paymentHash).toBe(new Invoice({ pr: INVOICE }).paymentHash);

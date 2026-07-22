@@ -1,6 +1,6 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithMpp } from "./mpp";
-import { Fetch402PaymentError } from "../utils";
+import { Fetch402InterruptedError } from "../utils";
 import { Invoice } from "../../bolt11";
 import {
   buildMppCredential,
@@ -451,7 +451,7 @@ describe("fetchWithMpp", () => {
     });
 
     const error = await fetchWithMpp(MPP_URL, {}, { wallet }).catch((e) => e);
-    expect(error).toBeInstanceOf(Fetch402PaymentError);
+    expect(error).toBeInstanceOf(Fetch402InterruptedError);
     expect(error.paid).toBe(false);
     expect(error.invoice).toBe(REAL_INVOICE);
     expect(error.paymentHash).toBe(
