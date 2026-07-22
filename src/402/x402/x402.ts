@@ -1,9 +1,8 @@
 import {
-  applyCredentials,
-  attachPayment,
   Fetch402Options,
   PaidResponse,
-  reusedCredentialPayment,
+  payAndFetch,
+  tryReusePayment,
   Wallet,
 } from "../utils";
 import { buildX402PaymentSignature, X402Requirements } from "./utils";
@@ -80,22 +79,23 @@ export const handleX402Payment = async (
     );
   }
 
-  const invResp = await wallet.payInvoice({ invoice: invoice.paymentRequest });
-
-  const value = buildX402PaymentSignature(
-    requirements.scheme,
-    requirements.network,
-    invoice.paymentRequest,
-    requirements,
-  );
-  headers.set("payment-signature", value);
-  const response = await fetch(url, fetchArgs);
-  return attachPayment(response, {
-    paid: true,
+  return payAndFetch({
+    wallet,
+    invoice: invoice.paymentRequest,
+    url,
+    fetchArgs,
+    headers,
+    pendingPayment: {
+      scheme: "x402",
+      header: "payment-signature",
+      value: buildX402PaymentSignature(
+        requirements.scheme,
+        requirements.network,
+        invoice.paymentRequest,
+        requirements,
+      ),
+    },
     amountSat: invoice.satoshi,
-    feesPaidMsat: invResp.fees_paid,
-    preimage: invResp.preimage,
-    credentials: { header: "payment-signature", value },
   });
 };
 
@@ -113,17 +113,13 @@ export const fetchWithX402 = async (
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
 
-  // If the caller supplied a credential, we MUST use it and never pay again —
-  // even if the server still responds with a 402. Re-paying here is the exact
-  // double-charge this API exists to prevent; the caller decides what to do
-  // with a rejected credential (retry after settlement, top up, etc.).
-  if (options.credentials) {
-    applyCredentials(headers, options.credentials);
-    const reusedResp = await fetch(url, fetchArgs);
-    return attachPayment(
-      reusedResp,
-      reusedCredentialPayment(options.credentials),
-    );
+  // If the caller supplied a credential or a resume token, we MUST use it and
+  // never pay again — even if the server still responds with a 402. Re-paying
+  // here is the exact double-charge this API exists to prevent; the caller
+  // decides what to do next (retry after settlement, top up, etc.).
+  const reused = await tryReusePayment(url, fetchArgs, headers, options);
+  if (reused) {
+    return reused;
   }
 
   const initResp = await fetch(url, fetchArgs);

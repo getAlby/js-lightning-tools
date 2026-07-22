@@ -1,10 +1,8 @@
 import {
-  applyCredentials,
-  attachPayment,
   createGuardedWallet,
   Fetch402Options,
   PaidResponse,
-  reusedCredentialPayment,
+  tryReusePayment,
 } from "./utils";
 import { handleL402Payment } from "./l402/l402";
 import { findX402LightningRequirements, handleX402Payment } from "./x402/x402";
@@ -29,17 +27,13 @@ export const fetch402 = async (
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
 
-  // If the caller supplied a credential, we MUST use it and never pay again —
-  // even if the server still responds with a 402. Re-paying here is the exact
-  // double-charge this API exists to prevent; the caller decides what to do
-  // with a rejected credential (retry after settlement, top up, etc.).
-  if (options.credentials) {
-    applyCredentials(headers, options.credentials);
-    const reusedResp = await fetch(url, fetchArgs);
-    return attachPayment(
-      reusedResp,
-      reusedCredentialPayment(options.credentials),
-    );
+  // If the caller supplied a credential or a resume token, we MUST use it and
+  // never pay again — even if the server still responds with a 402. Re-paying
+  // here is the exact double-charge this API exists to prevent; the caller
+  // decides what to do next (retry after settlement, top up, etc.).
+  const reused = await tryReusePayment(url, fetchArgs, headers, options);
+  if (reused) {
+    return reused;
   }
 
   const initResp = await fetch(url, fetchArgs);

@@ -1,18 +1,12 @@
 import {
-  applyCredentials,
-  attachPayment,
   Fetch402Options,
   getInvoiceAmount,
   PaidResponse,
-  reusedCredentialPayment,
+  payAndFetch,
+  tryReusePayment,
   Wallet,
 } from "../utils";
-import {
-  buildMppCredential,
-  decodeBase64url,
-  MppChargeRequest,
-  parseMppChallenge,
-} from "./utils";
+import { decodeBase64url, MppChargeRequest, parseMppChallenge } from "./utils";
 
 /**
  * Handle a `WWW-Authenticate: Payment …` challenge produced by a
@@ -53,20 +47,14 @@ export const handleMppChargePayment = async (
     throw new Error("mpp: missing invoice in charge request");
   }
 
-  const invResp = await wallet.payInvoice({ invoice });
-
-  // Per spec: Authorization: Payment <base64url-token>  (single token, no wrapper)
-  const credential = buildMppCredential(challenge, invResp.preimage);
-  const value = `Payment ${credential}`;
-  headers.set("Authorization", value);
-
-  const response = await fetch(url, fetchArgs);
-  return attachPayment(response, {
-    paid: true,
+  return payAndFetch({
+    wallet,
+    invoice,
+    url,
+    fetchArgs,
+    headers,
+    pendingPayment: { scheme: "mpp", header: "Authorization", challenge },
     amountSat: getInvoiceAmount(invoice),
-    feesPaidMsat: invResp.fees_paid,
-    preimage: invResp.preimage,
-    credentials: { header: "Authorization", value },
   });
 };
 
@@ -102,17 +90,13 @@ export const fetchWithMpp = async (
   const headers = new Headers(fetchArgs.headers ?? undefined);
   fetchArgs.headers = headers;
 
-  // If the caller supplied a credential, we MUST use it and never pay again —
-  // even if the server still responds with a 402. Re-paying here is the exact
-  // double-charge this API exists to prevent; the caller decides what to do
-  // with a rejected credential (retry after settlement, top up, etc.).
-  if (options.credentials) {
-    applyCredentials(headers, options.credentials);
-    const reusedResp = await fetch(url, fetchArgs);
-    return attachPayment(
-      reusedResp,
-      reusedCredentialPayment(options.credentials),
-    );
+  // If the caller supplied a credential or a resume token, we MUST use it and
+  // never pay again — even if the server still responds with a 402. Re-paying
+  // here is the exact double-charge this API exists to prevent; the caller
+  // decides what to do next (retry after settlement, top up, etc.).
+  const reused = await tryReusePayment(url, fetchArgs, headers, options);
+  if (reused) {
+    return reused;
   }
 
   const initResp = await fetch(url, fetchArgs);

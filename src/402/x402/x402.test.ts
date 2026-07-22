@@ -1,5 +1,7 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithX402 } from "./x402";
+import { Fetch402PaymentError } from "../utils";
+import { Invoice } from "../../bolt11";
 
 const INVOICE =
   "lnbc4020n1p5m6028dq80q6rqvsnp4qt5w34u6kntf5lc50jj27rvs89sgrpcpj7s6vfts042gkhxx2j6swpp5g6tquvmswkv5xf0ru7ju2qvdrf83l2ewha3qzzt0a7vurs5q30rssp54kt5hfzjngjersx8fgt60feuu8e7vnat67f3ksr98twdj7z0m0ls9qyysgqcqzp2xqyz5vqrzjqdc22wfv6lyplagj37n9dmndkrzdz8rh3lxkewvvk6arkjpefats2rf47yqqwysqqcqqqqlgqqqqqqgqfqrzjq26922n6s5n5undqrf78rjjhgpcczafws45tx8237y7pzx3fg8ww8apyqqqqqqqqjyqqqqlgqqqqr4gq2q3z5pu33awfm98ac3ysdhy046xmen4zqval67tccu35x9mxgvl6w3wmq6y03ae7pme6qr20mp5gvuqntnu8yy7nlf6gyt9zshanj2zhgqe4xde3";
@@ -286,9 +288,14 @@ describe("fetchWithX402", () => {
       headers: { "PAYMENT-REQUIRED": makePaymentRequiredHeader() },
     });
 
-    await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
-      "payment failed",
-    );
+    const error = await fetchWithX402(X402_URL, {}, { wallet }).catch((e) => e);
+    expect(error).toBeInstanceOf(Fetch402PaymentError);
+    expect(error.paid).toBe(false);
+    expect(error.invoice).toBe(INVOICE);
+    expect(error.paymentHash).toBe(new Invoice({ pr: INVOICE }).paymentHash);
+    expect(error.preimage).toBeUndefined();
+    expect(error.credentials).toBeUndefined();
+    expect((error.cause as Error).message).toBe("payment failed");
   });
 
   test("sets cache to no-store and mode to cors", async () => {
