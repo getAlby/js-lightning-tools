@@ -1,0 +1,31 @@
+{
+  "lnurlp": {
+    "allowsNostr": true,
+    "callback": "https://getalby.com/lnurlp/hello/callback",
+    "commentAllowed": 255,
+    "maxSendable": 11000000000,
+    "metadata": "[[\"text/identifier\",\"hello@getalby.com\"],[\"text/plain\",\"Sats for Alby\"]]",
+    "minSendable": 1000,
+    "nostrPubkey": "79f00d3f5a19ec806189fcab03c1be4ff81d18ee4f653c88fac41fe03570f432",
+    "payerData": {
+      "email": { "mandatory": false },
+      "name": { "mandatory": false },
+      "pubkey": { "mandatory": false }
+    },
+    "status": "OK",
+    "tag": "payRequest"
+  },
+  "keysend": {
+    "customData": [
+      { "customKey": "696969", "customValue": "017rsl75kNnSke4mMHYE" }
+    ],
+    "pubkey": "030a58b8653d32b99200a2334cfe913e51dc7d155aa0116c176657a4f1722677a3",
+    "status": "OK",
+    "tag": "keysend"
+  },
+  "nostr": {
+    "names": {
+      "hello": "4657dfe8965be8980a93072bcfb5e59a65124406db0f819215ee78ba47934b3e"
+    }
+  }
+}

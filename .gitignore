@@ -1,3 +1,5 @@
 .node-version
 node_modules
 dist
+playwright-report/
+test-results/

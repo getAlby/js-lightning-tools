@@ -1,0 +1,10 @@
+{
+  "names": {
+    "hello": "4657dfe8965be8980a93072bcfb5e59a65124406db0f819215ee78ba47934b3e"
+  },
+  "relays": {
+    "4657dfe8965be8980a93072bcfb5e59a65124406db0f819215ee78ba47934b3e": [
+      "wss://relay.example.com"
+    ]
+  }
+}
