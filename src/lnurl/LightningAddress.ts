@@ -219,7 +219,10 @@ export class LightningAddress {
     const msat = args.satoshi * 1000;
     const { commentAllowed, min, max } = this.lnurlpData;
 
-    if (!isValidAmount({ amount: msat, min, max }))
+    if (
+      !Number.isSafeInteger(args.satoshi) ||
+      !isValidAmount({ amount: msat, min, max })
+    )
       throw new Error("Invalid amount");
     if (
       args.comment &&
@@ -273,7 +276,10 @@ export class LightningAddress {
     const msat = satoshi * 1000;
     const { allowsNostr, min, max } = this.lnurlpData;
 
-    if (!isValidAmount({ amount: msat, min, max }))
+    if (
+      !Number.isSafeInteger(satoshi) ||
+      !isValidAmount({ amount: msat, min, max })
+    )
       throw new Error("Invalid amount");
     if (!allowsNostr) throw new Error("Your provider does not support zaps");
 

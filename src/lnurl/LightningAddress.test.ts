@@ -345,6 +345,26 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
         expect(fetchMock.mock.calls.length).toBe(fetchCount);
       });
 
+      it("throws error when satoshi is not a whole number", async () => {
+        const ln = new LightningAddress("hello@getalby.com", {
+          proxy,
+          webln: dummyWebLN,
+        });
+        await ln.fetch();
+        const fetchCount = fetchMock.mock.calls.length;
+        await expect(ln.requestInvoice({ satoshi: 1.5 })).rejects.toThrow(
+          "Invalid amount",
+        );
+        await expect(
+          ln.zap(
+            { satoshi: 1.001, relays: ["wss://relay.damus.io"] },
+            { nostr: nostrProvider },
+          ),
+        ).rejects.toThrow("Invalid amount");
+        // rejected before requesting an invoice
+        expect(fetchMock.mock.calls.length).toBe(fetchCount);
+      });
+
       it("sends extra params to the pay service", async () => {
         const ln = new LightningAddress("hello@getalby.com", { proxy });
         await ln.fetch();
