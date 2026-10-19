@@ -59,14 +59,17 @@ const INVOICE_1000_SATS =
 const INVOICE_NO_AMOUNT =
   "lnbc1pn42dukpp5wzqdjf8cv7pxa3rpa5vur8804ud0ckt24jctkq6qlr7w25kuc2fsdp82pshjgr5dusyymrfde4jq4mpd3kx2apq24ek2uscqzpuxqr8pqsp5nkrvgqj37ztv2luy6sfg0fgsr4p4rrqw3s3z5g63f8fsxh86u0hq9p4gqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpqysgqu68rgn4k22zlgzuylamdv6zaczf4rwwrrzlhvw672m8cphctk8shsamruj5ymh04jssy6x09fx99ahrsm7z4w840psu2u3nhtfjw50qpf8qku8";
 
-// invoices returned by the pay service, keyed by the requested amount in msat
+// by default the pay service returns an invoice for the requested amount (msat)
 const INVOICES_BY_AMOUNT: Record<string, string> = {
   "1000": INVOICE_1_SAT,
   "1000000": INVOICE_1000_SATS,
-  "2000": INVOICE_1000_SATS, // more than requested
-  "3000": INVOICE_1_SAT, // less than requested
-  "4000": INVOICE_NO_AMOUNT,
 };
+
+// overrides the default for the next request only, so call it after fetch()
+function mockNextInvoice(pr: string, proxy: string | false) {
+  const invoice = { pr, routes: [], status: "OK" };
+  fetchMock.mockResponseOnce(JSON.stringify(proxy ? { invoice } : invoice));
+}
 
 // TODO: refactor tests to set their own mocks rather than using conditionals and loops
 fetchMock.mockIf(/.*/, (req) => {
@@ -342,27 +345,41 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
         expect(fetchMock.mock.calls.length).toBe(fetchCount);
       });
 
+      it("sends extra params to the pay service", async () => {
+        const ln = new LightningAddress("hello@getalby.com", { proxy });
+        await ln.fetch();
+        const invoice = await ln.generateInvoice({ amount: 1000, foo: "bar" });
+        expect(invoice.satoshi).toBe(1);
+        const calls = fetchMock.mock.calls;
+        const lastUrl = new URL(calls[calls.length - 1][0] as string);
+        expect(lastUrl.searchParams.get("amount")).toBe("1000");
+        expect(lastUrl.searchParams.get("foo")).toBe("bar");
+      });
+
       it("throws error when invoice amount is more than requested", async () => {
         const ln = new LightningAddress("hello@getalby.com", { proxy });
         await ln.fetch();
-        await expect(ln.requestInvoice({ satoshi: 2 })).rejects.toThrow(
-          "Invoice amount (1000000 msat) does not match requested amount (2000 msat)",
+        mockNextInvoice(INVOICE_1000_SATS, proxy);
+        await expect(ln.requestInvoice({ satoshi: 1 })).rejects.toThrow(
+          "Invoice amount (1000000 msat) does not match requested amount (1000 msat)",
         );
       });
 
       it("throws error when invoice amount is less than requested", async () => {
         const ln = new LightningAddress("hello@getalby.com", { proxy });
         await ln.fetch();
-        await expect(ln.requestInvoice({ satoshi: 3 })).rejects.toThrow(
-          "Invoice amount (1000 msat) does not match requested amount (3000 msat)",
+        mockNextInvoice(INVOICE_1_SAT, proxy);
+        await expect(ln.requestInvoice({ satoshi: 1000 })).rejects.toThrow(
+          "Invoice amount (1000 msat) does not match requested amount (1000000 msat)",
         );
       });
 
       it("throws error when invoice has no amount", async () => {
         const ln = new LightningAddress("hello@getalby.com", { proxy });
         await ln.fetch();
-        await expect(ln.requestInvoice({ satoshi: 4 })).rejects.toThrow(
-          "Invoice amount (0 msat) does not match requested amount (4000 msat)",
+        mockNextInvoice(INVOICE_NO_AMOUNT, proxy);
+        await expect(ln.requestInvoice({ satoshi: 1 })).rejects.toThrow(
+          "Invoice amount (0 msat) does not match requested amount (1000 msat)",
         );
       });
     });
@@ -464,10 +481,11 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
           webln: dummyWebLN,
         });
         await ln.fetch();
+        mockNextInvoice(INVOICE_1000_SATS, proxy);
         await expect(
           ln.zap(
             {
-              satoshi: 2,
+              satoshi: 1,
               comment: "Awesome post",
               relays: ["wss://relay.damus.io"],
             },
@@ -476,7 +494,7 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
             },
           ),
         ).rejects.toThrow(
-          "Invoice amount (1000000 msat) does not match requested amount (2000 msat)",
+          "Invoice amount (1000000 msat) does not match requested amount (1000 msat)",
         );
       });
     });

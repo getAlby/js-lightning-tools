@@ -139,16 +139,20 @@ export class LightningAddress {
     return `https://${this.domain}/.well-known/nostr.json?name=${this.username}`;
   }
 
-  async generateInvoice(args: GenerateInvoiceArgs): Promise<Invoice> {
+  async generateInvoice(
+    args: GenerateInvoiceArgs & Record<string, unknown>,
+  ): Promise<Invoice> {
     const requestedMsat = args.amount;
     if (!Number.isSafeInteger(requestedMsat) || requestedMsat <= 0) {
       throw new Error("Invalid amount");
     }
 
-    const params: Record<string, string> = { amount: requestedMsat.toString() };
-    if (args.comment) params.comment = args.comment;
-    if (args.payerdata) params.payerdata = JSON.stringify(args.payerdata);
-    if (args.nostr) params.nostr = JSON.stringify(args.nostr);
+    // strings are sent as-is, anything else (amount, payerdata, nostr) as JSON
+    const params: Record<string, string> = {};
+    for (const [key, value] of Object.entries(args)) {
+      if (value === undefined || value === "") continue;
+      params[key] = typeof value === "string" ? value : JSON.stringify(value);
+    }
 
     let data;
     if (this.options.proxy) {
