@@ -52,17 +52,37 @@ const nostrProvider: NostrProvider = {
   },
 };
 
+const INVOICE_1_SAT =
+  "lnbc10n1pjk6m6spp57n44qespk3z2hjfc6wxmyqjy8aprdz5k6jflu9q5gw6wqm3y0ssqhp50kncf9zk35xg4lxewt4974ry6mudygsztsz8qn3ar8pn3mtpe50scqzzsxqyz5vqsp5creygvh0cmhjnqsvq7c9k5w9fpe4yy0sw025msv7ut09krp9g5ds9qyyssqlpl0539nx0rhmtltzzaeznnt967msvnuqe7k9mhld8xvs032ysy5697hsene3xat2ujxahfe63c6ces82jd2hcv2dmuynkf2p7cttuqpm6qdfm";
+const INVOICE_1000_SATS =
+  "lnbc10u1pjk6mhgpp5zj5mn43uz96y94vevla98990gtkm0fa5jysvfl2wx6q2lllkyd9shp56x0knvgt833500x88k786uqc7nqpa563vgzt5e9c7srg4h8vqf2qcqzzsxqyz5vqsp5h8crvhl0etrgc3jfwwqypmckvp5szw8a8mhnzw0xk6ru5anyak6q9qyyssq0dcsf56fhdwjd4adwlljetpkhdanckgxgwx49fu49h9hxjj0haq9tg867x6acudjraxvwuuq033004jy8fwx98hd69c9z3az2qhv3wsq6wwe8p";
+const INVOICE_NO_AMOUNT =
+  "lnbc1pn42dukpp5wzqdjf8cv7pxa3rpa5vur8804ud0ckt24jctkq6qlr7w25kuc2fsdp82pshjgr5dusyymrfde4jq4mpd3kx2apq24ek2uscqzpuxqr8pqsp5nkrvgqj37ztv2luy6sfg0fgsr4p4rrqw3s3z5g63f8fsxh86u0hq9p4gqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpqysgqu68rgn4k22zlgzuylamdv6zaczf4rwwrrzlhvw672m8cphctk8shsamruj5ymh04jssy6x09fx99ahrsm7z4w840psu2u3nhtfjw50qpf8qku8";
+
+// by default the pay service returns an invoice for the requested amount (msat)
+const INVOICES_BY_AMOUNT: Record<string, string> = {
+  "1000": INVOICE_1_SAT,
+  "1000000": INVOICE_1000_SATS,
+};
+
+// overrides the default for the next request only, so call it after fetch()
+function mockNextInvoice(pr: string, proxy: string | false) {
+  const invoice = { pr, routes: [], status: "OK" };
+  fetchMock.mockResponseOnce(JSON.stringify(proxy ? { invoice } : invoice));
+}
+
 // TODO: refactor tests to set their own mocks rather than using conditionals and loops
 fetchMock.mockIf(/.*/, (req) => {
+  const url = new URL(req.url);
   if (
     req.url.startsWith(
-      "https://api.getalby.com/lnurl/generate-invoice?ln=hello%40getalby.com&amount=1000",
+      "https://api.getalby.com/lnurl/generate-invoice?ln=hello%40getalby.com&",
     )
   ) {
     return Promise.resolve(
       JSON.stringify({
         invoice: {
-          pr: "lnbc10u1pjk6mhgpp5zj5mn43uz96y94vevla98990gtkm0fa5jysvfl2wx6q2lllkyd9shp56x0knvgt833500x88k786uqc7nqpa563vgzt5e9c7srg4h8vqf2qcqzzsxqyz5vqsp5h8crvhl0etrgc3jfwwqypmckvp5szw8a8mhnzw0xk6ru5anyak6q9qyyssq0dcsf56fhdwjd4adwlljetpkhdanckgxgwx49fu49h9hxjj0haq9tg867x6acudjraxvwuuq033004jy8fwx98hd69c9z3az2qhv3wsq6wwe8p",
+          pr: INVOICES_BY_AMOUNT[url.searchParams.get("amount") ?? ""],
           routes: [],
           status: "OK",
           successAction: {
@@ -74,12 +94,10 @@ fetchMock.mockIf(/.*/, (req) => {
         },
       }),
     );
-  } else if (
-    req.url.startsWith("https://getalby.com/lnurlp/hello/callback?amount=1000")
-  ) {
+  } else if (req.url.startsWith("https://getalby.com/lnurlp/hello/callback?")) {
     return Promise.resolve(
       JSON.stringify({
-        pr: "lnbc10n1pjk6m6spp57n44qespk3z2hjfc6wxmyqjy8aprdz5k6jflu9q5gw6wqm3y0ssqhp50kncf9zk35xg4lxewt4974ry6mudygsztsz8qn3ar8pn3mtpe50scqzzsxqyz5vqsp5creygvh0cmhjnqsvq7c9k5w9fpe4yy0sw025msv7ut09krp9g5ds9qyyssqlpl0539nx0rhmtltzzaeznnt967msvnuqe7k9mhld8xvs032ysy5697hsene3xat2ujxahfe63c6ces82jd2hcv2dmuynkf2p7cttuqpm6qdfm",
+        pr: INVOICES_BY_AMOUNT[url.searchParams.get("amount") ?? ""],
         routes: [],
         status: "OK",
         successAction: {
@@ -310,7 +328,79 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
         await ln.fetch();
         const invoice = await ln.requestInvoice({ satoshi: 1 });
         expect(invoice.paymentRequest).toContain("lnbc");
+        expect(invoice.satoshi).toBe(1);
         expect(invoice.successAction?.tag).toContain("message");
+      });
+
+      it("generateInvoice throws error when amount is missing or invalid", async () => {
+        const ln = new LightningAddress("hello@getalby.com", { proxy });
+        await ln.fetch();
+        const fetchCount = fetchMock.mock.calls.length;
+        for (const amount of [undefined, "1000", 0, -1000, 1000.5, NaN]) {
+          await expect(
+            ln.generateInvoice({ amount } as { amount: number }),
+          ).rejects.toThrow("Invalid amount");
+        }
+        // rejected before requesting an invoice
+        expect(fetchMock.mock.calls.length).toBe(fetchCount);
+      });
+
+      it("throws error when satoshi is not a whole number", async () => {
+        const ln = new LightningAddress("hello@getalby.com", {
+          proxy,
+          webln: dummyWebLN,
+        });
+        await ln.fetch();
+        const fetchCount = fetchMock.mock.calls.length;
+        await expect(ln.requestInvoice({ satoshi: 1.5 })).rejects.toThrow(
+          "Invalid amount",
+        );
+        await expect(
+          ln.zap(
+            { satoshi: 1.001, relays: ["wss://relay.damus.io"] },
+            { nostr: nostrProvider },
+          ),
+        ).rejects.toThrow("Invalid amount");
+        // rejected before requesting an invoice
+        expect(fetchMock.mock.calls.length).toBe(fetchCount);
+      });
+
+      it("sends extra params to the pay service", async () => {
+        const ln = new LightningAddress("hello@getalby.com", { proxy });
+        await ln.fetch();
+        const invoice = await ln.generateInvoice({ amount: 1000, foo: "bar" });
+        expect(invoice.satoshi).toBe(1);
+        const calls = fetchMock.mock.calls;
+        const lastUrl = new URL(calls[calls.length - 1][0] as string);
+        expect(lastUrl.searchParams.get("amount")).toBe("1000");
+        expect(lastUrl.searchParams.get("foo")).toBe("bar");
+      });
+
+      it("throws error when invoice amount is more than requested", async () => {
+        const ln = new LightningAddress("hello@getalby.com", { proxy });
+        await ln.fetch();
+        mockNextInvoice(INVOICE_1000_SATS, proxy);
+        await expect(ln.requestInvoice({ satoshi: 1 })).rejects.toThrow(
+          "Invoice amount (1000000 msat) does not match requested amount (1000 msat)",
+        );
+      });
+
+      it("throws error when invoice amount is less than requested", async () => {
+        const ln = new LightningAddress("hello@getalby.com", { proxy });
+        await ln.fetch();
+        mockNextInvoice(INVOICE_1_SAT, proxy);
+        await expect(ln.requestInvoice({ satoshi: 1000 })).rejects.toThrow(
+          "Invoice amount (1000 msat) does not match requested amount (1000000 msat)",
+        );
+      });
+
+      it("throws error when invoice has no amount", async () => {
+        const ln = new LightningAddress("hello@getalby.com", { proxy });
+        await ln.fetch();
+        mockNextInvoice(INVOICE_NO_AMOUNT, proxy);
+        await expect(ln.requestInvoice({ satoshi: 1 })).rejects.toThrow(
+          "Invoice amount (0 msat) does not match requested amount (1000 msat)",
+        );
       });
     });
 
@@ -403,6 +493,29 @@ for (const proxy of [DEFAULT_PROXY, false] as const) {
           },
         );
         expect(result.preimage).toBe("dummy"); // from dummyWebLN
+      });
+
+      it("throws error when zap invoice amount does not match", async () => {
+        const ln = new LightningAddress("hello@getalby.com", {
+          proxy,
+          webln: dummyWebLN,
+        });
+        await ln.fetch();
+        mockNextInvoice(INVOICE_1000_SATS, proxy);
+        await expect(
+          ln.zap(
+            {
+              satoshi: 1,
+              comment: "Awesome post",
+              relays: ["wss://relay.damus.io"],
+            },
+            {
+              nostr: nostrProvider,
+            },
+          ),
+        ).rejects.toThrow(
+          "Invoice amount (1000000 msat) does not match requested amount (1000 msat)",
+        );
       });
     });
 

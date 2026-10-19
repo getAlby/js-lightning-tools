@@ -2,6 +2,7 @@ import { SendPaymentResponse, WebLNProvider } from "@webbtc/webln-types";
 import { Invoice, InvoiceArgs } from "../bolt11";
 import { Boost, sendBoostagram } from "../podcasting2";
 import {
+  GenerateInvoiceArgs,
   KeysendResponse,
   LnUrlPayResponse,
   LnUrlRawData,
@@ -138,7 +139,21 @@ export class LightningAddress {
     return `https://${this.domain}/.well-known/nostr.json?name=${this.username}`;
   }
 
-  async generateInvoice(params: Record<string, string>): Promise<Invoice> {
+  async generateInvoice(
+    args: GenerateInvoiceArgs & Record<string, unknown>,
+  ): Promise<Invoice> {
+    const requestedMsat = args.amount;
+    if (!Number.isSafeInteger(requestedMsat) || requestedMsat <= 0) {
+      throw new Error("Invalid amount");
+    }
+
+    // strings are sent as-is, anything else (amount, payerdata, nostr) as JSON
+    const params: Record<string, string> = {};
+    for (const [key, value] of Object.entries(args)) {
+      if (value === undefined || value === "") continue;
+      params[key] = typeof value === "string" ? value : JSON.stringify(value);
+    }
+
     let data;
     if (this.options.proxy) {
       const invoiceResponse = await fetch(
@@ -185,7 +200,16 @@ export class LightningAddress {
       }
     }
 
-    return new Invoice(invoiceArgs);
+    const invoice = new Invoice(invoiceArgs);
+
+    // the pay service must return an invoice for exactly the requested amount
+    if (invoice.millisatoshi !== requestedMsat) {
+      throw new Error(
+        `Invoice amount (${invoice.millisatoshi} msat) does not match requested amount (${requestedMsat} msat)`,
+      );
+    }
+
+    return invoice;
   }
 
   async requestInvoice(args: RequestInvoiceArgs): Promise<Invoice> {
@@ -195,7 +219,10 @@ export class LightningAddress {
     const msat = args.satoshi * 1000;
     const { commentAllowed, min, max } = this.lnurlpData;
 
-    if (!isValidAmount({ amount: msat, min, max }))
+    if (
+      !Number.isSafeInteger(args.satoshi) ||
+      !isValidAmount({ amount: msat, min, max })
+    )
       throw new Error("Invalid amount");
     if (
       args.comment &&
@@ -207,16 +234,11 @@ export class LightningAddress {
         `The comment length must be ${commentAllowed} characters or fewer`,
       );
 
-    const invoiceParams: {
-      amount: string;
-      comment?: string;
-      payerdata?: string;
-    } = { amount: msat.toString() };
-    if (args.comment) invoiceParams.comment = args.comment;
-    if (args.payerdata)
-      invoiceParams.payerdata = JSON.stringify(args.payerdata);
-
-    return this.generateInvoice(invoiceParams);
+    return this.generateInvoice({
+      amount: msat,
+      comment: args.comment,
+      payerdata: args.payerdata,
+    });
   }
 
   async boost(boost: Boost, amount: number = 0) {
@@ -254,7 +276,10 @@ export class LightningAddress {
     const msat = satoshi * 1000;
     const { allowsNostr, min, max } = this.lnurlpData;
 
-    if (!isValidAmount({ amount: msat, min, max }))
+    if (
+      !Number.isSafeInteger(satoshi) ||
+      !isValidAmount({ amount: msat, min, max })
+    )
       throw new Error("Invalid amount");
     if (!allowsNostr) throw new Error("Your provider does not support zaps");
 
@@ -268,13 +293,7 @@ export class LightningAddress {
       },
       options,
     );
-    const zapParams: { amount: string; nostr: string } = {
-      amount: msat.toString(),
-      nostr: JSON.stringify(event),
-    };
-
-    const invoice = await this.generateInvoice(zapParams);
-    return invoice;
+    return this.generateInvoice({ amount: msat, nostr: event });
   }
 
   async zap(

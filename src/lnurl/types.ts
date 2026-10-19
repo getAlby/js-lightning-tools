@@ -94,6 +94,13 @@ export type RequestInvoiceArgs = {
   payerdata?: LUD18PayerData;
 };
 
+export type GenerateInvoiceArgs = {
+  amount: number; // millisats
+  comment?: string;
+  payerdata?: LUD18PayerData;
+  nostr?: Event; // zap request
+};
+
 export type KeysendResponse = {
   customKey: string;
   customValue: string;
