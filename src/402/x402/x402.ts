@@ -6,12 +6,13 @@ import {
   Wallet,
 } from "../utils";
 import { buildX402PaymentSignature, X402Requirements } from "./utils";
+import { isLnbtcRequirements, validateLnbtcRequirements } from "./lnbtc";
 import { Invoice } from "../../bolt11";
 
 const decodeX402Header = (
   x402Header: string,
-): { accepts: X402Requirements[] } => {
-  let parsed: { accepts?: unknown[] };
+): { accepts: X402Requirements[]; resource?: { url?: unknown } } => {
+  let parsed: { accepts?: unknown[]; resource?: { url?: unknown } };
   try {
     parsed = JSON.parse(decodeURIComponent(escape(atob(x402Header))));
   } catch (_) {
@@ -25,8 +26,19 @@ const decodeX402Header = (
       "x402: PAYMENT-REQUIRED header contains no payment options",
     );
   }
-  return { accepts: parsed.accepts as X402Requirements[] };
+  return {
+    accepts: parsed.accepts as X402Requirements[],
+    resource: parsed.resource,
+  };
 };
+
+/**
+ * Pick the lightning entry from `accepts`: the spec `exact`/`lnbtc` scheme,
+ * falling back to the legacy Alby dialect (`extra.paymentMethod: "lightning"`).
+ */
+const findLightningEntry = (accepts: X402Requirements[]) =>
+  accepts.find(isLnbtcRequirements) ??
+  accepts.find((e) => e?.extra?.paymentMethod === "lightning");
 
 /**
  * Probe a PAYMENT-REQUIRED header for a lightning-payable offer without
@@ -44,9 +56,7 @@ export const findX402LightningRequirements = (
   } catch (_) {
     return null;
   }
-  const requirements = accepts.find(
-    (e) => e?.extra?.paymentMethod === "lightning",
-  );
+  const requirements = findLightningEntry(accepts);
   if (!requirements?.extra?.invoice) return null;
   return requirements;
 };
@@ -58,11 +68,9 @@ export const handleX402Payment = async (
   headers: Headers,
   wallet: Wallet,
 ): Promise<PaidResponse> => {
-  const { accepts } = decodeX402Header(x402Header);
+  const { accepts, resource } = decodeX402Header(x402Header);
 
-  const requirements = accepts.find(
-    (e) => e?.extra?.paymentMethod === "lightning",
-  );
+  const requirements = findLightningEntry(accepts);
   if (!requirements) {
     throw new Error(
       "x402: unsupported x402 network, only Bitcoin lightning network is supported.",
@@ -70,6 +78,30 @@ export const handleX402Payment = async (
   }
   if (!requirements.extra?.invoice) {
     throw new Error("x402: payment requirements missing lightning invoice");
+  }
+
+  if (isLnbtcRequirements(requirements)) {
+    await validateLnbtcRequirements({
+      requirements,
+      resourceUrl: resource?.url,
+      url,
+      fetchArgs,
+      headers,
+    });
+    const invoice = new Invoice({ pr: requirements.extra.invoice });
+    return payAndFetch({
+      wallet,
+      invoice: invoice.paymentRequest,
+      url,
+      fetchArgs,
+      headers,
+      pendingPayment: {
+        scheme: "x402",
+        header: "payment-signature",
+        accepted: requirements,
+      },
+      amountSat: invoice.satoshi,
+    });
   }
 
   const invoice = new Invoice({ pr: requirements.extra.invoice });

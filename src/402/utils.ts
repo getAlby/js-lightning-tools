@@ -1,5 +1,6 @@
 import { Invoice } from "../bolt11/Invoice";
 import { buildMppCredential, MppChallenge } from "./mpp/utils";
+import { buildLnbtcPaymentSignature, X402Requirements } from "./x402/utils";
 
 export interface Wallet {
   payInvoice(args: {
@@ -52,7 +53,13 @@ export type PendingPayment =
   | {
       scheme: "x402";
       header: string;
-      /** The x402 payment signature — independent of the preimage. */
+      /** The accepted `exact`/`lnbtc` requirements, echoed with the preimage. */
+      accepted: X402Requirements;
+    }
+  | {
+      scheme: "x402";
+      header: string;
+      /** Legacy x402 dialect: the complete signature, independent of the preimage. */
       value: string;
     };
 
@@ -77,7 +84,13 @@ const buildCredentials = (
         value: `Payment ${buildMppCredential(pendingPayment.challenge, preimage)}`,
       };
     case "x402":
-      // x402's signature does not embed the preimage; it is already complete.
+      if ("accepted" in pendingPayment) {
+        return {
+          header: pendingPayment.header,
+          value: buildLnbtcPaymentSignature(pendingPayment.accepted, preimage),
+        };
+      }
+      // The legacy signature does not embed the preimage; it is already complete.
       return { header: pendingPayment.header, value: pendingPayment.value };
   }
 };
