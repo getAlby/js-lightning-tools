@@ -116,6 +116,22 @@ describe("bound request contents", () => {
     expect(actual).toBe(sha256(canonical));
   });
 
+  test("hashes Blob and byte bodies like the equivalent string body", async () => {
+    const hash = (body: RequestInit["body"]) =>
+      computeHttpRequestHash({
+        url: URL_A,
+        method: "POST",
+        headers: new Headers(),
+        body,
+        boundHeaders: [],
+      });
+    const expected = await hash("x".repeat(100000));
+    expect(await hash(new Blob(["x".repeat(100000)]))).toBe(expected);
+    expect(await hash(new TextEncoder().encode("x".repeat(100000)))).toBe(
+      expected,
+    );
+  });
+
   test("sets the headers fetch would add implicitly when they are bound", () => {
     const headers = new Headers();
     applyImplicitHeaders(headers, "text", ["accept", "content-type"]);
@@ -317,6 +333,23 @@ describe("fetchWithX402 with exact/lnbtc", () => {
 
     expect(response.status).toBe(200);
     expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
+  });
+
+  test("resolves a relative url against the page location", async () => {
+    const g = globalThis as { location?: { href: string } };
+    g.location = { href: "https://api.example.com/index.html" };
+    try {
+      const wallet = makeWallet();
+      mock402();
+      fetchMock.mockResponseOnce("paid", { status: 200 });
+
+      const response = await fetchWithX402("/article/A", {}, { wallet });
+
+      expect(response.status).toBe(200);
+      expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
+    } finally {
+      delete g.location;
+    }
   });
 
   test("rejects a resume token from an older version with a clear error", async () => {

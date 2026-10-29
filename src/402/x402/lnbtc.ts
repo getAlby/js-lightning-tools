@@ -55,27 +55,39 @@ const canonicalize = (value: unknown): string => {
   );
 };
 
-/** Raw content bytes of a fetch body, as they will be sent on the wire. */
-const getBodyBytes = async (
+/** SHA-256 (hex) of a fetch body's raw content bytes, as they will be sent. */
+const getBodyHash = async (
   body: RequestInit["body"] | undefined,
-): Promise<Uint8Array> => {
-  if (body === undefined || body === null) return new Uint8Array();
-  if (typeof body === "string") return textEncoder.encode(body);
+): Promise<string> => {
+  if (body === undefined || body === null) return sha256Hex(new Uint8Array());
+  if (typeof body === "string") return sha256Hex(textEncoder.encode(body));
   if (body instanceof URLSearchParams) {
-    return textEncoder.encode(body.toString());
+    return sha256Hex(textEncoder.encode(body.toString()));
   }
-  if (body instanceof ArrayBuffer) return new Uint8Array(body);
+  if (body instanceof ArrayBuffer) return sha256Hex(new Uint8Array(body));
   if (ArrayBuffer.isView(body)) {
-    return new Uint8Array(body.buffer, body.byteOffset, body.byteLength);
+    return sha256Hex(
+      new Uint8Array(body.buffer, body.byteOffset, body.byteLength),
+    );
   }
   if (typeof Blob !== "undefined" && body instanceof Blob) {
-    return new Uint8Array(await body.arrayBuffer());
+    // Hash in chunks so a large upload is not copied into memory again.
+    const hash = sha256.create();
+    const reader = body.stream().getReader();
+    for (
+      let chunk = await reader.read();
+      !chunk.done;
+      chunk = await reader.read()
+    ) {
+      hash.update(chunk.value);
+    }
+    return bytesToHex(hash.digest());
   }
   // FormData gets a random multipart boundary and streams can only be read
   // once, so the body bytes cannot be known before sending.
   return fail(
     "invalid_exact_lnbtc_request_binding",
-    "request body type cannot be bound; use a string, Blob, ArrayBuffer or URLSearchParams body",
+    "request body type cannot be bound; use a string, Blob, ArrayBuffer (or view) or URLSearchParams body",
   );
 };
 
@@ -152,7 +164,7 @@ export const computeHttpRequestHash = async (args: {
       ? method.toUpperCase()
       : method,
     url: args.url,
-    bodyHash: sha256Hex(await getBodyBytes(args.body)),
+    bodyHash: await getBodyHash(args.body),
     headers: args.boundHeaders.map((name) => {
       const value = args.headers.get(name);
       if (value === null) {
@@ -276,7 +288,11 @@ export const validateLnbtcRequirements = async (args: {
   ) {
     fail("invalid_exact_lnbtc_request_binding", "malformed requestHash");
   }
-  const url = new URL(args.url);
+  // Relative URLs resolve against the page, as fetch() does in browsers.
+  const url = new URL(
+    args.url,
+    (globalThis as { location?: { href: string } }).location?.href,
+  );
   if (url.username || url.password || url.hash) {
     fail(
       "invalid_exact_lnbtc_request_binding",
