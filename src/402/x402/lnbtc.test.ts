@@ -1,6 +1,8 @@
 import fetchMock from "jest-fetch-mock";
 import { fetchWithX402 } from "./x402";
-import { computeHttpRequestHash } from "./lnbtc";
+import { applyImplicitHeaders, computeHttpRequestHash } from "./lnbtc";
+import { createHash } from "crypto";
+import { Fetch402InterruptedError } from "../utils";
 
 import {
   LNBTC_INVOICE as INVOICE,
@@ -90,6 +92,52 @@ describe("computeHttpRequestHash", () => {
   });
 });
 
+describe("bound request contents", () => {
+  const sha256 = (data: Buffer | string) =>
+    createHash("sha256").update(data).digest("hex");
+
+  test("hashes a POST body and present/absent headers per the http:1 profile", async () => {
+    const body = '{"a":1}';
+    const actual = await computeHttpRequestHash({
+      url: URL_A,
+      method: "post",
+      headers: new Headers({ "content-type": "application/json" }),
+      body,
+      boundHeaders: ["accept", "content-type"],
+    });
+
+    // Independent construction of the JCS binding object from the spec.
+    const canonical =
+      `{"bodyHash":"${sha256(body)}",` +
+      `"domain":"x402:exact:lnbtc:bolt11:http:1",` +
+      `"headers":[{"name":"accept","valueHash":"${sha256(Buffer.from([0]))}"},` +
+      `{"name":"content-type","valueHash":"${sha256(Buffer.concat([Buffer.from([1]), Buffer.from("application/json")]))}"}],` +
+      `"method":"POST","url":"${URL_A}"}`;
+    expect(actual).toBe(sha256(canonical));
+  });
+
+  test("sets the headers fetch would add implicitly when they are bound", () => {
+    const headers = new Headers();
+    applyImplicitHeaders(headers, "text", ["accept", "content-type"]);
+    expect(headers.get("accept")).toBe("*/*");
+    expect(headers.get("content-type")).toBe("text/plain;charset=UTF-8");
+
+    const form = new Headers();
+    applyImplicitHeaders(form, new URLSearchParams("a=1"), ["content-type"]);
+    expect(form.get("content-type")).toBe(
+      "application/x-www-form-urlencoded;charset=UTF-8",
+    );
+
+    const explicit = new Headers({ "content-type": "application/json" });
+    applyImplicitHeaders(explicit, "{}", ["accept", "content-type"]);
+    expect(explicit.get("content-type")).toBe("application/json");
+
+    const unbound = new Headers();
+    applyImplicitHeaders(unbound, "text", []);
+    expect([...unbound.keys()]).toEqual([]);
+  });
+});
+
 describe("fetchWithX402 with exact/lnbtc", () => {
   test("pays the invoice and sends the preimage as payload", async () => {
     const wallet = makeWallet();
@@ -167,7 +215,7 @@ describe("fetchWithX402 with exact/lnbtc", () => {
         network: "lnbtc:00000008819873e925422c1ff0f99f7c",
       }),
       URL_A,
-      "unsupported_network",
+      "unsupported x402 network",
     ],
     [
       "the network does not match the invoice currency",
@@ -221,10 +269,75 @@ describe("fetchWithX402 with exact/lnbtc", () => {
     const wallet = makeWallet("ff".repeat(32));
     mock402();
 
-    await expect(fetchWithX402(URL_A, {}, { wallet })).rejects.toThrow(
+    const error = await fetchWithX402(URL_A, {}, { wallet }).catch((e) => e);
+
+    expect(error).toBeInstanceOf(Fetch402InterruptedError);
+    expect(error.paid).toBe(true);
+    expect(error.preimage).toBe("ff".repeat(32));
+    expect(error.credentials).toBeUndefined();
+    expect((error.cause as Error).message).toContain(
       "invalid_exact_lnbtc_payer_preimage_hash_mismatch",
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("accepts a preimage returned in uppercase hex and sends it lowercase", async () => {
+    mock402();
+    fetchMock.mockResponseOnce("paid", { status: 200 });
+
+    await fetchWithX402(
+      URL_A,
+      {},
+      { wallet: makeWallet(PREIMAGE.toUpperCase()) },
+    );
+
+    const sent = new Headers(fetchMock.mock.calls[1][1]?.headers);
+    expect(JSON.parse(atob(sent.get("payment-signature")!)).payload).toEqual({
+      preimage: PREIMAGE,
+    });
+  });
+
+  test("skips entries on unsupported lnbtc networks and pays a supported one", async () => {
+    const wallet = makeWallet();
+    const signet = {
+      ...REQUIREMENTS,
+      network: "lnbtc:00000008819873e925422c1ff0f99f7c",
+    };
+    mock402(
+      btoa(
+        JSON.stringify({
+          resource: { url: URL_A },
+          accepts: [signet, REQUIREMENTS],
+        }),
+      ),
+    );
+    fetchMock.mockResponseOnce("paid", { status: 200 });
+
+    const response = await fetchWithX402(URL_A, {}, { wallet });
+
+    expect(response.status).toBe(200);
+    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
+  });
+
+  test("rejects a resume token from an older version with a clear error", async () => {
+    const error = await fetchWithX402(
+      URL_A,
+      {},
+      {
+        wallet: makeWallet(),
+        resume: {
+          pendingPayment: {
+            scheme: "x402",
+            header: "payment-signature",
+            value: "legacy",
+          } as never,
+          preimage: PREIMAGE,
+        },
+      },
+    ).catch((e) => e);
+
+    expect((error as Error).message).toContain("older version");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("resumes an interrupted payment with the recovered preimage", async () => {

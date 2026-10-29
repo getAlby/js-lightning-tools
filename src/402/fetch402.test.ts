@@ -100,6 +100,27 @@ describe("fetch402 dispatcher", () => {
     expect(response.status).toBe(200);
   });
 
+  test("returns original 402 when the lightning offer is on an unsupported network", async () => {
+    const wallet = makeWallet(LNBTC_PREIMAGE);
+    fetchMock.mockResponseOnce("Payment Required", {
+      status: 402,
+      headers: {
+        "PAYMENT-REQUIRED": paymentRequiredHeader([
+          USDC_REQUIREMENTS,
+          {
+            ...LIGHTNING_REQUIREMENTS,
+            network: "lnbtc:00000008819873e925422c1ff0f99f7c",
+          },
+        ]),
+      },
+    });
+
+    const response = await fetch402(LNBTC_URL, {}, { wallet });
+
+    expect(response.status).toBe(402);
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
+  });
+
   test("returns original 402 when no payable lightning offer is present", async () => {
     // USDC-only endpoint: a non-lightning wallet would handle this. We pass
     // the original 402 back to the caller so they can act on it themselves.

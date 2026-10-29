@@ -27,11 +27,10 @@ const fail = (reason: string, message: string): never => {
   throw new Error(`x402: ${reason}: ${message}`);
 };
 
-/** True for an x402 entry that offers `exact` payment on a Lightning network. */
+/** True for an x402 entry that offers `exact` payment on a supported Lightning network. */
 export const isLnbtcRequirements = (e: X402Requirements | undefined) =>
   e?.scheme === "exact" &&
-  typeof e.network === "string" &&
-  e.network.startsWith("lnbtc:");
+  Object.prototype.hasOwnProperty.call(LNBTC_NETWORKS, e.network);
 
 /** JCS (RFC 8785) for the binding object, which holds only strings, arrays and objects. */
 const canonicalize = (value: unknown): string => {
@@ -108,6 +107,31 @@ const getBoundHeaders = (params: unknown): string[] => {
     }
   });
   return names as string[];
+};
+
+/**
+ * Headers fetch() adds when the caller does not set them. A bound header must
+ * be hashed with the value actually sent, so set these explicitly on the
+ * outgoing request before hashing.
+ */
+export const applyImplicitHeaders = (
+  headers: Headers,
+  body: RequestInit["body"] | undefined,
+  boundHeaders: string[],
+): void => {
+  if (boundHeaders.includes("accept") && !headers.has("accept")) {
+    headers.set("accept", "*/*");
+  }
+  if (boundHeaders.includes("content-type") && !headers.has("content-type")) {
+    let contentType: string | undefined;
+    if (typeof body === "string") contentType = "text/plain;charset=UTF-8";
+    else if (body instanceof URLSearchParams) {
+      contentType = "application/x-www-form-urlencoded;charset=UTF-8";
+    } else if (typeof Blob !== "undefined" && body instanceof Blob) {
+      contentType = body.type || undefined;
+    }
+    if (contentType) headers.set("content-type", contentType);
+  }
 };
 
 // fetch() upper-cases these methods before sending
@@ -265,12 +289,14 @@ export const validateLnbtcRequirements = async (args: {
       `resource url ${String(args.resourceUrl)} does not match request url ${url.href}`,
     );
   }
+  const boundHeaders = getBoundHeaders(extra.requestBindingParams);
+  applyImplicitHeaders(headers, fetchArgs.body, boundHeaders);
   const requestHash = await computeHttpRequestHash({
     url: url.href,
     method: fetchArgs.method,
     headers,
     body: fetchArgs.body,
-    boundHeaders: getBoundHeaders(extra.requestBindingParams),
+    boundHeaders,
   });
   if (requestHash !== extra.requestHash) {
     fail(
