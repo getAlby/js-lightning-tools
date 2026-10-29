@@ -55,12 +55,6 @@ export type PendingPayment =
       header: string;
       /** The accepted `exact`/`lnbtc` requirements, echoed with the preimage. */
       accepted: X402Requirements;
-    }
-  | {
-      scheme: "x402";
-      header: string;
-      /** Legacy x402 dialect: the complete signature, independent of the preimage. */
-      value: string;
     };
 
 /**
@@ -84,14 +78,10 @@ const buildCredentials = (
         value: `Payment ${buildMppCredential(pendingPayment.challenge, preimage)}`,
       };
     case "x402":
-      if ("accepted" in pendingPayment) {
-        return {
-          header: pendingPayment.header,
-          value: buildLnbtcPaymentSignature(pendingPayment.accepted, preimage),
-        };
-      }
-      // The legacy signature does not embed the preimage; it is already complete.
-      return { header: pendingPayment.header, value: pendingPayment.value };
+      return {
+        header: pendingPayment.header,
+        value: buildLnbtcPaymentSignature(pendingPayment.accepted, preimage),
+      };
   }
 };
 

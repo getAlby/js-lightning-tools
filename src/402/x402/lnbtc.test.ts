@@ -2,31 +2,13 @@ import fetchMock from "jest-fetch-mock";
 import { fetchWithX402 } from "./x402";
 import { computeHttpRequestHash } from "./lnbtc";
 
-// Test vector from the x402 `exact` Lightning spec (scheme_exact_lnbtc.md):
-// GET https://api.example.com/article/A, empty body, no bound headers, signed
-// with the test-only private key 0x01. Validation time is 1700000000.
-const URL_A = "https://api.example.com/article/A";
-const INVOICE =
-  "lnbc250n1pj48ugqpp54y3u9s8ylemsv8l3ewyzzu0klhujvuvmkl6llchq23vy8rzjsf0qsp5zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zygshp5p4nz8am4uqj4q8a87z3sk4x6yk4dv2mvel34epw68qqkwy0xcqvqxqzfvcqpjr4rx6ls6j5rpwknuea64evlk7yfx56wmqcer5eerekdsn9tlv6v4ex9mlz5dtm9qapl3svwlqcf7837dmjkru9z9w4h2rvm0md52w2sqxrwu5f";
-const PREIMAGE =
-  "0001020304050607080900010203040506070809000102030405060708090102";
-const REQUIREMENTS = {
-  scheme: "exact",
-  network: "lnbtc:000000000019d6689c085ae165831e93",
-  amount: "25000",
-  asset: "BTC",
-  payTo: "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-  maxTimeoutSeconds: 300,
-  extra: {
-    assetTransferMethod: "bolt11",
-    paymentFlow: "upfront",
-    requestHash:
-      "0d6623f775e025501fa7f0a30b54da25aad62b6ccfe35c85da38016711e6c018",
-    requestBindingProfile: "http:1",
-    requestBindingParams: { headers: [] as string[] },
-    invoice: INVOICE,
-  },
-};
+import {
+  LNBTC_INVOICE as INVOICE,
+  LNBTC_PREIMAGE as PREIMAGE,
+  LNBTC_REQUIREMENTS as REQUIREMENTS,
+  LNBTC_URL as URL_A,
+  LNBTC_VALIDATION_TIME_MS,
+} from "./testVector";
 
 function makePaymentRequiredHeader(
   requirements: unknown = REQUIREMENTS,
@@ -58,7 +40,7 @@ function mock402(header = makePaymentRequiredHeader()) {
 
 beforeEach(() => {
   fetchMock.resetMocks();
-  jest.spyOn(Date, "now").mockReturnValue(1700000000 * 1000);
+  jest.spyOn(Date, "now").mockReturnValue(LNBTC_VALIDATION_TIME_MS);
 });
 
 afterEach(() => {
@@ -124,28 +106,6 @@ describe("fetchWithX402 with exact/lnbtc", () => {
       accepted: REQUIREMENTS,
       payload: { preimage: PREIMAGE },
     });
-  });
-
-  test("prefers the lnbtc entry over a legacy lightning entry", async () => {
-    const wallet = makeWallet();
-    const legacy = {
-      scheme: "exact",
-      network: "bip122:000000000019d6689c085ae165831e93",
-      extra: { invoice: "lnbc1legacy", paymentMethod: "lightning" },
-    };
-    mock402(
-      btoa(
-        JSON.stringify({
-          resource: { url: URL_A },
-          accepts: [legacy, REQUIREMENTS],
-        }),
-      ),
-    );
-    fetchMock.mockResponseOnce("paid", { status: 200 });
-
-    await fetchWithX402(URL_A, {}, { wallet });
-
-    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
   });
 
   test.each([

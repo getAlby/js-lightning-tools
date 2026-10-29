@@ -2,27 +2,25 @@ import fetchMock from "jest-fetch-mock";
 import { fetchWithX402 } from "./x402";
 import { Fetch402InterruptedError } from "../utils";
 import { Invoice } from "../../bolt11";
-
-const INVOICE =
-  "lnbc4020n1p5m6028dq80q6rqvsnp4qt5w34u6kntf5lc50jj27rvs89sgrpcpj7s6vfts042gkhxx2j6swpp5g6tquvmswkv5xf0ru7ju2qvdrf83l2ewha3qzzt0a7vurs5q30rssp54kt5hfzjngjersx8fgt60feuu8e7vnat67f3ksr98twdj7z0m0ls9qyysgqcqzp2xqyz5vqrzjqdc22wfv6lyplagj37n9dmndkrzdz8rh3lxkewvvk6arkjpefats2rf47yqqwysqqcqqqqlgqqqqqqgqfqrzjq26922n6s5n5undqrf78rjjhgpcczafws45tx8237y7pzx3fg8ww8apyqqqqqqqqjyqqqqlgqqqqr4gq2q3z5pu33awfm98ac3ysdhy046xmen4zqval67tccu35x9mxgvl6w3wmq6y03ae7pme6qr20mp5gvuqntnu8yy7nlf6gyt9zshanj2zhgqe4xde3";
-const PREIMAGE =
-  "8196e90022ce688d911554d02af67d3d6a72143961c1e1aa12c4720538ea0549";
-
-const X402_URL = "https://example.com/protected";
-
-const REQUIREMENTS = {
-  scheme: "exact",
-  network: "bip122:000000000019d6689c085ae165831e93",
-  amount: "402000",
-  asset: "btc",
-  extra: { invoice: INVOICE, paymentMethod: "lightning" },
-};
+import {
+  LNBTC_INVOICE as INVOICE,
+  LNBTC_PREIMAGE as PREIMAGE,
+  LNBTC_REQUIREMENTS as REQUIREMENTS,
+  LNBTC_URL as X402_URL,
+  LNBTC_VALIDATION_TIME_MS,
+} from "./testVector";
 
 function makePaymentRequiredHeader(
   requirements = REQUIREMENTS,
   accepts = [requirements],
 ): string {
-  return btoa(unescape(encodeURIComponent(JSON.stringify({ accepts }))));
+  return btoa(
+    unescape(
+      encodeURIComponent(
+        JSON.stringify({ resource: { url: X402_URL }, accepts }),
+      ),
+    ),
+  );
 }
 
 function parsePaymentSignature(header: string): Record<string, unknown> {
@@ -37,6 +35,11 @@ function makeWallet(preimage: string = PREIMAGE) {
 
 beforeEach(() => {
   fetchMock.resetMocks();
+  jest.spyOn(Date, "now").mockReturnValue(LNBTC_VALIDATION_TIME_MS);
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
 // ---------------------------------------------------------------------------
@@ -93,8 +96,7 @@ describe("fetchWithX402", () => {
     const headers = secondCallInit.headers as Headers;
     const sig = parsePaymentSignature(headers.get("payment-signature")!);
 
-    const payload = sig.payload as { invoice: string };
-    expect(payload.invoice).toEqual(INVOICE);
+    expect(sig.payload).toEqual({ preimage: PREIMAGE });
     expect(sig.accepted).toEqual(REQUIREMENTS);
   });
 
@@ -116,7 +118,7 @@ describe("fetchWithX402", () => {
     const response = await fetchWithX402(X402_URL, {}, { wallet });
 
     expect(response.payment?.paid).toBe(true);
-    expect(response.payment?.amountSat).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.amountSat).toBe(25); // lnbc250n = 25 sats
     expect(response.payment?.feesPaidMsat).toBe(500);
     expect(response.payment?.preimage).toBe(PREIMAGE);
     expect(response.payment?.credentials.header).toBe("payment-signature");
@@ -222,7 +224,7 @@ describe("fetchWithX402", () => {
     const wallet = makeWallet();
     const nonLightning = {
       scheme: "exact",
-      network: "bip122:something",
+      network: "eip155:8453",
       extra: { invoice: INVOICE },
     };
 
@@ -242,7 +244,7 @@ describe("fetchWithX402", () => {
 
   test("throws when requirements missing invoice", async () => {
     const wallet = makeWallet();
-    const bad = { scheme: "exact", network: "lightning:mainnet", extra: {} };
+    const bad = { ...REQUIREMENTS, extra: {} };
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -250,7 +252,7 @@ describe("fetchWithX402", () => {
     });
 
     await expect(fetchWithX402(X402_URL, {}, { wallet })).rejects.toThrow(
-      "x402: unsupported x402 network, only Bitcoin lightning network is supported.",
+      "x402: payment requirements missing lightning invoice",
     );
   });
 
@@ -258,7 +260,7 @@ describe("fetchWithX402", () => {
     const wallet = makeWallet();
     const nonLightning = {
       scheme: "exact",
-      network: "bitcoin:mainnet",
+      network: "eip155:8453",
       extra: { invoice: "other" },
     };
 
@@ -321,14 +323,13 @@ describe("fetchWithX402", () => {
 
     await fetchWithX402(
       X402_URL,
-      { method: "POST", headers: { "X-Custom": "value" } },
+      { headers: { "X-Custom": "value" } },
       { wallet },
     );
 
     for (const call of fetchMock.mock.calls) {
       const fetchInit = call[1] as RequestInit;
       const headers = fetchInit.headers as Headers;
-      expect(fetchInit.method).toBe("POST");
       expect(headers.get("X-Custom")).toBe("value");
     }
   });

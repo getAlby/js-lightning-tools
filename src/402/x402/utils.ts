@@ -6,8 +6,6 @@ export interface X402Requirements {
   network: string;
   extra: {
     invoice: string;
-    /** Legacy (pre-spec) Alby dialect marker. */
-    paymentMethod?: string;
     [key: string]: unknown;
   };
   [key: string]: unknown;
@@ -40,22 +38,3 @@ export const buildLnbtcPaymentSignature = (
     payload: { preimage },
   });
 };
-
-/**
- * PAYMENT-SIGNATURE for the legacy Alby dialect (`extra.paymentMethod:
- * "lightning"`), which sends the invoice instead of the preimage.
- * @deprecated kept until servers migrate to the `lnbtc` spec.
- */
-export const buildX402PaymentSignature = (
-  scheme: string,
-  network: string,
-  invoice: string,
-  requirements: X402Requirements,
-): string =>
-  encodeHeader({
-    x402Version: 2,
-    scheme,
-    network,
-    payload: { invoice },
-    accepted: requirements,
-  });
