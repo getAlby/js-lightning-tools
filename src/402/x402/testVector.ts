@@ -24,3 +24,28 @@ export const LNBTC_REQUIREMENTS = {
     invoice: LNBTC_INVOICE,
   },
 };
+
+// A real signed signet challenge captured from https://fortune.mutinynet.com/x402
+// (GET, empty body, no bound headers). Its invoice was created at 1793354316.
+export const SIGNET_URL = "https://fortune.mutinynet.com/x402";
+export const SIGNET_VALIDATION_TIME_MS = 1793354316 * 1000;
+export const SIGNET_REQUIREMENTS = {
+  scheme: "exact",
+  network: "lnbtc:00000008819873e925422c1ff0f99f7c",
+  amount: "100000",
+  asset: "BTC",
+  payTo: "02465ed5be53d04fde66c9418ff14a5f2267723810176c9212b722e542dc1afb1b",
+  maxTimeoutSeconds: 300,
+  extra: {
+    assetTransferMethod: "bolt11",
+    invoice:
+      "lntbs1u1p4wg6jvpp56l8fe4rq2a2s0qezmwrpwjhsvq0ys5s28qj8ktf3dklsmfzevmwshp5e3uzm759236nkx84utats6w72cp8rysfax9pn9rg73y23f9c82lscqzzsxqzfvsp5tr2lqphsl5dj3dxx08hp4kzsdsnxct3vq505wuxdys383kf4mlss9qxpqysgqvvxf7gkgyf24y0aaf80p6h2yuaz04krt84386ha75hu97yc4wdvxu5vgprzcrl4l42lr7ngsluukyxcvukyyt9agg3c4lk5vyrywxscqwktu80",
+    paymentFlow: "upfront",
+    requestBindingParams: {
+      headers: [],
+    },
+    requestBindingProfile: "http:1",
+    requestHash:
+      "cc782dfa8554753b18f5e2fab869de5602719209e98a199468f448a8a4b83abf",
+  },
+};

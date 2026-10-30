@@ -309,6 +309,19 @@ export const validateLnbtcRequirements = async (args: {
     );
   }
   const boundHeaders = getBoundHeaders(extra.requestBindingParams);
+  // The paid request is sent after the wallet pays; copy mutable bodies so
+  // the bytes sent are the bytes the invoice commits to.
+  const body = fetchArgs.body;
+  if (body instanceof ArrayBuffer) fetchArgs.body = body.slice(0);
+  else if (ArrayBuffer.isView(body)) {
+    fetchArgs.body = new Uint8Array(
+      body.buffer,
+      body.byteOffset,
+      body.byteLength,
+    ).slice();
+  } else if (body instanceof URLSearchParams) {
+    fetchArgs.body = new URLSearchParams(body);
+  }
   applyImplicitHeaders(headers, fetchArgs.body, boundHeaders);
   const requestHash = await computeHttpRequestHash({
     url: url.href,

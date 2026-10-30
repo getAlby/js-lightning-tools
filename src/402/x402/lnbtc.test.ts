@@ -10,6 +10,9 @@ import {
   LNBTC_REQUIREMENTS as REQUIREMENTS,
   LNBTC_URL as URL_A,
   LNBTC_VALIDATION_TIME_MS,
+  SIGNET_REQUIREMENTS,
+  SIGNET_URL,
+  SIGNET_VALIDATION_TIME_MS,
 } from "./testVector";
 
 function makePaymentRequiredHeader(
@@ -359,6 +362,48 @@ describe("fetchWithX402 with exact/lnbtc", () => {
     } finally {
       delete g.location;
     }
+  });
+
+  test("pays a real signed signet (lntbs) invoice", async () => {
+    jest.spyOn(Date, "now").mockReturnValue(SIGNET_VALIDATION_TIME_MS);
+    const wallet = makeWallet();
+    mock402(makePaymentRequiredHeader(SIGNET_REQUIREMENTS, SIGNET_URL));
+
+    // Every pre-payment check passes; the fake wallet's preimage is then
+    // rejected because we don't know the real one.
+    const error = await fetchWithX402(SIGNET_URL, {}, { wallet }).catch(
+      (e) => e,
+    );
+
+    expect(wallet.payInvoice).toHaveBeenCalledWith({
+      invoice: SIGNET_REQUIREMENTS.extra.invoice,
+    });
+    expect(error).toBeInstanceOf(Fetch402InterruptedError);
+    expect(error.paid).toBe(true);
+  });
+
+  test("sends a snapshot of a byte body, not later mutations", async () => {
+    const body = new TextEncoder().encode("x");
+    const bound = withExtra({
+      requestHash: await computeHttpRequestHash({
+        url: URL_A,
+        method: "POST",
+        headers: new Headers(),
+        body: "x",
+        boundHeaders: [],
+      }),
+    });
+    const fetchArgs: RequestInit = { method: "POST", body };
+    mock402(makePaymentRequiredHeader(bound));
+
+    // The invoice commits to GET article A, so validation stops before paying;
+    // by then the body has already been swapped for a copy.
+    await fetchWithX402(URL_A, fetchArgs, { wallet: makeWallet() }).catch(
+      () => undefined,
+    );
+    body[0] = 0;
+
+    expect(new TextDecoder().decode(fetchArgs.body as Uint8Array)).toBe("x");
   });
 
   test("rejects a resume token from an older version with a clear error", async () => {
