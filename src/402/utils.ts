@@ -1,5 +1,6 @@
 import { Invoice } from "../bolt11/Invoice";
 import { buildMppCredential, MppChallenge } from "./mpp/utils";
+import { buildLnbtcPaymentSignature, X402Requirements } from "./x402/utils";
 
 export interface Wallet {
   payInvoice(args: {
@@ -52,8 +53,8 @@ export type PendingPayment =
   | {
       scheme: "x402";
       header: string;
-      /** The x402 payment signature — independent of the preimage. */
-      value: string;
+      /** The accepted `exact`/`lnbtc` requirements, echoed with the preimage. */
+      accepted: X402Requirements;
     };
 
 /**
@@ -77,8 +78,17 @@ const buildCredentials = (
         value: `Payment ${buildMppCredential(pendingPayment.challenge, preimage)}`,
       };
     case "x402":
-      // x402's signature does not embed the preimage; it is already complete.
-      return { header: pendingPayment.header, value: pendingPayment.value };
+      // Tokens from older versions carry a prebuilt `value` for the removed
+      // pre-spec x402 dialect instead of `accepted`.
+      if (!pendingPayment.accepted) {
+        throw new Error(
+          "x402: unsupported pendingPayment (created by an older version without `accepted`)",
+        );
+      }
+      return {
+        header: pendingPayment.header,
+        value: buildLnbtcPaymentSignature(pendingPayment.accepted, preimage),
+      };
   }
 };
 
@@ -222,7 +232,9 @@ export const getPaymentHash = (invoice: string): string => {
  *   `options.resume` (the library rebuilds the credential) instead of re-paying.
  * - `paid: true` — the invoice was paid but the follow-up request failed (e.g. a
  *   network error reaching the resource). Retry with `credentials` (already
- *   built) instead of paying again.
+ *   built) instead of paying again. `credentials` is missing only when they
+ *   could not be built from the wallet's preimage (e.g. it does not match the
+ *   payment hash); `cause` says why.
  *
  * All fields are plain data so the error survives `JSON.stringify` and can be
  * forwarded across process/CLI boundaries. Note: after such a round-trip the
@@ -244,7 +256,7 @@ export class Fetch402InterruptedError extends Error {
   readonly preimage?: string;
   /** Routing fees in millisatoshis, present when `paid` and reported by the wallet. */
   readonly feesPaidMsat?: number;
-  /** Reusable credential, present when `paid` (already built for you). */
+  /** Reusable credential, present when `paid` and it could be built (already built for you). */
   readonly credentials?: PaymentCredentials;
   /**
    * The interrupted payment. When `paid` is false, pass this back via
@@ -320,7 +332,23 @@ export const payAndFetch = async (args: {
     );
   }
 
-  const credentials = buildCredentials(pendingPayment, invResp.preimage);
+  let credentials: PaymentCredentials;
+  try {
+    credentials = buildCredentials(pendingPayment, invResp.preimage);
+  } catch (cause) {
+    // The invoice is already paid, so never surface this as a plain error.
+    throw new Fetch402InterruptedError(
+      "402: invoice paid but credentials could not be built from the preimage",
+      {
+        invoice,
+        paid: true,
+        pendingPayment,
+        preimage: invResp.preimage,
+        feesPaidMsat: invResp.fees_paid,
+        cause,
+      },
+    );
+  }
   headers.set(credentials.header, credentials.value);
 
   let response: Response;

@@ -4,6 +4,13 @@ import {
   encodeMppChargeRequest,
   makeMppWwwAuthenticateHeader,
 } from "./mpp/utils";
+import {
+  LNBTC_INVOICE,
+  LNBTC_PREIMAGE,
+  LNBTC_REQUIREMENTS,
+  LNBTC_URL,
+  LNBTC_VALIDATION_TIME_MS,
+} from "./x402/testVector";
 
 const INVOICE =
   "lnbc4020n1p5m6028dq80q6rqvsnp4qt5w34u6kntf5lc50jj27rvs89sgrpcpj7s6vfts042gkhxx2j6swpp5g6tquvmswkv5xf0ru7ju2qvdrf83l2ewha3qzzt0a7vurs5q30rssp54kt5hfzjngjersx8fgt60feuu8e7vnat67f3ksr98twdj7z0m0ls9qyysgqcqzp2xqyz5vqrzjqdc22wfv6lyplagj37n9dmndkrzdz8rh3lxkewvvk6arkjpefats2rf47yqqwysqqcqqqqlgqqqqqqgqfqrzjq26922n6s5n5undqrf78rjjhgpcczafws45tx8237y7pzx3fg8ww8apyqqqqqqqqjyqqqqlgqqqqr4gq2q3z5pu33awfm98ac3ysdhy046xmen4zqval67tccu35x9mxgvl6w3wmq6y03ae7pme6qr20mp5gvuqntnu8yy7nlf6gyt9zshanj2zhgqe4xde3";
@@ -12,14 +19,7 @@ const PREIMAGE =
 
 const URL = "https://example.com/protected";
 
-const LIGHTNING_REQUIREMENTS = {
-  scheme: "exact",
-  network: "bip122:000000000019d6689c085ae165831e93",
-  amount: "402000",
-  asset: "BTC",
-  payTo: "anonymous",
-  extra: { paymentMethod: "lightning", invoice: INVOICE },
-};
+const LIGHTNING_REQUIREMENTS = LNBTC_REQUIREMENTS;
 
 const USDC_REQUIREMENTS = {
   scheme: "exact",
@@ -31,7 +31,13 @@ const USDC_REQUIREMENTS = {
 };
 
 function paymentRequiredHeader(accepts: unknown[]): string {
-  return btoa(unescape(encodeURIComponent(JSON.stringify({ accepts }))));
+  return btoa(
+    unescape(
+      encodeURIComponent(
+        JSON.stringify({ resource: { url: LNBTC_URL }, accepts }),
+      ),
+    ),
+  );
 }
 
 function makeWallet(preimage: string = PREIMAGE) {
@@ -42,9 +48,14 @@ beforeEach(() => {
   fetchMock.resetMocks();
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe("fetch402 dispatcher", () => {
   test("pays lightning offer in PAYMENT-REQUIRED with mixed USDC + lightning accepts", async () => {
-    const wallet = makeWallet();
+    jest.spyOn(Date, "now").mockReturnValue(LNBTC_VALIDATION_TIME_MS);
+    const wallet = makeWallet(LNBTC_PREIMAGE);
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -57,17 +68,18 @@ describe("fetch402 dispatcher", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify({ paid: true }), { status: 200 });
 
-    const response = await fetch402(URL, {}, { wallet });
+    const response = await fetch402(LNBTC_URL, {}, { wallet });
 
-    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
+    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: LNBTC_INVOICE });
     expect(response.status).toBe(200);
   });
 
   test("falls through unknown WWW-Authenticate Payment method to x402 lightning offer", async () => {
+    jest.spyOn(Date, "now").mockReturnValue(LNBTC_VALIDATION_TIME_MS);
     // An unknown WWW-Authenticate Payment method alongside x402 PAYMENT-REQUIRED
     // with both USDC and lightning entries. We don't speak `method=unknown`, so
     // we must fall through to x402 and pay the lightning entry.
-    const wallet = makeWallet();
+    const wallet = makeWallet(LNBTC_PREIMAGE);
 
     fetchMock.mockResponseOnce("Payment Required", {
       status: 402,
@@ -82,10 +94,31 @@ describe("fetch402 dispatcher", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify({ paid: true }), { status: 200 });
 
-    const response = await fetch402(URL, {}, { wallet });
+    const response = await fetch402(LNBTC_URL, {}, { wallet });
 
-    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: INVOICE });
+    expect(wallet.payInvoice).toHaveBeenCalledWith({ invoice: LNBTC_INVOICE });
     expect(response.status).toBe(200);
+  });
+
+  test("returns original 402 when the lightning offer is on an unsupported network", async () => {
+    const wallet = makeWallet(LNBTC_PREIMAGE);
+    fetchMock.mockResponseOnce("Payment Required", {
+      status: 402,
+      headers: {
+        "PAYMENT-REQUIRED": paymentRequiredHeader([
+          USDC_REQUIREMENTS,
+          {
+            ...LIGHTNING_REQUIREMENTS,
+            network: "lnbtc:0f9188f13cb7b2c71f2a335e3a4fc328",
+          },
+        ]),
+      },
+    });
+
+    const response = await fetch402(LNBTC_URL, {}, { wallet });
+
+    expect(response.status).toBe(402);
+    expect(wallet.payInvoice).not.toHaveBeenCalled();
   });
 
   test("returns original 402 when no payable lightning offer is present", async () => {
@@ -171,10 +204,11 @@ describe("fetch402 dispatcher", () => {
   });
 
   test("attaches payment info after paying a lightning offer", async () => {
+    jest.spyOn(Date, "now").mockReturnValue(LNBTC_VALIDATION_TIME_MS);
     const wallet = {
       payInvoice: jest
         .fn()
-        .mockResolvedValue({ preimage: PREIMAGE, fees_paid: 42 }),
+        .mockResolvedValue({ preimage: LNBTC_PREIMAGE, fees_paid: 42 }),
     };
 
     fetchMock.mockResponseOnce("Payment Required", {
@@ -185,10 +219,10 @@ describe("fetch402 dispatcher", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify({ paid: true }), { status: 200 });
 
-    const response = await fetch402(URL, {}, { wallet });
+    const response = await fetch402(LNBTC_URL, {}, { wallet });
 
     expect(response.payment?.paid).toBe(true);
-    expect(response.payment?.amountSat).toBe(402); // lnbc4020n = 402 sats
+    expect(response.payment?.amountSat).toBe(25); // lnbc250n = 25 sats
     expect(response.payment?.feesPaidMsat).toBe(42);
     expect(response.payment?.credentials.header).toBe("payment-signature");
   });
