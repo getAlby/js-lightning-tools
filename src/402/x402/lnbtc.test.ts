@@ -228,7 +228,7 @@ describe("fetchWithX402 with exact/lnbtc", () => {
       "the network is not supported",
       makePaymentRequiredHeader({
         ...REQUIREMENTS,
-        network: "lnbtc:00000008819873e925422c1ff0f99f7c",
+        network: "lnbtc:0f9188f13cb7b2c71f2a335e3a4fc328",
       }),
       URL_A,
       "unsupported x402 network",
@@ -241,6 +241,15 @@ describe("fetchWithX402 with exact/lnbtc", () => {
       }),
       URL_A,
       "invalid_exact_lnbtc_invoice_currency_mismatch",
+    ],
+    [
+      "the signet network does not match a mainnet invoice",
+      makePaymentRequiredHeader({
+        ...REQUIREMENTS,
+        network: "lnbtc:00000008819873e925422c1ff0f99f7c",
+      }),
+      URL_A,
+      "invoice currency bc does not match lnbtc:00000008819873e925422c1ff0f99f7c",
     ],
     [
       "the payment flow is missing",
@@ -317,7 +326,7 @@ describe("fetchWithX402 with exact/lnbtc", () => {
     const wallet = makeWallet();
     const signet = {
       ...REQUIREMENTS,
-      network: "lnbtc:00000008819873e925422c1ff0f99f7c",
+      network: "lnbtc:0f9188f13cb7b2c71f2a335e3a4fc328",
     };
     mock402(
       btoa(

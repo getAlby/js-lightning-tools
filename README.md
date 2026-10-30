@@ -359,7 +359,7 @@ It enables APIs and resources to request payments inline, without prior registra
 This library includes a `fetchWithX402` function to consume X402-protected resources that support the lightning network.
 (Note: X402 works also with other coins and network. This library supports X402 resources that accept Bitcoin on the lightning network)
 
-It implements the [`exact` scheme on Bitcoin Lightning (`lnbtc`)](https://github.com/x402-foundation/x402/blob/main/specs/schemes/exact/scheme_exact_lnbtc.md) for mainnet and testnet: before paying, it checks that the invoice is signed by `payTo` and that its description hash commits to the exact request being sent (`http:1` request binding), then proves payment with the preimage. Request bodies must be a string, `Blob`, `ArrayBuffer`, an `ArrayBuffer` view such as `Uint8Array`, or `URLSearchParams` so they can be bound.
+It implements the [`exact` scheme on Bitcoin Lightning (`lnbtc`)](https://github.com/x402-foundation/x402/blob/main/specs/schemes/exact/scheme_exact_lnbtc.md) for mainnet, testnet and signet (signet is not in the spec's network list, but follows its convention): before paying, it checks that the invoice is signed by `payTo` and that its description hash commits to the exact request being sent (`http:1` request binding), then proves payment with the preimage. Request bodies must be a string, `Blob`, `ArrayBuffer`, an `ArrayBuffer` view such as `Uint8Array`, or `URLSearchParams` so they can be bound.
 
 ##### fetchWithX402(url: string, fetchArgs, options)
 

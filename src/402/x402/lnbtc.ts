@@ -11,6 +11,9 @@ import { X402Requirements } from "./utils";
 const LNBTC_NETWORKS: Record<string, string> = {
   "lnbtc:000000000019d6689c085ae165831e93": "bc", // mainnet
   "lnbtc:000000000933ea01ad0ee984209779ba": "tb", // testnet
+  // Not listed by the spec, but follows its BIP-122 convention; used by
+  // mutinynet test endpoints (e.g. fortune.mutinynet.com/x402).
+  "lnbtc:00000008819873e925422c1ff0f99f7c": "tbs", // signet
 };
 
 const HTTP_PROFILE = "http:1";

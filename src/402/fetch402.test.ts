@@ -109,7 +109,7 @@ describe("fetch402 dispatcher", () => {
           USDC_REQUIREMENTS,
           {
             ...LIGHTNING_REQUIREMENTS,
-            network: "lnbtc:00000008819873e925422c1ff0f99f7c",
+            network: "lnbtc:0f9188f13cb7b2c71f2a335e3a4fc328",
           },
         ]),
       },
