@@ -536,9 +536,12 @@ import "cross-fetch/polyfill";
 
 ## 🛠 Development
 
+This project uses Yarn 1 (the lockfile is `yarn lockfile v1`). If `yarn` isn't installed, run `npm install -g yarn`, or prefix the commands below with `npx yarn@1`.
+
 ```
 yarn install
 yarn run build
+yarn test
 ```
 
 ## Need help?
